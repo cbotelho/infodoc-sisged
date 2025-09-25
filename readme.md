@@ -4,7 +4,7 @@
 
 ## Visão Geral
 
-O `infodoc-sisged` é uma plataforma robusta para gestão eletrônica de documentos, desenvolvida em PHP, com arquitetura modular e extensível. Inspirado em sistemas CRM como o Rukovoditel, oferece recursos avançados de automação, controle de acesso, integração com APIs e personalização visual.
+O `infodoc-sisged` é uma plataforma robusta para gestão eletrônica de documentos, desenvolvida em PHP, com arquitetura modular e extensível, oferece recursos avançados de automação, controle de acesso, integração com APIs e personalização visual.
 
 ## Principais Funcionalidades
 
