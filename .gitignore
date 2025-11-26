@@ -1,15 +1,34 @@
-﻿# PHP / WAMP
-/node_modules/
-/composer.lock
-/.env
-/.idea/
-/nbproject/
-Thumbs.db
-.DS_Store
-
-# Ignorar apenas arquivos de log sensíveis, não diretórios
-*.log~
+﻿# Arquivos sensíveis e temporários
+.env
+.env.local
+*.log
 *.swp
 *.swo
 *~
 .DS_Store
+Thumbs.db
+.vscode/workspace.settings
+*.sublime-project
+*.sublime-workspace
+
+# IDE
+.idea/
+/nbproject/
+
+# Node (se usado)
+node_modules/
+
+# Composer lock (opcional - descomente se quiser)
+# /composer.lock
+
+# Pastas que podem ter conteúdo sensível (mas versionar a estrutura)
+# Descomente linhas abaixo se quiser ignorar apenas conteúdo específico
+# /logs/*
+# /tmp/*
+# /uploads/*
+
+# Arquivos de certificado e chaves privadas (IMPORTANTÍSSIMO!)
+*.pfx
+*.p12
+*.key
+*.pem~
