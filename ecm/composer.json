@@ -1,5 +1,7 @@
 {
     "require": {
-        "setasign/fpdi": "^2.3"
+        "setasign/fpdi": "^2.3",
+        "thiagoalessio/tesseract_ocr": "^2.9",
+        "smalot/pdfparser": "^2.12"
     }
 }

@@ -1,12 +1,13 @@
 <?php
+require_once __DIR__ . '/vendor/autoload.php';
 
 // Habilitar a exibição de erros
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// require_once 'fpdi260/autoload.php';
-// use setasign\Fpdi\Fpdi;
+use setasign\Fpdi\Fpdi;
+use setasign\Fpdi\PdfReader;
 
 // Definir conexão com o banco de dados
 define('DB_SERVER', 'localhost');
@@ -35,60 +36,12 @@ function saveRegistro($pdo, $parent_id, $parent_item_id, $linked_id, $date_added
 }
 
 function saveArquivo($pdo, $parent_item_id, $arquivos) {
-
-// Função para extrair metadados do arquivo
-function extract_metadata($file_path, $original_name) {
-    return [
-        'nome_original' => $original_name,
-        'tamanho_bytes' => filesize($file_path),
-        'mime_type' => mime_content_type($file_path),
-        'extensao' => strtolower(pathinfo($original_name, PATHINFO_EXTENSION)),
-        'data_upload' => date('Y-m-d H:i:s'),
-    ];
-}
-
-// Função para extrair texto via OCR
-function extract_ocr($file_path, $original_name) {
-    $ext = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
-    $ocr_text = '';
-
-    if (in_array($ext, ['jpg', 'jpeg', 'png', 'bmp', 'tiff', 'tif', 'gif'])) {
-        // Imagem: usar tesseract
-        $output_txt = tempnam(sys_get_temp_dir(), 'ocr_');
-        @shell_exec("tesseract \"$file_path\" \"$output_txt\" -l por 2>&1");
-        $ocr_text = @file_get_contents($output_txt . '.txt');
-        @unlink($output_txt . '.txt');
-    } elseif ($ext === 'pdf') {
-        // PDF: tentar extrair texto com pdftotext, se não, converter páginas para imagem e rodar tesseract
-        $output_txt = tempnam(sys_get_temp_dir(), 'pdftxt_');
-        @shell_exec("pdftotext \"$file_path\" \"$output_txt\" 2>&1");
-        $ocr_text = @file_get_contents($output_txt);
-        @unlink($output_txt);
-        if (empty(trim($ocr_text))) {
-            // fallback: converter páginas para imagens e rodar tesseract (requer imagemagick e tesseract instalados)
-            $tmp_img = tempnam(sys_get_temp_dir(), 'pdfimg_') . '.png';
-            @shell_exec("convert -density 300 \"$file_path\"[0] \"$tmp_img\" 2>&1"); // só a primeira página
-            if (file_exists($tmp_img)) {
-                $output_txt2 = tempnam(sys_get_temp_dir(), 'ocrpdf_');
-                @shell_exec("tesseract \"$tmp_img\" \"$output_txt2\" -l por 2>&1");
-                $ocr_text = @file_get_contents($output_txt2 . '.txt');
-                @unlink($output_txt2 . '.txt');
-                @unlink($tmp_img);
-            }
-        }
-    }
-    return $ocr_text;
-}
-
-
-    $upload_dir = "../upload/";
-
-    // Obter data atual
-    $ano = date('Y');
+    // Defina o diretório de upload
+    $upload_dir = __DIR__ . '/../upload/';
     $mes = date('m');
     $dia = date('d');
-
-    // Construir caminho completo para o diretório de destino
+    $ano = date('Y');
+    // Você pode ajustar o diretório conforme sua necessidade
     $target_dir = $upload_dir; // . "{$ano}/{$mes}/{$dia}/";
 
     // Verificar se o diretório de destino existe, se não, criá-lo recursivamente
@@ -106,9 +59,44 @@ function extract_ocr($file_path, $original_name) {
         $arquivo['coluna5'] = getFileNameWithoutExtension($arquivo['coluna5']);
         $totalPages = count_pages($arquivo['tmp_name']); 
 
-        // Extrair metadados e OCR do arquivo temporário antes de mover
-        $metadados = extract_metadata($arquivo['tmp_name'], $originalFileName);
-        $ocr_text = extract_ocr($arquivo['tmp_name'], $originalFileName);
+        // Extrair extensão
+        $ext = strtolower(pathinfo($originalFileName, PATHINFO_EXTENSION));
+        $ocr_text = '';
+        // OCR ou extração de texto
+        if (in_array($ext, ['jpg', 'jpeg', 'png', 'bmp', 'tiff', 'tif', 'gif'])) {
+            // Imagem: usar Tesseract OCR PHP
+            try {
+                if (class_exists('\\TesseractOCR')) {
+                    $ocr = new \TesseractOCR($arquivo['tmp_name']);
+                    $ocr->lang('por');
+                    $ocr_text = $ocr->run();
+                } else {
+                    $ocr_text = 'Tesseract OCR não disponível';
+                }
+            } catch (\Exception $e) {
+                $ocr_text = 'Erro no OCR: ' . $e->getMessage();
+            }
+        } elseif ($ext === 'pdf') {
+            try {
+                if (class_exists('\\Smalot\\PdfParser\\Parser')) {
+                    $parser = new \Smalot\PdfParser\Parser();
+                    $pdf = $parser->parseFile($arquivo['tmp_name']);
+                    $ocr_text = $pdf->getText();
+                } else {
+                    $ocr_text = 'PDF Parser não disponível';
+                }
+            } catch (\Exception $e) {
+                $ocr_text = 'Erro no PDF Parser: ' . $e->getMessage();
+            }
+        }
+
+        // Extrair metadados do arquivo
+        $metadados = [
+            'nome_original' => $originalFileName,
+            'tamanho_bytes' => filesize($arquivo['tmp_name']),
+            'extensao' => $ext,
+            'data_upload' => date('Y-m-d H:i:s')
+        ];
 
         // Salvar no banco
         $stmt->execute([

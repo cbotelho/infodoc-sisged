@@ -1,0 +1,23 @@
+# Proteger arquivos sensíveis
+<FilesMatch "\.(key|pem|pfx|p12|log)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Permitir uploads maiores
+php_value upload_max_filesize 20M
+php_value post_max_size 21M
+php_value memory_limit 256M
+
+# Configurações de timeout
+php_value max_execution_time 300
+php_value max_input_time 300
+
+# Habilitar exibição de erros (remover em produção)
+php_flag display_errors on
+php_value error_reporting E_ALL
+
+# Forçar HTTPS (descomente se necessário)
+# RewriteEngine On
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
