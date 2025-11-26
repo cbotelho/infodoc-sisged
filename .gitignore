@@ -1,0 +1,13 @@
+﻿# PHP / WAMP
+/vendor/
+/node_modules/
+/composer.lock
+/.env
+/.vscode/
+/.idea/
+/nbproject/
+/logs/
+/tmp/
+*.log
+Thumbs.db
+.DS_Store
