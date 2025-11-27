@@ -3,8 +3,8 @@
 header('Content-Type: text/plain; charset=utf-8');
 
 // Ajuste estes valores antes de abrir o script no navegador
-$filename = __DIR__ . '/certs/test.pfx'; // coloque seu .pfx aqui
-$password = 'SENHA_DO_CERTIFICADO';
+$filename = __DIR__ . '/certs/Certificado_ECM_novo.pfx'; // coloque seu .pfx aqui
+$password = '161198';
 
 echo "Arquivo testado: $filename\n";
 if (!file_exists($filename)) {

@@ -50,6 +50,16 @@
         </div>
         
         <div class="form-group">
+            <label for="certFile">Certificado Digital (.pfx ou .p12):</label>
+            <input type="file" id="certFile" name="certFile" accept=".pfx,.p12" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="certPass">Senha do Certificado:</label>
+            <input type="password" id="certPass" name="certPass" required>
+        </div>
+        
+        <div class="form-group">
             <label>Posição da Assinatura (em milímetros):</label><br>
             <label>X: <input type="number" name="x_mm" value="20" class="coord-input" min="0"></label>
             <label>Y: <input type="number" name="y_mm" value="20" class="coord-input" min="0"></label>

@@ -217,6 +217,13 @@ async function handleSignConfirm(senha) {
             document.getElementById('btnBaixar').dataset.signed = state.signedFilename;
             Swal.fire('Sucesso', 'Documento assinado: ' + state.signedFilename, 'success');
 
+            const signedUrl = 'uploads/' + state.signedFilename;
+            if (signedUrl) {
+                loadPDF(signedUrl);
+                state.selectedFile = state.signedFilename;
+                document.getElementById('currentFile').innerText = state.signedFilename;
+            }
+
             // Fechar modal de senha se estiver aberto
             const bs = bootstrap.Modal.getInstance(document.getElementById('senhaModal'));
             if (bs) bs.hide();

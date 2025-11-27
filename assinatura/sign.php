@@ -9,11 +9,120 @@ if (!defined('FPDI_VERSION')) {
     define('FPDI_VERSION', '2.3.7'); // Versão compatível
 }
 
+function decodeFileData($data) {
+    if ($data === null || $data === '') {
+        return '';
+    }
+
+    if (strpos($data, 'data:') === 0) {
+        return base64_decode(preg_replace('#^data:[^;]+;base64,#', '', $data));
+    }
+
+    $decoded = base64_decode($data, true);
+    return $decoded !== false ? $decoded : $data;
+}
+
+function buildFileUrl($relativePath) {
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    return sprintf('%s://%s/assinatura/%s', $scheme, $host, ltrim($relativePath, '/'));
+}
+
+function getUploadedTmp(array $names) {
+    foreach ($names as $name) {
+        if (!empty($_FILES[$name]['tmp_name']) && is_uploaded_file($_FILES[$name]['tmp_name'])) {
+            return $_FILES[$name]['tmp_name'];
+        }
+    }
+    return null;
+}
+
+// localizar autoload do Composer em múltiplos locais (assinatura/, projeto raiz, infodoc-assinador/)
+$possibleAutoload = [
+    __DIR__ . '/vendor/autoload.php',
+    __DIR__ . '/../vendor/autoload.php',
+    __DIR__ . '/../infodoc-assinador/vendor/autoload.php',
+    __DIR__ . '/../../vendor/autoload.php',
+    __DIR__ . '/vendor/autoload.php'
+];
+$autoloadFound = null;
+foreach ($possibleAutoload as $p) {
+    if (file_exists($p)) { $autoloadFound = $p; break; }
+}
+if ($autoloadFound) {
+    require $autoloadFound;
+} else {
+    if (php_sapi_name() === 'cli') {
+        fwrite(STDERR, "Composer autoload not found. Execute 'composer install' in the project or copy vendor/autoload.php to assinatura/vendor/.\n");
+        exit(1);
+    } else {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'message' => 'Composer autoload not found. Execute composer install.']);
+        exit;
+    }
+}
+
 // Configurar o autoloader para usar TCPDI e PDF-Parser
 use setasign\Fpdi\Tcpdf\Fpdi;
 use setasign\FpdiPdfParser\PdfParser\PdfParser;
 use setasign\FpdiPdfParser\PdfParser\StreamReader;
 use setasign\Fpdi\Tcpdf\Fpdi as FpdiTcpdf;
+
+// Extensão personalizada do FPDI para suporte a assinatura ICP-Brasil
+class FpdiIcpBrasil extends Fpdi {
+    public function setSignature(
+        $signing_cert = '',
+        $private_key = '',
+        $private_key_password = '',
+        $extracerts = '',
+        $cert_type = 2,
+        $info = array(),
+        $approval = ''
+    ) {
+        // Se nenhuma chave privada for informada, assume o mesmo arquivo do certificado
+        if (empty($private_key)) {
+            $private_key = $signing_cert;
+        }
+
+        $icpDefaults = array(
+            'Name' => 'Assinatura Digital',
+            'Location' => 'Brasil',
+            'Reason' => 'Assinatura Digital ICP-Brasil',
+            'ContactInfo' => '',
+            'CertificationLevel' => 3,
+            'URL' => 'https://www.iti.gov.br/icp-brasil'
+        );
+
+        $info = array_merge($icpDefaults, $info ?? []);
+
+        parent::setSignature(
+            $signing_cert,
+            $private_key,
+            $private_key_password,
+            $extracerts,
+            $cert_type,
+            $info,
+            $approval
+        );
+
+        if (method_exists($this, 'setSignatureAlgorithm')) {
+            $this->setSignatureAlgorithm('sha256WithRSAEncryption');
+        }
+        if (method_exists($this, 'setCertificationLevel')) {
+            $this->setCertificationLevel(3);
+        }
+    }
+    
+    public function _putsignature() {
+        // Sobrescreve o método para incluir informações específicas do ICP-Brasil
+        parent::_putsignature();
+        
+        // Adiciona informações adicionais para ICP-Brasil
+        $this->_out('/Prop_Build << /App << /Name "TCPDF" >> >>');
+        $this->_out('/Prop_AuthTime ' . time() . ' 00:00:00 -03:00');
+        $this->_out('/Prop_AuthType /PKCS7');
+    }
+}
 
 // Aumentar limite de memória se necessário
 ini_set('memory_limit', '256M');
@@ -109,7 +218,12 @@ $MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 $TSA_USERNAME = '';
 $TSA_PASSWORD = '';
 
-$action = $_GET['action'] ?? '';
+$action = $_GET['action'] ?? ($_POST['action'] ?? '');
+
+// Se nenhuma ação for informada, assumir assinatura ao receber POST (ex.: formulário simples)
+if ($action === '' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = 'sign';
+}
 
 // --- Tratamento de Upload ---
 if ($action === 'upload') {
@@ -150,7 +264,7 @@ if ($action === 'upload') {
         }
         
         // Retornar sucesso com URL completa
-        $fileUrl = 'https://' . $_SERVER['HTTP_HOST'] . '/assinatura/uploads/' . $filename;
+        $fileUrl = buildFileUrl('uploads/' . $filename);
         
         resp(true, [
             'filename' => $filename,
@@ -219,13 +333,19 @@ else if ($action === 'sign') {
                 if (isset($file['tmp_name']) && is_uploaded_file($file['tmp_name'])) {
                     // Se for o arquivo PDF
                     if ($key === 'file' || $key === 'pdfFile') {
-                        $input['pdfFile'] = file_get_contents($file['tmp_name']);
-                        file_put_contents('debug.log', "Arquivo PDF recebido. Tamanho: " . strlen($input['pdfFile']) . " bytes\n", FILE_APPEND);
+                        $rawPdf = file_get_contents($file['tmp_name']);
+                        if ($rawPdf !== false) {
+                            $input['pdfFile'] = base64_encode($rawPdf);
+                            file_put_contents('debug.log', "Arquivo PDF recebido. Tamanho: " . strlen($rawPdf) . " bytes\n", FILE_APPEND);
+                        }
                     }
                     // Se for o certificado
                     elseif ($key === 'cert' || $key === 'certFile') {
-                        $input['certFile'] = file_get_contents($file['tmp_name']);
-                        file_put_contents('debug.log', "Arquivo de certificado recebido. Tamanho: " . strlen($input['certFile']) . " bytes\n", FILE_APPEND);
+                        $rawCert = file_get_contents($file['tmp_name']);
+                        if ($rawCert !== false) {
+                            $input['certFile'] = base64_encode($rawCert);
+                            file_put_contents('debug.log', "Arquivo de certificado recebido. Tamanho: " . strlen($rawCert) . " bytes\n", FILE_APPEND);
+                        }
                     }
                 }
             }
@@ -253,12 +373,14 @@ else if ($action === 'sign') {
         $missing = [];
         
         // Verificar PDF
-        if (empty($input['pdfFile']) && empty($_FILES['file']['tmp_name'])) {
+        $pdfTmp = $_FILES['file']['tmp_name'] ?? $_FILES['pdfFile']['tmp_name'] ?? null;
+        if (empty($input['pdfFile']) && empty($pdfTmp)) {
             $missing[] = 'pdfFile';
         }
         
         // Verificar Certificado
-        if (empty($input['certFile']) && empty($_FILES['cert']['tmp_name'])) {
+        $certTmp = $_FILES['cert']['tmp_name'] ?? $_FILES['certFile']['tmp_name'] ?? null;
+        if (empty($input['certFile']) && empty($certTmp)) {
             $missing[] = 'certFile';
         }
         
@@ -275,32 +397,78 @@ else if ($action === 'sign') {
         // Processar certificado
         $certData = $input['certFile'] ?? '';
         $certPass = $input['certPass'] ?? '';
+
+        $certContent = '';
+        $certPathUsed = '';
+        $certDirs = [
+            __DIR__ . '/certs/' . $certData,
+            $certData
+        ];
         
-        // Verificar se é um arquivo temporário ou dados base64
-        if (isset($_FILES['certFile'])) {
+        // Se foi enviado via upload (form multipart)
+        if (isset($_FILES['certFile']) && is_uploaded_file($_FILES['certFile']['tmp_name'])) {
             $certContent = file_get_contents($_FILES['certFile']['tmp_name']);
-        } elseif (strpos($certData, 'data:application/') === 0) {
-            // Remover o cabeçalho do base64 (data:application/...;base64,)
-            $certContent = base64_decode(preg_replace('#^data:application/.*;base64,#', '', $certData));
+            $certPathUsed = $_FILES['certFile']['tmp_name'];
+        } elseif (isset($_FILES['cert']) && is_uploaded_file($_FILES['cert']['tmp_name'])) {
+            $certContent = file_get_contents($_FILES['cert']['tmp_name']);
+            $certPathUsed = $_FILES['cert']['tmp_name'];
         } else {
-            $certContent = base64_decode($certData);
+            foreach ($certDirs as $possible) {
+                if (!empty($possible) && file_exists($possible) && is_file($possible)) {
+                    $certContent = file_get_contents($possible);
+                    $certPathUsed = $possible;
+                    break;
+                }
+            }
+            if ($certContent === '' && !empty($certData)) {
+                $certContent = decodeFileData($certData);
+            }
+        }
+
+        file_put_contents('debug.log', "Cert path usado: " . ($certPathUsed ?: 'inline/base64') . "\n", FILE_APPEND);
+        if ($certContent === '' || $certContent === false) {
+            throw new Exception('Certificado não encontrado ou vazio.');
         }
         
         // Processar PDF
-        if (isset($_FILES['pdfFile'])) {
+        $pdfContent = '';
+        $pdfPathUsed = '';
+        $pdfDirs = [];
+        if (!empty($input['pdfFile'])) {
+            $pdfDirs[] = __DIR__ . '/uploads/' . $input['pdfFile'];
+            $pdfDirs[] = $input['pdfFile'];
+        }
+
+        if (isset($_FILES['pdfFile']) && is_uploaded_file($_FILES['pdfFile']['tmp_name'])) {
             $pdfContent = file_get_contents($_FILES['pdfFile']['tmp_name']);
-        } elseif (isset($input['pdfFile'])) {
-            // Se for uma URL, tenta baixar o arquivo
-            if (filter_var($input['pdfFile'], FILTER_VALIDATE_URL)) {
-                $pdfContent = file_get_contents($input['pdfFile']);
-                if ($pdfContent === false) {
-                    throw new Exception('Não foi possível carregar o PDF da URL fornecida');
-                }
-            } else {
-                // Se for base64
-                $pdfContent = base64_decode(preg_replace('#^data:application/.*;base64,#', '', $input['pdfFile']));
-            }
+            $pdfPathUsed = $_FILES['pdfFile']['tmp_name'];
+        } elseif (isset($_FILES['file']) && is_uploaded_file($_FILES['file']['tmp_name'])) {
+            $pdfContent = file_get_contents($_FILES['file']['tmp_name']);
+            $pdfPathUsed = $_FILES['file']['tmp_name'];
         } else {
+            foreach ($pdfDirs as $candidate) {
+                if (!empty($candidate) && file_exists($candidate) && is_file($candidate)) {
+                    $pdfContent = file_get_contents($candidate);
+                    $pdfPathUsed = $candidate;
+                    break;
+                }
+            }
+
+            if ($pdfContent === '' && !empty($input['pdfFile'])) {
+                if (filter_var($input['pdfFile'], FILTER_VALIDATE_URL)) {
+                    $pdfContent = file_get_contents($input['pdfFile']);
+                    if ($pdfContent === false) {
+                        throw new Exception('Não foi possível carregar o PDF da URL fornecida');
+                    }
+                    $pdfPathUsed = $input['pdfFile'];
+                } else {
+                    $pdfContent = decodeFileData($input['pdfFile']);
+                }
+            }
+        }
+
+        file_put_contents('debug.log', "PDF path usado: " . ($pdfPathUsed ?: 'inline/base64') . "\n", FILE_APPEND);
+        if ($pdfContent === '' || $pdfContent === false) {
             throw new Exception('Nenhum arquivo PDF válido foi fornecido');
         }
         
@@ -312,45 +480,154 @@ else if ($action === 'sign') {
             'ContactInfo' => $input['contact'] ?? ''
         ];
         
-        // Criar PDF assinado
-        $pdf = new Fpdi();
+        // Verificar se o certificado é válido
+        $certInfo = @openssl_x509_parse($certContent);
+        if (!$certInfo) {
+            // Tentar ler como PKCS#12 (PFX/P12)
+            $certs = [];
+            if (openssl_pkcs12_read($certContent, $certs, $certPass)) {
+                $certContent = $certs['cert'];
+                $certInfo = openssl_x509_parse($certContent);
+                
+                // Adicionar a chave privada ao conteúdo do certificado
+                if (!empty($certs['pkey'])) {
+                    $certContent = $certs['cert'] . "\n" . $certs['pkey'];
+                }
+            } else {
+                throw new Exception('Certificado digital inválido, corrompido ou senha incorreta.');
+            }
+        }
+        
+        // Verificar se o certificado é da ICP-Brasil
+        $isIcpBrasil = false;
+        $issuerO = $certInfo['issuer']['O'] ?? '';
+        $issuerCN = $certInfo['issuer']['CN'] ?? '';
+        
+        if (is_array($issuerO)) {
+            $issuerO = implode(', ', $issuerO);
+        }
+        
+        if (stripos($issuerO, 'ICP-Brasil') !== false || 
+            stripos($issuerCN, 'ICP-Brasil') !== false ||
+            stripos($issuerO, 'Autoridade Certificadora') !== false ||
+            stripos($issuerO, 'AC ') === 0) {
+            $isIcpBrasil = true;
+        }
+        
+        // Verificar se o certificado está dentro do período de validade
+        $now = time();
+        if (isset($certInfo['validFrom_time_t']) && $now < $certInfo['validFrom_time_t']) {
+            throw new Exception('O certificado ainda não está válido. Data de início: ' . 
+                             date('d/m/Y H:i:s', $certInfo['validFrom_time_t']));
+        }
+        
+        if (isset($certInfo['validTo_time_t']) && $now > $certInfo['validTo_time_t']) {
+            throw new Exception('O certificado expirou em ' . 
+                             date('d/m/Y H:i:s', $certInfo['validTo_time_t']));
+        }
+        
+        // Verificar se o certificado tem chave privada
+        $hasPrivateKey = false;
+        $privateKey = openssl_pkey_get_private($certContent, $certPass);
+        if ($privateKey !== false) {
+            $hasPrivateKey = true;
+        }
+        
+        if (!$hasPrivateKey) {
+            throw new Exception('O certificado não contém uma chave privada ou a senha está incorreta.');
+        }
+        
+        // Criar PDF assinado com a classe personalizada
+        $pdf = new FpdiIcpBrasil();
         
         // Configurar metadados
         $pdf->SetCreator('Infodoc-SISGED');
         $pdf->SetAuthor('Infodoc-SISGED');
         $pdf->SetTitle('Documento Assinado Digitalmente');
         $pdf->SetSubject('Documento assinado digitalmente');
-        $pdf->SetKeywords('assinatura, digital, documento');
+        $pdf->SetKeywords('assinatura, digital, documento, ICP-Brasil');
+        
+        // Configurar informações da assinatura
+        $info = [
+            'Name' => $certInfo['subject']['CN'] ?? 'Assinatura Digital',
+            'Location' => $certInfo['subject']['L'] ?? 'Brasil',
+            'Reason' => 'Assinatura Digital ICP-Brasil',
+            'ContactInfo' => $certInfo['subject']['emailAddress'] ?? '',
+            'CertificationLevel' => 3
+        ];
         
         // Configurar assinatura
         $pdf->setSignature($certContent, $certContent, $certPass, '', 2, $info);
         
         // Importar páginas do PDF original
-        $pageCount = $pdf->setSourceData($pdfContent);
+        $sourcePdfPath = null;
+        $cleanupTempPdf = false;
+
+        if (!empty($pdfPathUsed) && file_exists($pdfPathUsed)) {
+            $sourcePdfPath = $pdfPathUsed;
+        } else {
+            $tempPdf = tempnam($UPLOAD_DIR, 'pdf_src_');
+            if ($tempPdf === false || file_put_contents($tempPdf, $pdfContent) === false) {
+                throw new Exception('Não foi possível preparar o PDF para importação.');
+            }
+            $sourcePdfPath = $tempPdf;
+            $cleanupTempPdf = true;
+        }
+
+        if (!method_exists($pdf, 'setSourceData')) {
+            $pageCount = $pdf->setSourceFile($sourcePdfPath);
+        } else {
+            $pageCount = $pdf->setSourceData($pdfContent);
+        }
         
         // Processar cada página
         for ($i = 1; $i <= $pageCount; $i++) {
             $tplIdx = $pdf->importPage($i);
             $size = $pdf->getTemplateSize($tplIdx);
+            $tplWidth = $size['width'] ?? $size['w'] ?? ($size[0] ?? 0);
+            $tplHeight = $size['height'] ?? $size['h'] ?? ($size[1] ?? 0);
             
             // Adicionar página com as mesmas dimensões do original
-            $pdf->AddPage($size['orientation'], [$size['w'], $size['h']]);
+            $pdf->AddPage($size['orientation'], [$tplWidth, $tplHeight]);
             $pdf->useTemplate($tplIdx);
             
-            // Adicionar assinatura apenas na última página
-            if ($i == $pageCount) {
-                $x = isset($input['x']) ? (float)$input['x'] : 20;
-                $y = isset($input['y']) ? (float)$input['y'] : 20;
-                $w = isset($input['width']) ? (float)$input['width'] : 100;
-                $h = isset($input['height']) ? (float)$input['height'] : 50;
+            // Adicionar assinatura apenas na página especificada (padrão: última página)
+            $targetPage = isset($input['page']) ? (int)$input['page'] : $pageCount;
+            if ($i == $targetPage) {
+                $x = isset($input['x_mm']) ? (float)$input['x_mm'] : 20;
+                $y = isset($input['y_mm']) ? (float)$input['y_mm'] : 20;
+                $w = isset($input['width_mm']) ? (float)$input['width_mm'] : 100;
+                $h = 30; // Altura fixa para a assinatura
                 
                 // Configurar aparência da assinatura
                 $pdf->setSignatureAppearance($x, $y, $w, $h, 'Name');
+                
+                // Adicionar texto de assinatura
+                $pdf->SetFont('helvetica', '', 8);
+                $pdf->SetXY($x, $y);
+                $pdf->Cell($w, 5, 'Assinado digitalmente por:', 0, 1, 'L');
+                $pdf->SetX($x);
+                $pdf->Cell($w, 5, $info['Name'], 0, 1, 'L');
+                $pdf->SetX($x);
+                $pdf->Cell($w, 5, 'CPF: ' . ($certInfo['subject']['serialNumber'] ?? ''), 0, 1, 'L');
+                $pdf->SetX($x);
+                $pdf->Cell($w, 5, 'Emissor: ' . ($certInfo['issuer']['O'] ?? ''), 0, 1, 'L');
+                $pdf->SetX($x);
+                $pdf->Cell($w, 5, 'Data: ' . date('d/m/Y H:i:s'), 0, 1, 'L');
+                
+                if ($isIcpBrasil) {
+                    $pdf->SetX($x);
+                    $pdf->Cell($w, 5, 'Assinatura ICP-Brasil válida', 0, 1, 'L');
+                }
             }
         }
         
         // Gerar PDF assinado
         $signedPdf = $pdf->Output('documento_assinado.pdf', 'S');
+
+        if ($cleanupTempPdf && file_exists($sourcePdfPath)) {
+            @unlink($sourcePdfPath);
+        }
         
         // Salvar arquivo assinado
         $signedFilename = 'signed_' . uniqid() . '.pdf';
@@ -361,7 +638,7 @@ else if ($action === 'sign') {
         }
         
         // Retornar sucesso com URL do arquivo assinado
-        $signedFileUrl = 'https://' . $_SERVER['HTTP_HOST'] . '/assinatura/uploads/' . $signedFilename;
+        $signedFileUrl = buildFileUrl('uploads/' . $signedFilename);
         
         resp(true, [
             'signedFile' => $signedFilename,
