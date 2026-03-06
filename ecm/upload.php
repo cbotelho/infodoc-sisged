@@ -5,14 +5,12 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// require_once 'fpdi260/autoload.php';
-// use setasign\Fpdi\Fpdi;
-
 // Definir conexão com o banco de dados
-define('DB_SERVER', 'localhost');
-define('DB_SERVER_USERNAME', 'u578749560_botelho_sisged');
-define('DB_SERVER_PASSWORD', '@#Botelho751953#@');
-define('DB_DATABASE', 'u578749560_sisged');
+define('DB_SERVER', '195.200.4.41');
+define('DB_SERVER_USERNAME', 'admin');
+define('DB_SERVER_PASSWORD', '8rekXBff');
+define('DB_SERVER_PORT', '');		
+define('DB_DATABASE', 'sisged_gea');
 
 $dsn = "mysql:host=" . DB_SERVER . ";dbname=" . DB_DATABASE . ";charset=utf8mb4";
 
@@ -29,112 +27,115 @@ try {
 }
 
 function saveRegistro($pdo, $parent_id, $parent_item_id, $linked_id, $date_added, $date_updated, $created_by, $sort_order, $field_432, $field_433, $field_434, $field_436, $field_437, $field_463) {
-    $stmt = $pdo->prepare("INSERT INTO app_entity_41 (parent_id, parent_item_id, linked_id, date_added, date_updated, created_by, sort_order, field_432, field_433, field_434, field_436, field_437, field_463) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$parent_id, $parent_item_id, $linked_id, $date_added, $date_updated, $created_by, $sort_order, $field_432, $field_433, $field_434, $field_436, $field_437, $field_463]);
+    $stmt = $pdo->prepare("INSERT INTO app_entity_41 (parent_id, parent_item_id, linked_id, date_added, date_updated, created_by, sort_order, field_432, field_433, field_434, field_436, field_437, field_463, field_476, field_505) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$parent_id, $parent_item_id, $linked_id, $date_added, $date_updated, $created_by, $sort_order, $field_432, $field_433, $field_434, $field_436, $field_437, $field_463, null, '159']);
     return $pdo->lastInsertId();
 }
 
-function saveArquivo($pdo, $parent_item_id, $arquivos) {
+function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc) {
+    // Função para extrair metadados do arquivo
+    function extract_metadata($file_path, $original_name) {
+        return [
+            'nome_original' => $original_name,
+            'tamanho_bytes' => filesize($file_path),
+            'mime_type' => mime_content_type($file_path),
+            'extensao' => strtolower(pathinfo($original_name, PATHINFO_EXTENSION)),
+            'data_upload' => date('Y-m-d H:i:s'),
+        ];
+    }
 
-// Função para extrair metadados do arquivo
-function extract_metadata($file_path, $original_name) {
-    return [
-        'nome_original' => $original_name,
-        'tamanho_bytes' => filesize($file_path),
-        'mime_type' => mime_content_type($file_path),
-        'extensao' => strtolower(pathinfo($original_name, PATHINFO_EXTENSION)),
-        'data_upload' => date('Y-m-d H:i:s'),
-    ];
-}
+    // Função para extrair texto via OCR
+    function extract_ocr($file_path, $original_name) {
+        $ext = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+        $ocr_text = '';
 
-// Função para extrair texto via OCR
-function extract_ocr($file_path, $original_name) {
-    $ext = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
-    $ocr_text = '';
-
-    if (in_array($ext, ['jpg', 'jpeg', 'png', 'bmp', 'tiff', 'tif', 'gif'])) {
-        // Imagem: usar tesseract
-        $output_txt = tempnam(sys_get_temp_dir(), 'ocr_');
-        @shell_exec("tesseract \"$file_path\" \"$output_txt\" -l por 2>&1");
-        $ocr_text = @file_get_contents($output_txt . '.txt');
-        @unlink($output_txt . '.txt');
-    } elseif ($ext === 'pdf') {
-        // PDF: tentar extrair texto com pdftotext, se não, converter páginas para imagem e rodar tesseract
-        $output_txt = tempnam(sys_get_temp_dir(), 'pdftxt_');
-        @shell_exec("pdftotext \"$file_path\" \"$output_txt\" 2>&1");
-        $ocr_text = @file_get_contents($output_txt);
-        @unlink($output_txt);
-        if (empty(trim($ocr_text))) {
-            // fallback: converter páginas para imagens e rodar tesseract (requer imagemagick e tesseract instalados)
-            $tmp_img = tempnam(sys_get_temp_dir(), 'pdfimg_') . '.png';
-            @shell_exec("convert -density 300 \"$file_path\"[0] \"$tmp_img\" 2>&1"); // só a primeira página
-            if (file_exists($tmp_img)) {
-                $output_txt2 = tempnam(sys_get_temp_dir(), 'ocrpdf_');
-                @shell_exec("tesseract \"$tmp_img\" \"$output_txt2\" -l por 2>&1");
-                $ocr_text = @file_get_contents($output_txt2 . '.txt');
-                @unlink($output_txt2 . '.txt');
-                @unlink($tmp_img);
+        if (in_array($ext, ['jpg', 'jpeg', 'png', 'bmp', 'tiff', 'tif', 'gif'])) {
+            $output_txt = tempnam(sys_get_temp_dir(), 'ocr_');
+            @shell_exec("tesseract \"$file_path\" \"$output_txt\" -l por 2>&1");
+            $ocr_text = @file_get_contents($output_txt . '.txt');
+            @unlink($output_txt . '.txt');
+        } elseif ($ext === 'pdf') {
+            $output_txt = tempnam(sys_get_temp_dir(), 'pdftxt_');
+            @shell_exec("pdftotext \"$file_path\" \"$output_txt\" 2>&1");
+            $ocr_text = @file_get_contents($output_txt);
+            @unlink($output_txt);
+            if (empty(trim($ocr_text))) {
+                $tmp_img = tempnam(sys_get_temp_dir(), 'pdfimg_') . '.png';
+                @shell_exec("convert -density 300 \"$file_path\"[0] \"$tmp_img\" 2>&1");
+                if (file_exists($tmp_img)) {
+                    $output_txt2 = tempnam(sys_get_temp_dir(), 'ocrpdf_');
+                    @shell_exec("tesseract \"$tmp_img\" \"$output_txt2\" -l por 2>&1");
+                    $ocr_text = @file_get_contents($output_txt2 . '.txt');
+                    @unlink($output_txt2 . '.txt');
+                    @unlink($tmp_img);
+                }
             }
         }
+        return $ocr_text;
     }
-    return $ocr_text;
-}
 
+    function count_pages($pdfname) {
+        $pdftext = file_get_contents($pdfname);
+        $num = preg_match_all("/\/Page\W/", $pdftext, $dummy);
+        return $num;
+    }
+
+    function getFileNameWithoutExtension($fileName) {
+        $parts = explode('.pdf', $fileName);
+        return $parts[0];
+    }
 
     $upload_dir = "../upload/";
-
-    // Obter data atual
     $ano = date('Y');
     $mes = date('m');
     $dia = date('d');
+    $target_dir = $upload_dir;
 
-    // Construir caminho completo para o diretório de destino
-    $target_dir = $upload_dir; // . "{$ano}/{$mes}/{$dia}/";
-
-    // Verificar se o diretório de destino existe, se não, criá-lo recursivamente
     if (!file_exists($target_dir)) {
         if (!mkdir($target_dir, 0777, true)) {
             die('Falha ao criar diretório de upload...');
         }
     }
 
+    // Preparar a statement fora do loop para melhor performance
     $stmt = $pdo->prepare("INSERT INTO app_entity_43 (parent_id, parent_item_id, linked_id, date_added, date_updated, created_by, sort_order, field_445, field_446, field_447, field_448, field_449, field_450, field_458, field_474, field_475) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    
     foreach ($arquivos as $arquivo) {
         $originalFileName = $arquivo['nome'];
         $newFileName = str_replace("#", "_", $originalFileName);
         $target_file = $target_dir . $newFileName;
-        $arquivo['coluna5'] = getFileNameWithoutExtension($arquivo['coluna5']);
-        $totalPages = count_pages($arquivo['tmp_name']); 
+        
+        $totalPages = 0;
+        if (strtolower(pathinfo($originalFileName, PATHINFO_EXTENSION)) === 'pdf') {
+            $totalPages = count_pages($arquivo['tmp_name']);
+        }
 
-        // Extrair metadados e OCR do arquivo temporário antes de mover
+        // Extrair metadados e OCR
         $metadados = extract_metadata($arquivo['tmp_name'], $originalFileName);
         $ocr_text = extract_ocr($arquivo['tmp_name'], $originalFileName);
 
-        // Salvar no banco
+        // Executar o insert com os parâmetros na ordem correta
         $stmt->execute([
             0, // parent_id
-            $parent_item_id,
+            $parent_item_id, // parent_item_id
             0, // linked_id
             time(), // date_added
             null, // date_updated
             $arquivo['coluna6'], // created_by
             0, // sort_order
             $newFileName, // field_445
-            $arquivo['coluna1'],
-            $arquivo['coluna2'],
-            $arquivo['coluna3'],
-            $arquivo['coluna4'],
-            $arquivo['coluna5'],
-            $totalPages,
-            json_encode($metadados, JSON_UNESCAPED_UNICODE), // field_474 - Metadados
-            $ocr_text // field_475 - OCR
+            $arquivo['coluna1'], // field_446
+            $arquivo['coluna2'], // field_447
+            $arquivo['coluna3'], // field_448
+            $tipodoc, // field_449 - Agora recebe o valor correto do POST
+            $arquivo['coluna4'], // field_450
+            $arquivo['coluna5'], // field_458
+            json_encode($metadados, JSON_UNESCAPED_UNICODE), // field_474
+            $ocr_text // field_475
         ]);
 
-        if (move_uploaded_file($arquivo['tmp_name'], $target_file)) {
-            // Arquivo movido com sucesso
-        } else {
-            // Tratar erro se o arquivo não puder ser movido
-            echo "Erro ao mover o arquivo {$arquivo['nome']} para {$target_file}. Verifique as permissões do diretório e se o caminho está correto.";
+        if (!move_uploaded_file($arquivo['tmp_name'], $target_file)) {
+            echo "Erro ao mover o arquivo {$arquivo['nome']} para {$target_file}. Verifique as permissões do diretório.";
         }
     }
 }
@@ -147,24 +148,13 @@ function base64url_decode($data) {
     return base64_decode(str_pad(strtr($data, '-_', '+/'), strlen($data) % 4, '=', STR_PAD_RIGHT));
 }
 
-function getFileNameWithoutExtension($fileName) {
-    $parts = explode('.pdf', $fileName);
-    return $parts[0];
-}
-
-
-function count_pages($pdfname) {
-    $pdftext = file_get_contents($pdfname);
-    $num = preg_match_all("/\/Page\W/", $pdftext, $dummy);
-    return $num;
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $secretaria = $_POST['secretaria'];
     $setor = $_POST['setor'];
     $tipo = $_POST['tipo'];
     $numero = $_POST['numero'];
     $tratadoPorId = $_POST['tratado_por'];
+    $tipodoc = isset($_POST['tipodoc']) ? intval($_POST['tipodoc']) : 0; // Capturar e converter para inteiro
 
     try {
         $pdo->beginTransaction();
@@ -195,18 +185,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!empty($arquivosComErro)) {
             $pdo->rollBack();
-
             echo "Erro ao carregar arquivos. Os seguintes arquivos possuem formato inválido:\n";
             foreach ($arquivosComErro as $arquivoErro) {
                 echo "- " . $arquivoErro . "\n";
             }
-
         } else {
-            $contadorArquivosImportados = 0; // Inicializa o contador
-            saveArquivo($pdo, $parent_item_id, $arquivos);
-
-            $contadorArquivosImportados = count($arquivos); // Conta os arquivos importados
-
+            saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc);
+            $contadorArquivosImportados = count($arquivos);
             $pdo->commit();
             echo "Arquivos carregados com sucesso! Total de arquivos importados: " . $contadorArquivosImportados; 
         }

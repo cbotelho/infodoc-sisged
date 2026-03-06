@@ -36,75 +36,103 @@ error_reporting(E_ALL);
 <body width="100%">
     <div class="container">
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-12">
                 <span><img src="../images/logo_ecm.png" width="100px" height="64px"></span>
+            </div>
+        </div>
+        <div class="row align-items-start">
+            <div class="col-12">
                 <!-- Formulário de Upload -->
                 <form id="uploadForm" action="upload.php" method="post" enctype="multipart/form-data">
                     <input type="hidden" id="id_registro" name="id_registro">
-                    <div class="form-group">
-                        <label for="secretaria">* Secretaria</label>
-                        <select class="form-control" id="secretaria" name="secretaria" required>
-                            <option value="">Selecione a Secretaria</option>
-                            <?php
-                            include '../includes/db.php';
-                            $stmt = $pdo->query("SELECT id, field_233 FROM app_entity_26");
-                            while ($row = $stmt->fetch()) {
-                                echo '<option value="' . htmlspecialchars($row['id']) . '">' . htmlspecialchars($row['field_233']) . '</option>';
-                            }
-                            ?>
-                        </select>
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label for="secretaria">* Secretaria</label>
+                            <select class="form-control" id="secretaria" name="secretaria" required>
+                                <option value="">Selecione a Secretaria</option>
+                                <?php
+                                include '../includes/db.php';
+                                $stmt = $pdo->query("SELECT id, field_232 FROM app_entity_26");
+                                while ($row = $stmt->fetch()) {
+                                    echo '<option value="' . htmlspecialchars($row['id']) . '">' . htmlspecialchars($row['field_232']) . '</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="setor">* Setor</label>
+                            <select class="form-control" id="setor" name="setor" required>
+                                <option value="">Selecione o Setor</option>
+                                <!-- Opções serão carregadas via AJAX -->
+                            </select>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="tipodoc">* Tipo de Documentos</label>
+                            <select class="form-control" id="tipodoc" name="tipodoc" required>
+                                <option value="">Selecione Tipo Documento</option>
+                                <option value="152">Público</option>
+                                <option value="153">Privado</option>
+                            </select>
+                        </div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="setor">* Setor</label>
-                        <select class="form-control" id="setor" name="setor" required>
-                            <option value="">Selecione o Setor</option>
-                            <!-- Opções serão carregadas via AJAX -->
-                        </select>
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label for="tipo">* Tipo de Arquivo</label>
+                            <select class="form-control" id="tipo" name="tipo" required>
+                                <option value="118">Caixa</option>
+                                <option value="117">Pasta</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="numero">* Nº da Caixa/Pasta</label>
+                            <input type="text" class="form-control" id="numero" name="numero" required>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="tratado_por">* Enviado Por:</label>
+                            <select class="form-control" id="tratado_por" name="tratado_por" required>
+                                <option value="">Selecione quem Enviou</option>
+                                <?php
+                                include '../includes/db.php';
+                                $stmt = $pdo->query("SELECT id, field_12 FROM app_entity_1");
+                                while ($row = $stmt->fetch()) {
+                                    echo '<option value="' . htmlspecialchars($row['id']) . '">' . htmlspecialchars($row['field_12']) . '</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="tipo">* Tipo</label>
-                        <select class="form-control" id="tipo" name="tipo" required>
-                            <option value="118">Caixa</option>
-                            <option value="117">Pasta</option>
-                        </select>
+                    <div class="form-row align-items-center">
+                        <div class="form-group col-md-4">
+                            <div class="custom-file mb-3">
+                                <input type="file" class="custom-file-input" id="files" name="files[]" multiple required>
+                                <label class="custom-file-label" for="files">* Escolha os arquivos...</label>
+                            </div>
+                        </div>
+                        <div class="form-group col-md-2">
+                            <button type="submit" class="btn btn-primary mt-2">Enviar Arquivos</button>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <!-- Barra de Progresso -->
+                            <div class="progress" style="height: 38px; display: none;">
+                                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <!-- Mensagens de Status ao lado -->
+                            <div id="status" class="ml-2"></div>
+                        </div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="numero">* Nº da Caixa/Pasta</label>
-                        <input type="text" class="form-control" id="numero" name="numero" required>
+                    <!-- Mensagens abaixo -->
+                    <div class="form-row">
+                        <div class="form-group col-12">
+                            <div id="status" class="mt-2"></div>
+                        </div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="tratado_por">* Tratado Por:</label>
-                        <select class="form-control" id="tratado_por" name="tratado_por" required>
-                            <option value="">Selecione quem Tratou</option>
-                            <?php
-                            include '../includes/db.php';
-                            $stmt = $pdo->query("SELECT id, field_12 FROM app_entity_1");
-                            while ($row = $stmt->fetch()) {
-                                echo '<option value="' . htmlspecialchars($row['id']) . '">' . htmlspecialchars($row['field_12']) . '</option>';
-                            }
-                            ?>
-                        </select>
-                    </div>
-
-                    <div class="custom-file mb-3">
-                        <input type="file" class="custom-file-input" id="files" name="files[]" multiple required>
-                        <label class="custom-file-label" for="files">* Escolha os arquivos...</label>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Enviar Arquivos</button>
                 </form>
-
-                <!-- Barra de Progresso -->
-                <div class="progress mt-4" style="display: none;">
-                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
-                <!-- Mensagens de Status -->
-                <div id="status" class="mt-3"></div>
             </div>
-            <div class="col-md-6">
+        </div>
+        <div class="row mt-4">
+            <div class="col-12">
                 <h5 class="mb-4">Registros Salvos</h5>
                 <div class="table-container">
                     <table class="table table-striped">
@@ -115,6 +143,7 @@ error_reporting(E_ALL);
                                 <th>Interessado</th>
                                 <th>Assunto</th>
                                 <th>Tipo</th>
+                                <th>Documento</th>
                             </tr>
                         </thead>
                         <tbody id="registros"></tbody>
@@ -223,7 +252,7 @@ error_reporting(E_ALL);
 
     <footer class="main-footer no-bdr fixed-btm">
         <div class="container">
-            © ECM Tecnologia e Soluções 2024
+            © ECM Tecnologia e Soluções 2025
         </div>
     </footer>
     

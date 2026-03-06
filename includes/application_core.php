@@ -15,10 +15,19 @@
     define('PROJECT_VERSION','3.6.2');
     define('PROJECT_VERSION_DEV','');    
     
-//is HTTPS
-    define('IS_HTTPS',(isset($_SERVER['HTTPS']) ? (strtolower($_SERVER['HTTPS'])=='on' ? true : false): false));
+    // Identifica se é HTTPS, mesmo atrás de Proxy/Load Balancer
+    $isHttps = false;
+    if (isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) == 'on') {
+        $isHttps = true;
+    } elseif (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
+        $isHttps = true;
+    } elseif (isset($_SERVER['HTTP_FRONT_END_HTTPS']) && strtolower($_SERVER['HTTP_FRONT_END_HTTPS']) == 'on') {
+        $isHttps = true;
+    }
+
+    define('IS_HTTPS', $isHttps);
     
-//check HTTP_HOST    
+    // check HTTP_HOST    
     $_SERVER['HTTP_HOST'] = $_SERVER['HTTP_HOST'] ?? '';
 
     require('config/server.php');

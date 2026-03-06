@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Inserir Assinatura em PDF</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="file"], input[type="number"] { 
+            padding: 8px; 
+            margin-bottom: 10px; 
+        }
+        .coord-input { 
+            width: 60px; 
+            margin-right: 10px; 
+            display: inline-block;
+        }
+        button { 
+            background-color: #4CAF50; 
+            color: white; 
+            padding: 10px 15px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+        }
+        button:hover { background-color: #45a049; }
+        #preview { 
+            border: 1px solid #ddd; 
+            margin-top: 20px; 
+            max-width: 100%; 
+            display: none;
+        }
+        #result { 
+            margin-top: 20px; 
+            padding: 15px; 
+            border-radius: 4px; 
+            display: none;
+        }
+        .success { background-color: #dff0d8; color: #3c763d; }
+        .error { background-color: #f2dede; color: #a94442; }
+    </style>
+</head>
+<body>
+    <h1>Inserir Assinatura em PDF</h1>
+    
+    <form id="signForm" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="file">Documento PDF:</label>
+            <input type="file" id="file" name="file" accept=".pdf" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="certFile">Certificado Digital (.pfx ou .p12):</label>
+            <input type="file" id="certFile" name="certFile" accept=".pfx,.p12" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="certPass">Senha do Certificado:</label>
+            <input type="password" id="certPass" name="certPass" required>
+        </div>
+        
+        <div class="form-group">
+            <label>Posição da Assinatura (em milímetros):</label><br>
+            <label>X: <input type="number" name="x_mm" value="20" class="coord-input" min="0"></label>
+            <label>Y: <input type="number" name="y_mm" value="20" class="coord-input" min="0"></label>
+            <label>Largura: <input type="number" name="width_mm" value="50" class="coord-input" min="10"></label>
+            <label>Página: <input type="number" name="page" value="1" class="coord-input" min="1"></label>
+        </div>
+        
+        <button type="submit">Inserir Assinatura</button>
+    </form>
+    
+    <div id="result"></div>
+    <iframe id="preview" width="100%" height="500px"></iframe>
+    
+    <script>
+        document.getElementById('signForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const resultDiv = document.getElementById('result');
+            const preview = document.getElementById('preview');
+            
+            resultDiv.style.display = 'none';
+            preview.style.display = 'none';
+            
+            try {
+                // Mostrar loading
+                resultDiv.className = '';
+                resultDiv.innerHTML = 'Processando...';
+                resultDiv.style.display = 'block';
+                
+                const response = await fetch('sign.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = '✅ ' + data.message + 
+                        ' <a href="#" onclick="downloadFile(\'' + data.data.download_url + 
+                        '\', \'' + data.data.file_name + '\'); return false;">Baixar Documento</a>';
+                    
+                    // Mostrar preview
+                    preview.src = data.data.download_url;
+                    preview.style.display = 'block';
+                } else {
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = '❌ ' + data.message;
+                }
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = '❌ Erro na requisição: ' + error.message;
+            }
+            
+            resultDiv.style.display = 'block';
+        });
+        
+        function downloadFile(url, filename) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
+</body>
+</html>

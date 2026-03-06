@@ -1,8 +1,8 @@
 <?php
-$host = 'localhost';
-$db   = 'u578749560_sisged'; // Substitua pelo nome do seu banco de dados
-$user = 'u578749560_botelho_sisged'; // Substitua pelo seu usuário do banco de dados
-$pass = '@#Botelho751953#@'; // Substitua pela sua senha do banco de dados
+$host = '195.200.4.41';
+$db   = 'sisged_gea'; // Substitua pelo nome do seu banco de dados
+$user = 'admin'; // Substitua pelo seu usuário do banco de dados
+$pass = '8rekXBff'; // Substitua pela sua senha do banco de dados
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
