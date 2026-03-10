@@ -1,6 +1,6 @@
 <?php
 // index.php
-// Interface de Assinatura Digital - Infodoc-Sisgep
+// Interface de Assinatura Digital - Infodoc-Sisged
 // Lista certificados na pasta /certs e permite upload de PDF + seleção de posição da assinatura
 
 $certDir = __DIR__ . '/certs/';
@@ -13,7 +13,7 @@ if (is_dir($certDir)) {
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Infodoc-Sisgep - Assinatura Digital ICP-Brasil</title>
+<title>Infodoc-SisGed - Assinatura Digital ICP-Brasil</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
@@ -36,7 +36,7 @@ if (is_dir($certDir)) {
     <?php if (file_exists(__DIR__ . '/assets/logo.png')): ?>
     <img src="assets/logo.png" alt="Logo Infodoc">
     <?php endif; ?>
-    <h4>Infodoc-Sisgep — Assinatura Digital (ICP-Brasil)</h4>
+    <h4>Infodoc-SisGed — Assinatura Digital (ICP-Brasil)</h4>
 </header>
 
 <div class="container mt-4">
