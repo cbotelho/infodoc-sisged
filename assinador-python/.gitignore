@@ -1,0 +1,45 @@
+# Ambiente virtual
+venv/
+env/
+ENV/
+
+# Arquivos Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+
+# Logs
+logs/
+*.log
+
+# Arquivos temporários
+temp/
+*.tmp
+
+# Uploads e certificados (já existem no PHP)
+/uploads/
+/certs/
+
+# Banco de dados
+*.db
+*.sqlite3
+
+# Ambiente
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testes
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Docker
+docker-compose.override.yml

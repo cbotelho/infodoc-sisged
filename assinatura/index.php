@@ -69,6 +69,13 @@ if (is_dir($certDir)) {
                     <div class="form-text mb-2">Se usar PEM sem chave privada embutida, envie o arquivo de chave abaixo:</div>
                     <input type="file" id="keyFile" accept=".key,.pem" class="form-control mb-2">
                     <div class="form-text">Obs: Se usar .pfx/.p12 não envie chave separada.</div>
+                    <hr>
+                    <form id="certUploadForm" enctype="multipart/form-data">
+                        <label class="form-label">Upload de Certificado</label>
+                        <input type="file" name="certFile" id="certFile" accept=".pfx,.p12,.pem,.cer,.crt" class="form-control mb-2" required>
+                        <button class="btn btn-warning w-100" type="submit">Enviar Certificado</button>
+                    </form>
+                    <div id="certUploadStatus" class="small text-muted mt-2"></div>
                 </div>
             </div>
 

@@ -1,0 +1,1 @@
+# Autenticação/validação de token

@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Validador ICP-Brasil Completo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primary-color: #0b3b66;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+        }
+        
+        body { background: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        header { 
+            background: var(--primary-color); 
+            color: #fff; 
+            padding: 15px 25px; 
+            display: flex; 
+            align-items: center; 
+            gap: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        header img { height: 50px; }
+        
+        .validation-result { margin-top: 20px; }
+        
+        .badge-valid { 
+            background: var(--success-color); 
+            color: white; 
+            padding: 5px 12px; 
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        
+        .badge-invalid { 
+            background: var(--danger-color); 
+            color: white; 
+            padding: 5px 12px; 
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        
+        .badge-warning { 
+            background: var(--warning-color); 
+            color: #333; 
+            padding: 5px 12px; 
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        
+        .signature-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        
+        .signature-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .signature-header {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+            border-radius: 8px 8px 0 0;
+            font-weight: 600;
+        }
+        
+        .signature-valid .signature-header {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .signature-invalid .signature-header {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid var(--danger-color);
+        }
+        
+        .signature-body {
+            padding: 15px;
+            background: #fff;
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .cert-details {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            border: 1px solid #e9ecef;
+        }
+        
+        .icp-badge { 
+            background: var(--primary-color); 
+            color: white; 
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        
+        .integrity-good { color: var(--success-color); font-weight: 600; }
+        .integrity-bad { color: var(--danger-color); font-weight: 600; }
+        
+        .summary-card {
+            background: linear-gradient(135deg, var(--primary-color), #1a4d7a);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .summary-item {
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .summary-number {
+            font-size: 2.2em;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        
+        .summary-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .tsa-badge {
+            background: #17a2b8;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+        }
+        
+        .lcr-revoked {
+            color: var(--danger-color);
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .nav-tabs .nav-link {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+        }
+        
+        .file-list-item {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .file-list-item:hover {
+            background: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <img src="assets/logo.png" alt="Logo Infodoc" onerror="this.style.display='none'">
+    <h4 class="mb-0">Infodoc-SisGed — Validador ICP-Brasil Completo</h4>
+</header>
+
+<div class="container mt-4">
+    <!-- Abas de navegação -->
+    <ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="validate-tab" data-bs-toggle="tab" data-bs-target="#validate" type="button" role="tab">
+                <i class="bi bi-shield-check"></i> Validar Documento
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">
+                <i class="bi bi-file-pdf"></i> Relatórios Salvos
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="about-tab" data-bs-toggle="tab" data-bs-target="#about" type="button" role="tab">
+                <i class="bi bi-info-circle"></i> Sobre
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Aba de Validação -->
+        <div class="tab-pane fade show active" id="validate" role="tabpanel">
+            <div class="row">
+                <!-- Coluna Esquerda: Upload e Controles -->
+                <div class="col-md-4">
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <i class="bi bi-file-pdf"></i> Documento Assinado
+                        </div>
+                        <div class="card-body">
+                            <form id="validateForm" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Selecionar documento existente:</label>
+                                    <select class="form-select" id="signedSelect">
+                                        <option value="">-- Carregando documentos... --</option>
+                                    </select>
+                                    <small class="text-muted">ou faça upload abaixo</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Upload de documento assinado:</label>
+                                    <input type="file" class="form-control" id="signedFile" accept=".pdf">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Documento original (opcional - para integridade):</label>
+                                    <input type="file" class="form-control" id="originalFile" accept=".pdf">
+                                    <small class="text-muted">Forneça para verificar alterações pós-assinatura</small>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-shield-check"></i> Validar Assinatura
+                                    </button>
+                                    <button type="button" class="btn btn-success" id="btnGenerateReport" style="display: none;">
+                                        <i class="bi bi-file-pdf"></i> Gerar Relatório PDF
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Status em tempo real (aparece durante validação) -->
+                    <div id="liveStatus" class="card" style="display: none;">
+                        <div class="card-header bg-info text-white">
+                            <i class="bi bi-activity"></i> Status da Validação
+                        </div>
+                        <div class="card-body">
+                            <div class="progress mb-3">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     id="validationProgress" style="width: 0%"></div>
+                            </div>
+                            <div id="statusMessage" class="small"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna Direita: Resultado -->
+                <div class="col-md-8">
+                    <div id="resultContainer">
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-file-pdf" style="font-size: 4rem;"></i>
+                            <p class="mt-3 fs-5">Carregue um documento assinado para validar</p>
+                            <p class="small">O validador analisará múltiplas assinaturas, LCR, TSA e ICP-Brasil</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aba de Relatórios Salvos -->
+        <div class="tab-pane fade" id="reports" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-dark text-white">
+                            <i class="bi bi-file-pdf"></i> Relatórios de Validação Gerados
+                        </div>
+                        <div class="card-body">
+                            <div id="reportsList">
+                                <p class="text-muted text-center">Carregando relatórios...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aba Sobre -->
+        <div class="tab-pane fade" id="about" role="tabpanel">
+            <div class="row">
+                <div class="col-md-8 mx-auto">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <i class="bi bi-info-circle"></i> Sobre o Validador ICP-Brasil
+                        </div>
+                        <div class="card-body">
+                            <h5>Funcionalidades Implementadas:</h5>
+                            <ul class="list-group mb-4">
+                                <li class="list-group-item">
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                    <strong>Múltiplas Assinaturas:</strong> Detecta e valida todas as assinaturas no documento
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                    <strong>LCR (Lista de Certificados Revogados):</strong> Consulta automática de certificados revogados
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                    <strong>Validação Online:</strong> Consulta status junto ao ITI/ICP-Brasil
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                    <strong>TSA (Timestamp Authority):</strong> Validação de carimbo do tempo
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                    <strong>Relatório PDF:</strong> Geração automática de relatório detalhado
+                                </li>
+                            </ul>
+                            
+                            <h5>Como funciona:</h5>
+                            <p>O validador utiliza múltiplas fontes para garantir a autenticidade do documento:</p>
+                            <ol>
+                                <li><strong>pdfsig (poppler):</strong> Extrai todas as assinaturas do PDF</li>
+                                <li><strong>OpenSSL:</strong> Valida os certificados e assinaturas</li>
+                                <li><strong>LCR online:</strong> Consulta listas de revogação das ACs</li>
+                                <li><strong>API ITI:</strong> Validação online com a infraestrutura ICP-Brasil</li>
+                                <li><strong>TCPDF:</strong> Geração de relatórios profissionais</li>
+                            </ol>
+                            
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Padrão ICP-Brasil:</strong> Certificados emitidos por Autoridades Certificadoras credenciadas pelo ITI.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Estado da aplicação
+let currentValidationData = null;
+let currentSignedFile = null;
+
+// Carregar lista de documentos
+async function loadSignedFiles() {
+    try {
+        const res = await fetch('validate_complete.php?action=list_signed');
+        const data = await res.json();
+        if (data.success && data.files) {
+            const select = document.getElementById('signedSelect');
+            select.innerHTML = '<option value="">-- Selecione um documento --</option>';
+            data.files.forEach(file => {
+                const opt = document.createElement('option');
+                opt.value = file.name;
+                opt.textContent = `${file.name} (${formatBytes(file.size)}) - ${file.modified}`;
+                select.appendChild(opt);
+            });
+        }
+    } catch (err) {
+        console.error('Erro ao carregar documentos:', err);
+    }
+}
+
+// Formatar bytes
+function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+// Exibir resultado da validação
+function displayValidationResult(data) {
+    const v = data.validation;
+    currentValidationData = v;
+    
+    let html = `
+        <!-- Resumo -->
+        <div class="summary-card">
+            <div class="row">
+                <div class="col-md-3 summary-item">
+                    <div class="summary-number">${v.summary?.total_signatures || 0}</div>
+                    <div class="summary-label">Assinaturas</div>
+                </div>
+                <div class="col-md-3 summary-item">
+                    <div class="summary-number" style="color: #28a745;">${v.summary?.valid_signatures || 0}</div>
+                    <div class="summary-label">Válidas</div>
+                </div>
+                <div class="col-md-3 summary-item">
+                    <div class="summary-number" style="color: #ffc107;">${v.summary?.icp_brasil_count || 0}</div>
+                    <div class="summary-label">ICP-Brasil</div>
+                </div>
+                <div class="col-md-3 summary-item">
+                    <div class="summary-number" style="color: #17a2b8;">${v.tsa?.has_tsa ? '✓' : '✗'}</div>
+                    <div class="summary-label">TSA</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Assinaturas
+    if (v.signatures?.has_signatures) {
+        v.signatures.signatures.forEach((sig, idx) => {
+            const isValid = sig.is_valid || false;
+            const lcrRevoked = sig.lcr_status?.status === 'revoked';
+            const cardClass = lcrRevoked ? 'signature-invalid' : (isValid ? 'signature-valid' : 'signature-invalid');
+            
+            html += `
+                <div class="signature-card ${cardClass}">
+                    <div class="signature-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-patch-check"></i> Assinatura #${idx + 1}</span>
+                            <div>
+                                ${sig.icp_brasil ? '<span class="icp-badge me-2">ICP-Brasil</span>' : ''}
+                                ${lcrRevoked ? '<span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> REVOGADO</span>' : ''}
+                                ${sig.validity ? 
+                                    (sig.is_valid ? 
+                                        '<span class="badge-valid"><i class="bi bi-check-circle"></i> VÁLIDA</span>' : 
+                                        '<span class="badge-invalid"><i class="bi bi-x-circle"></i> INVÁLIDA</span>') 
+                                    : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="signature-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Data/Hora:</strong> ${sig.timestamp || 'Não especificada'}</p>
+                                <p><strong>Algoritmo:</strong> ${sig.hash_algorithm || 'Não especificado'}</p>
+                                <p><strong>Hash:</strong> <span class="small">${sig.hash || ''}</span></p>
+                                ${sig.trusted !== undefined ? `<p><strong>Confiança:</strong> ${sig.trusted ? 'Confiavel' : 'Não confiavel'}</p>` : ''}
+                            </div>
+                            <div class="col-md-6">
+                                <div class="cert-details">
+                                    <p class="mb-1"><strong>Emitido por:</strong><br>${sig.issuer || 'Não disponível'}</p>
+                                    <p class="mb-1"><strong>Titular:</strong><br>${sig.subject || 'Não disponível'}</p>
+                                    <p class="mb-1"><strong>Série:</strong> ${sig.serial || 'Não disponível'}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${sig.lcr_status ? `
+                            <div class="mt-2 p-2 ${sig.lcr_status.status === 'revoked' ? 'bg-danger bg-opacity-10' : 'bg-light'}" style="border-radius: 4px;">
+                                <small>
+                                    <strong>LCR:</strong> ${sig.lcr_status.message}
+                                    ${sig.lcr_status.status === 'revoked' ? 
+                                        '<span class="lcr-revoked"><i class="bi bi-exclamation-triangle"></i> CERTIFICADO REVOGADO</span>' : 
+                                        ''}
+                                </small>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        html += `
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+                Nenhuma assinatura digital detectada neste documento.
+            </div>
+        `;
+    }
+    
+    // TSA
+    if (v.tsa && v.tsa.has_tsa) {
+        html += `
+            <div class="alert alert-info">
+                <i class="bi bi-clock-history"></i>
+                <strong>Carimbo do Tempo (TSA):</strong> ${v.tsa.timestamp}
+                <span class="tsa-badge ms-2">${v.tsa.valid ? 'VÁLIDO' : 'INVÁLIDO'}</span>
+            </div>
+        `;
+    }
+    
+    // Integridade
+    if (v.integrity) {
+        html += `
+            <div class="alert ${v.integrity.valid ? 'alert-success' : 'alert-danger'}">
+                <i class="bi ${v.integrity.valid ? 'bi-check-circle' : 'bi-exclamation-triangle'}"></i>
+                <strong>Integridade:</strong> ${v.integrity.valid ? 
+                    'Documento íntegro (não houve alterações após a assinatura)' : 
+                    'Documento ALTERADO após a assinatura!'}
+                <br><small>Hash original: ${v.integrity.original_hash}</small>
+                <br><small>Hash assinado: ${v.integrity.signed_hash}</small>
+            </div>
+        `;
+    }
+    
+    // Timestamp e hash do documento
+    html += `
+        <div class="text-muted small mt-3 p-2 border-top">
+            <div><strong>Documento:</strong> ${v.document}</div>
+            <div><strong>Validação:</strong> ${v.timestamp}</div>
+            <div><strong>Hash SHA256:</strong> ${v.hash || 'Não disponível'}</div>
+        </div>
+    `;
+    
+    document.getElementById('resultContainer').innerHTML = html;
+    
+    // Mostrar botão de relatório
+    document.getElementById('btnGenerateReport').style.display = 'block';
+}
+
+// Gerar relatório
+async function generateReport() {
+    if (!currentValidationData || !currentSignedFile) {
+        Swal.fire('Aviso', 'Nenhuma validação realizada para gerar relatório', 'warning');
+        return;
+    }
+    
+    try {
+        Swal.fire({ title: 'Gerando relatório...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        
+        const formData = new FormData();
+        formData.append('action', 'generate_report');
+        formData.append('signedFile', currentSignedFile);
+        
+        const res = await fetch('validate_complete.php', { method: 'POST', body: formData });
+        const data = await res.json();
+        
+        Swal.close();
+        
+        if (data.success && data.report) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Relatório gerado!',
+                text: 'Clique no botão abaixo para baixar',
+                showConfirmButton: true,
+                confirmButtonText: 'Baixar Relatório'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.open(data.report.url, '_blank');
+                }
+            });
+        } else {
+            Swal.fire('Erro', data.message || 'Falha ao gerar relatório', 'error');
+        }
+    } catch (err) {
+        Swal.fire('Erro', 'Falha na comunicação com o servidor', 'error');
+        console.error(err);
+    }
+}
+
+// Carregar relatórios salvos
+async function loadReports() {
+    try {
+        const res = await fetch('validate_complete.php?action=list_signed');
+        const data = await res.json();
+        if (data.success && data.files) {
+            const reports = data.files.filter(f => f.name.startsWith('relatorio_'));
+            const container = document.getElementById('reportsList');
+            
+            if (reports.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">Nenhum relatório encontrado</p>';
+                return;
+            }
+            
+            let html = '<div class="list-group">';
+            reports.forEach(report => {
+                html += `
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="bi bi-file-pdf text-danger"></i>
+                            <strong>${report.name}</strong>
+                            <br><small class="text-muted">${report.modified} (${formatBytes(report.size)})</small>
+                        </div>
+                        <div>
+                            <a href="uploads/${report.name}" target="_blank" class="btn btn-sm btn-primary">
+                                <i class="bi bi-download"></i> Baixar
+                            </a>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+    } catch (err) {
+        console.error('Erro ao carregar relatórios:', err);
+        document.getElementById('reportsList').innerHTML = '<p class="text-danger">Erro ao carregar relatórios</p>';
+    }
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+    loadSignedFiles();
+    loadReports();
+    
+    document.getElementById('validateForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData();
+        formData.append('action', 'validate');
+        
+        const signedSelect = document.getElementById('signedSelect');
+        const signedFile = document.getElementById('signedFile');
+        const originalFile = document.getElementById('originalFile');
+        
+        if (signedSelect.value) {
+            formData.append('signedFile', signedSelect.value);
+            currentSignedFile = signedSelect.value;
+        } else if (signedFile.files.length) {
+            formData.append('signedFile', signedFile.files[0]);
+            currentSignedFile = signedFile.files[0].name;
+        } else {
+            Swal.fire('Aviso', 'Selecione um documento assinado', 'warning');
+            return;
+        }
+        
+        if (originalFile.files.length) {
+            formData.append('originalFile', originalFile.files[0]);
+        }
+        
+        // Mostrar status
+        document.getElementById('liveStatus').style.display = 'block';
+        document.getElementById('validationProgress').style.width = '50%';
+        document.getElementById('statusMessage').innerHTML = '<i class="bi bi-arrow-repeat"></i> Validando assinaturas...';
+        
+        try {
+            const res = await fetch('validate_complete.php', { method: 'POST', body: formData });
+            document.getElementById('validationProgress').style.width = '90%';
+            document.getElementById('statusMessage').innerHTML = '<i class="bi bi-check-circle"></i> Processando resultados...';
+            
+            const data = await res.json();
+            
+            document.getElementById('validationProgress').style.width = '100%';
+            
+            setTimeout(() => {
+                document.getElementById('liveStatus').style.display = 'none';
+                document.getElementById('validationProgress').style.width = '0%';
+            }, 500);
+            
+            if (data.success) {
+                displayValidationResult(data);
+                
+                // Atualizar lista de documentos
+                loadSignedFiles();
+                loadReports();
+            } else {
+                Swal.fire('Erro', data.message || 'Falha na validação', 'error');
+            }
+        } catch (err) {
+            document.getElementById('liveStatus').style.display = 'none';
+            Swal.fire('Erro', 'Falha na comunicação com o servidor', 'error');
+            console.error(err);
+        }
+    });
+    
+    document.getElementById('btnGenerateReport').addEventListener('click', generateReport);
+    
+    // Quando selecionar arquivo da lista, limpar upload
+    document.getElementById('signedSelect').addEventListener('change', function() {
+        if (this.value) {
+            document.getElementById('signedFile').value = '';
+        }
+    });
+    
+    document.getElementById('signedFile').addEventListener('change', function() {
+        if (this.files.length) {
+            document.getElementById('signedSelect').value = '';
+        }
+    });
+});
+</script>
+</body>
+</html>

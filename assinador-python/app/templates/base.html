@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Assinador Digital ICP-Brasil{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" 
+          rel="stylesheet" 
+          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" 
+          crossorigin="anonymous">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" 
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        {% block styles %}
+        :root {
+            --primary-color: #0b3b66;
+            --secondary-color: #1a4d7a;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar-custom {
+            background-color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-custom .navbar-brand {
+            color: white;
+            font-weight: 600;
+        }
+        
+        .navbar-custom .nav-link {
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .navbar-custom .nav-link:hover {
+            color: white;
+        }
+        
+        .footer {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 15px 0;
+            margin-top: 50px;
+            font-size: 0.9em;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .alert-custom {
+            border-left: 4px solid;
+            border-radius: 4px;
+        }
+        
+        .alert-success-custom {
+            border-left-color: var(--success-color);
+            background-color: #d4edda;
+        }
+        
+        .alert-danger-custom {
+            border-left-color: var(--danger-color);
+            background-color: #f8d7da;
+        }
+        
+        .btn-icp {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        .btn-icp:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        {% endblock %}
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">
+                <i class="fas fa-shield-alt me-2"></i>
+                Assinador Digital ICP-Brasil
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
+                    data-bs-target="#navbarNav" aria-controls="navbarNav" 
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="helpBtn">
+                            <i class="fas fa-question-circle me-1"></i>Ajuda
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt me-1"></i>Sair
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container-fluid py-4">
+        <!-- Alert messages -->
+        <div id="alert-container"></div>
+        
+        <!-- Page content -->
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p class="mb-0">
+                <i class="fas fa-lock me-1"></i>
+                Sistema de Assinatura Digital ICP-Brasil - Versão 1.0
+                <br>
+                <small>Conforme padrões do ITI - Instituto Nacional de Tecnologia da Informação</small>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" 
+            integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" 
+            crossorigin="anonymous"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        {% block scripts %}
+        // Funções utilitárias globais
+        
+        // Mostrar mensagens de alerta
+        function showAlert(message, type = 'success') {
+            const alertContainer = document.getElementById('alert-container');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show mt-3`;
+            alertDiv.role = 'alert';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            alertContainer.appendChild(alertDiv);
+            
+            // Auto-remover após 5 segundos
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+        
+        // Mostrar loading
+        function showLoading(show = true) {
+            const existingLoader = document.getElementById('global-loader');
+            
+            if (show) {
+                if (!existingLoader) {
+                    const loader = document.createElement('div');
+                    loader.id = 'global-loader';
+                    loader.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0,0,0,0.5);
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        z-index: 9999;
+                    `;
+                    loader.innerHTML = '<div class="loading-spinner"></div>';
+                    document.body.appendChild(loader);
+                }
+            } else {
+                if (existingLoader) {
+                    existingLoader.remove();
+                }
+            }
+        }
+        
+        // Botão de ajuda
+        document.getElementById('helpBtn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Ajuda - Assinatura Digital',
+                html: `
+                    <div style="text-align: left">
+                        <h6><i class="fas fa-check-circle text-success me-2"></i>Como assinar:</h6>
+                        <ol class="mt-2">
+                            <li>Clique no PDF para posicionar a assinatura</li>
+                            <li>Selecione o certificado ICP-Brasil</li>
+                            <li>Informe a senha do certificado</li>
+                            <li>Confirme a assinatura</li>
+                        </ol>
+                        <hr>
+                        <p class="mb-0"><strong>Importante:</strong> A assinatura segue os padrões ICP-Brasil e tem validade jurídica.</p>
+                    </div>
+                `,
+                icon: 'info',
+                confirmButtonColor: '#0b3b66'
+            });
+        });
+        
+        // Botão de logout
+        document.getElementById('logoutBtn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Deseja sair?',
+                text: 'A sessão de assinatura será encerrada',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#0b3b66',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sim, sair',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.close();
+                }
+            });
+        });
+        
+        // Tratamento de erros global
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            console.error('Erro:', msg, 'Linha:', lineNo);
+            showAlert('Ocorreu um erro inesperado. Tente novamente.', 'danger');
+            return false;
+        };
+        {% endblock %}
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
