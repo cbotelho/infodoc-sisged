@@ -9,5 +9,11 @@
 /logs/
 /tmp/
 *.log
+.docker-*.out
+/.env.production.portainer
+/assinatura/uploads/
+/assinador-python/pytest_out.txt
+/assinador-python/unittest*.txt
+*.out
 Thumbs.db
 .DS_Store

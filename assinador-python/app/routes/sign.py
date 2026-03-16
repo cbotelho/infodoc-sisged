@@ -65,7 +65,14 @@ def api_sign():
         token = data.get('token')
         cert_id = data.get('certificado_id')
         password = data.get('senha')
-        position = data.get('posicao', {})
+        raw_position = data.get('posicao', {}) or {}
+        position = {
+            'x': raw_position.get('x', 20),
+            'y': raw_position.get('y', 50),
+            'pagina': raw_position.get('pagina', raw_position.get('page', 1)),
+            'width': raw_position.get('width', raw_position.get('largura', 80)),
+            'height': raw_position.get('height', raw_position.get('altura', 30))
+        }
         
         # Validar entrada
         if not all([token, cert_id, password]):

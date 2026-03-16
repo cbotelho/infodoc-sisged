@@ -1,8 +1,53 @@
-version: '3.8'
 services:
-  assinador-python:
-    build: ./assinador-python
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: infodoc-web
+    depends_on:
+      - assinador-python
+    environment:
+      DB_SERVER: ${DB_SERVER:-host.docker.internal}
+      DB_SERVER_PORT: ${DB_SERVER_PORT:-3306}
+      DB_SERVER_USERNAME: ${DB_SERVER_USERNAME:-root}
+      DB_SERVER_PASSWORD: ${DB_SERVER_PASSWORD:-}
+      DB_DATABASE: ${DB_DATABASE:-infodoc_sisged}
+      DB_HOST: ${DB_HOST:-host.docker.internal}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-}
+      DB_NAME: ${DB_NAME:-infodoc_sisged}
+      PYTHON_SERVICE_INTERNAL_URL: ${PYTHON_SERVICE_INTERNAL_URL:-http://assinador-python:5000}
+      PYTHON_SERVICE_PUBLIC_URL: ${PYTHON_SERVICE_PUBLIC_URL:-http://localhost:5000}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
     ports:
-      - "5000:5000"
+      - "${APP_PORT:-8080}:80"
+    volumes:
+      - ./:/var/www/html
+
+  assinador-python:
+    build:
+      context: ./assinador-python
+      dockerfile: Dockerfile
+    container_name: infodoc-assinador
+    environment:
+      DB_HOST: ${DB_HOST:-host.docker.internal}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME:-infodoc_sisged}
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-}
+      SECRET_KEY: ${SIGNER_SECRET_KEY:-change-this-docker-secret}
+      TOKEN_EXPIRY: ${TOKEN_EXPIRY:-3600}
+      UPLOAD_DIR: /app/uploads
+      CERT_DIR: /app/certs
+      TEMP_DIR: /app/temp
+      HOST: 0.0.0.0
+      PORT: 5000
+      DEBUG: false
+      PYTHON_SERVICE_INTERNAL_URL: http://assinador-python:5000
+      PYTHON_SERVICE_PUBLIC_URL: ${PYTHON_SERVICE_PUBLIC_URL:-http://localhost:5000}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
+    ports:
+      - "${SIGNER_PORT:-5000}:5000"
     volumes:
       - ./assinador-python:/app

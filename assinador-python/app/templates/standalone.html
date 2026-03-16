@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assinador Digital ICP-Brasil</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            background: #f4f6f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .header {
+            background: #0b3b66;
+            color: white;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+        }
+        #pdf-canvas {
+            border: 1px solid #ddd;
+            cursor: crosshair;
+            max-width: 100%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .marker {
+            position: absolute;
+            border: 2px dashed #dc3545;
+            background: rgba(220,53,69,0.1);
+            pointer-events: none;
+            display: none;
+            z-index: 1000;
+        }
+        .pdf-container {
+            position: relative;
+            display: inline-block;
+        }
+        .card {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: none;
+            margin-bottom: 20px;
+        }
+        .card-header {
+            font-weight: 600;
+        }
+        .btn-success {
+            background: #28a745;
+            border: none;
+        }
+        .btn-primary {
+            background: #0b3b66;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container-fluid">
+            <h2><i class="fas fa-pencil-alt"></i> Assinador Digital ICP-Brasil</h2>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <i class="fas fa-file-pdf"></i> Upload do PDF
+                    </div>
+                    <div class="card-body">
+                        <input type="file" id="pdfFile" accept=".pdf" class="form-control mb-2">
+                        <button class="btn btn-success w-100" onclick="uploadPDF()">
+                            <i class="fas fa-upload"></i> Enviar PDF
+                        </button>
+                        <div id="pdfInfo" class="small text-muted mt-2"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <i class="fas fa-certificate"></i> Certificados
+                    </div>
+                    <div class="card-body">
+                        <select id="certSelect" class="form-select mb-3">
+                            <option value="">-- Selecione um certificado --</option>
+                            {% for cert in certificates %}
+                            <option value="{{ cert }}">{{ cert }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <label class="form-label">Upload de Certificado</label>
+                        <input type="file" id="certFile" accept=".pfx,.p12,.pem,.cer,.crt" class="form-control mb-2">
+                        <button class="btn btn-warning w-100" onclick="uploadCert()">
+                            <i class="fas fa-upload"></i> Enviar Certificado
+                        </button>
+                        <div id="certInfo" class="small text-muted mt-2"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <i class="fas fa-cog"></i> Configurações
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label class="form-label">Largura (mm)</label>
+                                <input type="number" id="sigWidth" class="form-control" value="60" min="20" max="300">
+                            </div>
+                            <div class="col">
+                                <label class="form-label">Altura (mm)</label>
+                                <input type="number" id="sigHeight" class="form-control" value="30" min="10" max="200">
+                            </div>
+                        </div>
+
+                        <label class="form-label">Senha do Certificado</label>
+                        <input type="password" id="certPassword" class="form-control mb-3" placeholder="Senha do certificado">
+
+                        <button class="btn btn-primary w-100" id="signBtn" onclick="signPDF()" disabled>
+                            <i class="fas fa-pencil-alt"></i> Assinar Documento
+                        </button>
+
+                        <button class="btn btn-success w-100 mt-2" id="downloadBtn" style="display:none;" onclick="downloadPDF()">
+                            <i class="fas fa-download"></i> Baixar Assinado
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <div class="card">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-eye"></i> Visualizador do PDF</span>
+                        <div>
+                            <span id="pageInfo" class="me-2"></span>
+                            <button class="btn btn-sm btn-light" onclick="prevPage()" title="Página anterior">◀</button>
+                            <button class="btn btn-sm btn-light" onclick="nextPage()" title="Próxima página">▶</button>
+                        </div>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="pdf-container">
+                            <canvas id="pdf-canvas"></canvas>
+                            <div id="marker" class="marker"></div>
+                        </div>
+                        <p class="small text-muted mt-2">
+                            <i class="fas fa-mouse-pointer"></i> Clique no PDF para posicionar a assinatura
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        const basePath = '{{ base_path }}';
+        let pdfDoc = null;
+        let pageNum = 1;
+        let scale = 1.5;
+        const canvas = document.getElementById('pdf-canvas');
+        const ctx = canvas.getContext('2d');
+        let currentPdfFile = null;
+        let signaturePosition = null;
+        let signedFile = null;
+
+        async function uploadPDF() {
+            const file = document.getElementById('pdfFile').files[0];
+            if (!file) {
+                Swal.fire('Aviso', 'Selecione um arquivo PDF', 'warning');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('pdf', file);
+
+            try {
+                const res = await fetch(basePath + '/upload_pdf', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (data.success) {
+                    currentPdfFile = data.filename;
+                    document.getElementById('pdfInfo').innerHTML = `<i class="fas fa-check-circle text-success"></i> ${data.filename}`;
+                    loadPDF(basePath + '/uploads/' + data.filename);
+                    Swal.fire('Sucesso', 'PDF carregado', 'success');
+                } else {
+                    Swal.fire('Erro', data.error || 'Falha no upload do PDF', 'error');
+                }
+            } catch (err) {
+                Swal.fire('Erro', 'Falha no upload: ' + err.message, 'error');
+            }
+        }
+
+        async function uploadCert() {
+            const file = document.getElementById('certFile').files[0];
+            if (!file) {
+                Swal.fire('Aviso', 'Selecione um certificado', 'warning');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('cert', file);
+
+            try {
+                const res = await fetch(basePath + '/upload_cert', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (data.success) {
+                    document.getElementById('certInfo').innerHTML = `<i class="fas fa-check-circle text-success"></i> ${data.filename}`;
+                    Swal.fire('Sucesso', 'Certificado enviado', 'success');
+                    setTimeout(updateCertList, 500);
+                } else {
+                    Swal.fire('Erro', data.error || 'Falha no upload do certificado', 'error');
+                }
+            } catch (err) {
+                Swal.fire('Erro', 'Falha no upload: ' + err.message, 'error');
+            }
+        }
+
+        async function updateCertList() {
+            const res = await fetch(basePath + '/list_certs');
+            const data = await res.json();
+            const select = document.getElementById('certSelect');
+            select.innerHTML = '<option value="">-- Selecione um certificado --</option>';
+
+            (data.certificados || []).forEach(cert => {
+                const option = document.createElement('option');
+                option.value = cert;
+                option.textContent = cert;
+                select.appendChild(option);
+            });
+        }
+
+        function loadPDF(url) {
+            Swal.fire({ title: 'Carregando PDF...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            pdfjsLib.getDocument(url).promise.then(pdf => {
+                pdfDoc = pdf;
+                renderPage(1);
+                document.getElementById('signBtn').disabled = false;
+                Swal.close();
+            }).catch(err => {
+                Swal.close();
+                Swal.fire('Erro', 'Falha ao carregar PDF: ' + err.message, 'error');
+            });
+        }
+
+        function renderPage(num) {
+            pdfDoc.getPage(num).then(page => {
+                const viewport = page.getViewport({ scale: scale });
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+
+                return page.render({ canvasContext: ctx, viewport: viewport }).promise;
+            }).then(() => {
+                document.getElementById('pageInfo').textContent = `Página ${num} de ${pdfDoc.numPages}`;
+                pageNum = num;
+            });
+        }
+
+        function prevPage() {
+            if (pdfDoc && pageNum > 1) {
+                renderPage(pageNum - 1);
+                signaturePosition = null;
+                document.getElementById('marker').style.display = 'none';
+            }
+        }
+
+        function nextPage() {
+            if (pdfDoc && pageNum < pdfDoc.numPages) {
+                renderPage(pageNum + 1);
+                signaturePosition = null;
+                document.getElementById('marker').style.display = 'none';
+            }
+        }
+
+        canvas.addEventListener('click', (e) => {
+            if (!pdfDoc) {
+                return;
+            }
+
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const canvasX = (e.clientX - rect.left) * scaleX;
+            const canvasY = (e.clientY - rect.top) * scaleY;
+            const mmPorPixel = 25.4 / 72 / scale;
+            const width = parseFloat(document.getElementById('sigWidth').value) || 60;
+            const height = parseFloat(document.getElementById('sigHeight').value) || 30;
+            const pixelsPorMm = 1 / mmPorPixel;
+            const widthPx = width * pixelsPorMm;
+            const heightPx = height * pixelsPorMm;
+            const leftPx = Math.max(0, Math.min(canvas.width - widthPx, canvasX - widthPx / 2));
+            const topPx = Math.max(0, Math.min(canvas.height - heightPx, canvasY - heightPx / 2));
+            const x_mm = leftPx * mmPorPixel;
+            const y_mm = (canvas.height - (topPx + heightPx)) * mmPorPixel;
+
+            signaturePosition = {
+                x: Math.round(x_mm * 100) / 100,
+                y: Math.round(y_mm * 100) / 100,
+                page: pageNum,
+                width: width,
+                height: height
+            };
+
+            const marker = document.getElementById('marker');
+            marker.style.left = leftPx + 'px';
+            marker.style.top = topPx + 'px';
+            marker.style.width = widthPx + 'px';
+            marker.style.height = heightPx + 'px';
+            marker.style.display = 'block';
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Posição definida',
+                text: `X: ${signaturePosition.x}mm, Y: ${signaturePosition.y}mm (Página ${pageNum})`,
+                timer: 1500,
+                showConfirmButton: false
+            });
+        });
+
+        async function signPDF() {
+            const certFile = document.getElementById('certSelect').value;
+            const password = document.getElementById('certPassword').value;
+
+            if (!currentPdfFile) {
+                Swal.fire('Aviso', 'Faça upload do PDF primeiro', 'warning');
+                return;
+            }
+            if (!certFile) {
+                Swal.fire('Aviso', 'Selecione um certificado', 'warning');
+                return;
+            }
+            if (!signaturePosition) {
+                Swal.fire('Aviso', 'Posicione a assinatura no PDF', 'warning');
+                return;
+            }
+            if (!password && certFile.toLowerCase().includes('.pfx')) {
+                Swal.fire('Aviso', 'Informe a senha do certificado', 'warning');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Assinando documento...',
+                text: 'Isso pode levar alguns segundos',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                const response = await fetch(basePath + '/sign_pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pdf_file: currentPdfFile,
+                        cert_file: certFile,
+                        password: password,
+                        position: signaturePosition
+                    })
+                });
+
+                const data = await response.json();
+                Swal.close();
+
+                if (data.success) {
+                    signedFile = data.signed_file;
+                    document.getElementById('downloadBtn').style.display = 'block';
+                    await Swal.fire({ icon: 'success', title: 'Sucesso!', text: 'Documento assinado' });
+                    loadPDF(basePath + '/uploads/' + signedFile);
+                } else {
+                    Swal.fire('Erro', data.error || 'Falha na assinatura', 'error');
+                }
+            } catch (err) {
+                Swal.close();
+                Swal.fire('Erro', 'Erro na comunicação: ' + err.message, 'error');
+            }
+        }
+
+        function downloadPDF() {
+            if (signedFile) {
+                window.location.href = basePath + '/download/' + signedFile;
+            }
+        }
+
+        updateCertList();
+    </script>
+</body>
+</html>

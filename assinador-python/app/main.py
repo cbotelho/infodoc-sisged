@@ -6,7 +6,7 @@ import logging
 from datetime import datetime
 
 from app.config import Config
-from app.routes import auth, sign, certificates
+from app.routes import auth, sign, certificates, standalone
 
 # Configurar logging
 logging.basicConfig(
@@ -27,6 +27,22 @@ CORS(app)
 app.register_blueprint(auth.bp)
 app.register_blueprint(sign.bp)
 app.register_blueprint(certificates.bp)
+app.register_blueprint(standalone.bp)
+
+@app.route('/')
+def index():
+    """Rota raiz com informações básicas do serviço."""
+    return jsonify({
+        'service': 'assinador-python',
+        'status': 'online',
+        'version': '1.0.0',
+        'routes': {
+            'health': '/health',
+            'assinador': '/assinador?token=<token>&doc=<caminho>',
+            'api_sign': '/api/sign',
+            'standalone': '/standalone/'
+        }
+    })
 
 @app.route('/health')
 def health():

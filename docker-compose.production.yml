@@ -1,0 +1,71 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: infodoc-web
+    restart: unless-stopped
+    depends_on:
+      - assinador-python
+    environment:
+      DB_SERVER: ${DB_SERVER}
+      DB_SERVER_PORT: ${DB_SERVER_PORT:-3306}
+      DB_SERVER_USERNAME: ${DB_SERVER_USERNAME}
+      DB_SERVER_PASSWORD: ${DB_SERVER_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      PYTHON_SERVICE_INTERNAL_URL: http://assinador-python:5000
+      PYTHON_SERVICE_PUBLIC_URL: ${PYTHON_SERVICE_PUBLIC_URL}
+      APP_BASE_URL: ${APP_BASE_URL}
+    ports:
+      - "${APP_PORT:-8081}:80"
+    volumes:
+      - infodoc_uploads:/var/www/html/uploads
+      - infodoc_cache:/var/www/html/cache
+      - infodoc_tmp:/var/www/html/tmp
+      - infodoc_log:/var/www/html/log
+
+  assinador-python:
+    build:
+      context: ./assinador-python
+      dockerfile: Dockerfile
+    container_name: infodoc-assinador
+    restart: unless-stopped
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SECRET_KEY: ${SIGNER_SECRET_KEY}
+      TOKEN_EXPIRY: ${TOKEN_EXPIRY:-3600}
+      UPLOAD_DIR: /app/uploads
+      CERT_DIR: /app/certs
+      TEMP_DIR: /app/temp
+      HOST: 0.0.0.0
+      PORT: 5000
+      DEBUG: false
+      PYTHON_SERVICE_INTERNAL_URL: http://assinador-python:5000
+      PYTHON_SERVICE_PUBLIC_URL: ${PYTHON_SERVICE_PUBLIC_URL}
+      APP_BASE_URL: ${APP_BASE_URL}
+    ports:
+      - "${SIGNER_PORT:-5000}:5000"
+    volumes:
+      - signer_uploads:/app/uploads
+      - signer_certs:/app/certs
+      - signer_temp:/app/temp
+      - signer_logs:/app/logs
+
+volumes:
+  infodoc_uploads:
+  infodoc_cache:
+  infodoc_tmp:
+  infodoc_log:
+  signer_uploads:
+  signer_certs:
+  signer_temp:
+  signer_logs:

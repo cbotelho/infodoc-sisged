@@ -6,7 +6,7 @@ signature_validator.py - Validador de assinaturas digitais em PDF
 import os
 import hashlib
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple, Any
 from pathlib import Path
 
@@ -250,7 +250,7 @@ class SignatureValidator:
                 result['icp_brasil'] = cert.get('is_icp_brasil', False)
                 
                 # Verificar validade temporal
-                now = datetime.utcnow()
+                now = datetime.now(timezone.utc)
                 not_before = datetime.fromisoformat(cert['not_valid_before'].replace('Z', '+00:00'))
                 not_after = datetime.fromisoformat(cert['not_valid_after'].replace('Z', '+00:00'))
                 
@@ -302,6 +302,9 @@ class SignatureValidator:
             byte_range = sig_data['byte_range']
             if len(byte_range) != 4:
                 return False, "Byte range inválido"
+
+            if byte_range == [0, 0, 0, 0]:
+                return False, "ByteRange não foi preenchido; assinatura inválida"
             
             # Extrair o conteúdo assinado
             with open(pdf_path, 'rb') as f:
@@ -313,6 +316,9 @@ class SignatureValidator:
             len1 = byte_range[1]
             start2 = byte_range[2]
             len2 = byte_range[3]
+
+            if start1 != 0 or len1 <= 0 or start2 <= len1 or len2 <= 0:
+                return False, "ByteRange inconsistente"
             
             # Concatenar as partes assinadas
             signed_content = pdf_bytes[start1:start1+len1] + pdf_bytes[start2:start2+len2]

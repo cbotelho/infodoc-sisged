@@ -268,7 +268,8 @@ class InputValidator:
         Returns:
             (is_valid, error_message)
         """
-        required = ['x', 'y', 'pagina']
+        page_key = 'pagina' if 'pagina' in position else 'page'
+        required = ['x', 'y', page_key]
         
         for field in required:
             if field not in position:
@@ -277,9 +278,9 @@ class InputValidator:
         try:
             x = float(position.get('x', 0))
             y = float(position.get('y', 0))
-            page = int(position.get('pagina', 1))
-            width = float(position.get('width', 80))
-            height = float(position.get('height', 30))
+            page = int(position.get('pagina', position.get('page', 1)))
+            width = float(position.get('width', position.get('largura', 80)))
+            height = float(position.get('height', position.get('altura', 30)))
             
             if x < 0 or y < 0:
                 return False, "Coordenadas devem ser positivas"

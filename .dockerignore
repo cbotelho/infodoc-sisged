@@ -1,0 +1,14 @@
+.git
+.gitignore
+.venv*
+**/__pycache__
+**/*.pyc
+backups
+cache
+log
+tmp
+uploads
+assinador-python/logs
+assinador-python/temp
+assinador-python/uploads
+assinador-python/certs

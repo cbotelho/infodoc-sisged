@@ -29,6 +29,8 @@ temp/
 .env
 .env.local
 .env.*.local
+.env.production
+.env.production.*
 
 # IDE
 .vscode/
@@ -40,6 +42,8 @@ temp/
 .coverage
 htmlcov/
 .pytest_cache/
+pytest_out.txt
+unittest*.txt
 
 # Docker
 docker-compose.override.yml

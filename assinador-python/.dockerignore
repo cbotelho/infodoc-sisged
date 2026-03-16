@@ -1,0 +1,12 @@
+.git
+.gitignore
+__pycache__
+*.pyc
+.pytest_cache
+.coverage
+logs
+temp
+uploads
+certs
+tests/__pycache__
+unittest_*.txt
