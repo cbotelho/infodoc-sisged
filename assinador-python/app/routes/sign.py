@@ -7,7 +7,7 @@ sign.py - Rotas para assinatura de documentos
 import os
 import logging
 from datetime import datetime
-from flask import Blueprint, request, jsonify, render_template, session, current_app
+from flask import Blueprint, request, jsonify, render_template, redirect, url_for
 
 from app.services.pdf_signer import PDFSigner
 from app.services.database import get_db
@@ -21,14 +21,19 @@ bp = Blueprint('sign', __name__, url_prefix='')
 def assinador():
     """
     Página do assinador digital
-    Recebe token e doc path como parâmetros
+    Aceita token/doc no fluxo autenticado ou abre o modo standalone sem parâmetros.
     """
     token = request.args.get('token')
     doc_path = request.args.get('doc')
-    
+
+    if not token and not doc_path:
+        return redirect(url_for('standalone.index'))
+
     if not token or not doc_path:
-        return render_template('error.html', 
-                             error="Token ou documento não fornecido"), 400
+        return render_template(
+            'error.html',
+            error='Informe token e documento, ou acesse sem parâmetros para usar o modo standalone.'
+        ), 400
     
     # Validar token com banco de dados
     db = get_db()

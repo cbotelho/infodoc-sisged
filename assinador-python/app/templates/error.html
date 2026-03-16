@@ -1,4 +1,11 @@
 {% extends 'base.html' %}
 {% block content %}
-<p>Erro ao processar assinatura.</p>
+<div class="row justify-content-center">
+	<div class="col-md-8 col-lg-6">
+		<div class="alert alert-danger mt-4" role="alert">
+			<h4 class="alert-heading">Não foi possível abrir o assinador</h4>
+			<p class="mb-0">{{ error or 'Erro ao processar assinatura.' }}</p>
+		</div>
+	</div>
+</div>
 {% endblock %}

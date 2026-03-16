@@ -38,7 +38,7 @@ def index():
         'version': '1.0.0',
         'routes': {
             'health': '/health',
-            'assinador': '/assinador?token=<token>&doc=<caminho>',
+            'assinador': '/assinador[?token=<token>&doc=<caminho>]',
             'api_sign': '/api/sign',
             'standalone': '/standalone/'
         }
