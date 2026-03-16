@@ -116,6 +116,11 @@ Nesse modelo:
 - a rota explícita `/assinador` deve ser encaminhada pelo proxy reverso para o container `assinador-python` na porta `5000`;
 - o backend PHP continua chamando o assinador internamente por `http://assinador-python:5000`.
 
+Exemplos prontos de proxy reverso:
+
+- Apache: `docs/proxy-rota-explicita-apache.conf.example`
+- Nginx: `docs/proxy-rota-explicita-nginx.conf.example`
+
 ### Observações de produção
 
 - O `web` fala com o assinador internamente por `http://assinador-python:5000`.

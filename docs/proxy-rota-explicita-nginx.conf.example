@@ -1,0 +1,28 @@
+server {
+    listen 80;
+    server_name seu-dominio.exemplo.com.br;
+
+    # GED principal
+    location / {
+        proxy_pass http://127.0.0.1:8081;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Assinador Flask em rota explicita.
+    # O prefixo /assinador/ eh removido antes do encaminhamento.
+    location = /assinador {
+        return 301 /assinador/;
+    }
+
+    location /assinador/ {
+        rewrite ^/assinador/(.*)$ /$1 break;
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

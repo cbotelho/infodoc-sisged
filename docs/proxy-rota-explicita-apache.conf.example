@@ -1,0 +1,22 @@
+<VirtualHost *:80>
+    ServerName seu-dominio.exemplo.com.br
+
+    ProxyPreserveHost On
+    ProxyRequests Off
+    AllowEncodedSlashes NoDecode
+
+    # GED principal
+    ProxyPass / http://127.0.0.1:8081/
+    ProxyPassReverse / http://127.0.0.1:8081/
+
+    # Assinador Flask publicado em rota explicita.
+    # O prefixo /assinador eh removido antes do encaminhamento.
+    RewriteEngine On
+    RewriteRule ^/assinador$ /assinador/ [R=301,L]
+    RewriteRule ^/assinador/(.*)$ http://127.0.0.1:5000/$1 [P,L]
+
+    ProxyPassReverse /assinador/ http://127.0.0.1:5000/
+
+    ErrorLog ${APACHE_LOG_DIR}/infodoc-error.log
+    CustomLog ${APACHE_LOG_DIR}/infodoc-access.log combined
+</VirtualHost>
