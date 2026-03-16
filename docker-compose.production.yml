@@ -28,6 +28,9 @@ services:
       - infodoc_cache:/var/www/html/cache
       - infodoc_tmp:/var/www/html/tmp
       - infodoc_log:/var/www/html/log
+    networks:
+      - default
+      - proxy
 
   assinador-python:
     build:
@@ -59,6 +62,14 @@ services:
       - signer_certs:/app/certs
       - signer_temp:/app/temp
       - signer_logs:/app/logs
+    networks:
+      - default
+      - proxy
+
+networks:
+  proxy:
+    external: true
+    name: ${PROXY_EXTERNAL_NETWORK:-proxy}
 
 volumes:
   infodoc_uploads:
