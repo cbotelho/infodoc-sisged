@@ -1,5 +1,5 @@
 # app/main.py
-from flask import Flask, jsonify
+from flask import Flask, jsonify, redirect, url_for
 from flask_cors import CORS
 import os
 import logging
@@ -8,9 +8,13 @@ from datetime import datetime
 from app.config import Config
 from app.routes import auth, sign, certificates, standalone
 
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
+
 # Configurar logging
 logging.basicConfig(
-    filename='logs/app.log',
+    filename=os.path.join(LOG_DIR, 'app.log'),
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
@@ -31,12 +35,19 @@ app.register_blueprint(standalone.bp)
 
 @app.route('/')
 def index():
-    """Rota raiz com informações básicas do serviço."""
+    """Rota raiz publica o modo standalone por padrao."""
+    return redirect(url_for('standalone.index'))
+
+
+@app.route('/info')
+def info():
+    """Rota tecnica com informações básicas do serviço."""
     return jsonify({
         'service': 'assinador-python',
         'status': 'online',
         'version': '1.0.0',
         'routes': {
+            'info': '/info',
             'health': '/health',
             'assinador': '/assinador[?token=<token>&doc=<caminho>]',
             'api_sign': '/api/sign',

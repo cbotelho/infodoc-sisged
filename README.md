@@ -90,8 +90,9 @@ Para deploy na VPS via Portainer, use o arquivo `docker-compose.production.yml` 
 
 ### Arquivos para produção
 
-- `docker-compose.production.yml`: stack de produção com restart automático e volumes persistentes.
-- `.env.production.portainer.example`: exemplo de variáveis para colar/ajustar no Portainer.
+- `docker-compose.production.yml`: stack de produção com restart automático, rede externa de proxy e volumes persistentes.
+- `.env.production.portainer.example`: exemplo de variáveis para colar e ajustar no Portainer.
+- `docs/portainer-duas-aplicacoes.md`: passo a passo para publicar o GED e o assinador em domínios separados.
 
 ### Fluxo recomendado
 
@@ -101,14 +102,29 @@ Para deploy na VPS via Portainer, use o arquivo `docker-compose.production.yml` 
 4. Configure as variáveis usando `.env.production.portainer.example`.
 5. Faça o deploy da stack.
 
-### Rota explícita no domínio atual
+### Cenário recomendado para duas aplicações públicas
 
-Neste projeto, o cenário recomendado de produção é publicar o GED e o assinador no mesmo domínio, mas com rota explícita para o serviço Flask.
+Este projeto suporta o cenário em que o GED PHP e o assinador Python ficam em domínios distintos, desde que o navegador use a URL pública do assinador e o backend PHP continue chamando o serviço internamente pela rede Docker.
 
 Exemplo:
 
-- `APP_BASE_URL=https://seu-dominio.exemplo.com.br`
-- `PYTHON_SERVICE_PUBLIC_URL=https://seu-dominio.exemplo.com.br/assinador`
+- `APP_BASE_URL=https://gea.seu-dominio.com.br`
+- `PYTHON_SERVICE_PUBLIC_URL=https://assinador.seu-dominio.com.br`
+
+Nesse modelo:
+
+- o domínio `gea.seu-dominio.com.br` aponta para o container `web`;
+- o domínio `assinador.seu-dominio.com.br` aponta para o container `assinador-python`;
+- o backend PHP continua chamando o assinador internamente por `http://assinador-python:5000`.
+
+### Alternativa com rota explícita no mesmo domínio
+
+Se preferir publicar tudo no mesmo domínio, o projeto também suporta rota explícita para o serviço Flask.
+
+Exemplo:
+
+- `APP_BASE_URL=https://gea.seu-dominio.com.br`
+- `PYTHON_SERVICE_PUBLIC_URL=https://gea.seu-dominio.com.br/assinador`
 
 Nesse modelo:
 
@@ -126,6 +142,7 @@ Exemplos prontos de proxy reverso:
 - O `web` fala com o assinador internamente por `http://assinador-python:5000`.
 - Os dados persistentes ficam em volumes Docker, sem depender de bind mount do código fonte.
 - O modo Web editor do Portainer não é indicado para este compose, porque o build usa contextos locais do repositório.
+- A rede externa definida por `PROXY_EXTERNAL_NETWORK` precisa existir antes do deploy da stack.
 - Se optar por rota explícita no domínio atual, publique essa rota no proxy reverso em vez de expor a porta `5000` diretamente para o usuário final.
 
 ## Licença

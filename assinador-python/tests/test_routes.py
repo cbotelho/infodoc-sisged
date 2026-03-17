@@ -19,8 +19,14 @@ class TestRoutes(unittest.TestCase):
     def setUpClass(cls):
         cls.client = app.test_client()
 
-    def test_root_reports_optional_signer_params(self):
+    def test_root_redirects_to_standalone(self):
         response = self.client.get('/')
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers.get('Location'), '/standalone/')
+
+    def test_info_reports_optional_signer_params(self):
+        response = self.client.get('/info')
 
         self.assertEqual(response.status_code, 200)
         payload = response.get_json()
