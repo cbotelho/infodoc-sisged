@@ -41,3 +41,5 @@ Se voce executar o GED fora do Docker, rode o Composer manualmente em plugins/ex
 ### Observacao importante
 
 Com a arquitetura atual do GED, o upload ainda passa localmente pela area de uploads e depois e sincronizado para o storage externo pelo mecanismo de fila. Para eliminar completamente a persistencia local desde o primeiro byte, seria necessario refatorar o fluxo de upload do core.
+
+No assinador Python, apenas o diretorio /uploads foi adaptado para uso direto do R2 quando as variaveis FILE_STORAGE_R2_* estiverem definidas. Os certificados em /certs continuam exclusivamente locais.

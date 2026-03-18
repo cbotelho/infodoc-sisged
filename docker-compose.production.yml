@@ -92,6 +92,12 @@ services:
       UPLOAD_DIR: /app/uploads
       CERT_DIR: /app/certs
       TEMP_DIR: /app/temp
+      FILE_STORAGE_R2_ENDPOINT: ${FILE_STORAGE_R2_ENDPOINT:-}
+      FILE_STORAGE_R2_REGION: ${FILE_STORAGE_R2_REGION:-auto}
+      FILE_STORAGE_R2_BUCKET: ${FILE_STORAGE_R2_BUCKET:-}
+      FILE_STORAGE_R2_ACCESS_KEY_ID: ${FILE_STORAGE_R2_ACCESS_KEY_ID:-}
+      FILE_STORAGE_R2_SECRET_ACCESS_KEY: ${FILE_STORAGE_R2_SECRET_ACCESS_KEY:-}
+      FILE_STORAGE_R2_OBJECT_PREFIX: ${FILE_STORAGE_R2_OBJECT_PREFIX:-ged}
       HOST: 0.0.0.0
       PORT: 5000
       DEBUG: false
@@ -101,7 +107,6 @@ services:
     ports:
       - "${SIGNER_PORT:-5000}:5000"
     volumes:
-      - signer_uploads:/app/uploads
       - signer_certs:/app/certs
       - signer_temp:/app/temp
       - signer_logs:/app/logs
@@ -119,7 +124,6 @@ volumes:
   infodoc_cache:
   infodoc_tmp:
   infodoc_log:
-  signer_uploads:
   signer_certs:
   signer_temp:
   signer_logs:

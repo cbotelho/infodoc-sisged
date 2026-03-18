@@ -67,9 +67,19 @@ TOKEN_EXPIRY=3600
 ## Fazer o deploy
 
 1. Clique em `Deploy the stack`.
-2. Aguarde o build das imagens `web` e `assinador-python`.
-3. Confirme se os containers `infodoc-web` e `infodoc-assinador` ficaram em estado `running`.
-4. Valide no Portainer se ambos estao conectados a rede padrao da stack e tambem a rede externa definida em `PROXY_EXTERNAL_NETWORK`.
+2. Aguarde o build das imagens `web`, `assinador-python` e `file-storage-worker`.
+3. Confirme se os containers `infodoc-web`, `infodoc-assinador` e `infodoc-file-storage-worker` ficaram em estado `running`.
+4. Valide no Portainer se os tres servicos estao conectados a rede padrao da stack e tambem a rede externa definida em `PROXY_EXTERNAL_NETWORK`.
+
+## Checklist final antes do deploy
+
+1. Confirme que a rede Docker externa `proxy` ja existe na VPS.
+2. Confirme que o DNS de `gea.infodocsisged.com.br` e `assinador.infodocsisged.com.br` aponta para a VPS.
+3. Confirme que o banco `sisged_gea` aceita conexao da VPS em `195.200.4.41:3306`.
+4. Confirme que `FILE_STORAGE_R2_BUCKET=gea` esta definido nas variaveis da stack.
+5. Confirme que `SIGNER_SECRET_KEY` nao esta com placeholder e ja usa uma chave forte.
+6. Confirme que o compose path no Portainer aponta para `docker-compose.production.yml`.
+7. Confirme que o repositório e a branch escolhidos no Portainer correspondem a esta versao com suporte a R2.
 
 ## Validacoes apos o deploy
 
@@ -78,6 +88,19 @@ TOKEN_EXPIRY=3600
 3. Abra `https://assinador.seu-dominio.com.br/standalone/` e confirme o carregamento da interface do assinador.
 4. Valide um fluxo real de assinatura iniciado pelo GED, porque esse fluxo depende de banco, token e arquivo PDF acessivel ao assinador.
 
+## Validacao guiada do assinador com R2
+
+1. Abra `https://assinador.infodocsisged.com.br/standalone/`.
+2. Envie um PDF pequeno no modo standalone.
+3. Confirme que o upload retorna sucesso e gera uma URL em `/standalone/uploads/<arquivo>`.
+4. Abra essa URL no navegador e confirme que o PDF e servido normalmente.
+5. Assine o PDF com um certificado ja presente em `/app/certs`.
+6. Confirme que o retorno da assinatura informa `signed_file` com nome `assinado_...pdf`.
+7. Abra `/standalone/download/<arquivo-assinado>` e confirme o download do PDF assinado.
+8. No bucket `gea`, confirme a criacao de objetos sob o prefixo `ged/assinador-python/uploads/`.
+9. Confirme no container do assinador que `/app/certs` continua local e que os certificados nao foram enviados ao R2.
+10. Confirme que nao existe dependencia operacional do volume local `/app/uploads` na stack de producao, porque o fluxo do assinador agora usa R2 para esse diretorio.
+
 ## Diagnostico rapido
 
 - Se a stack falhar ao subir, verifique primeiro se a rede `proxy` existe.
@@ -85,3 +108,6 @@ TOKEN_EXPIRY=3600
 - Se o navegador abrir o GED mas o redirecionamento para o assinador for incorreto, revise `PYTHON_SERVICE_PUBLIC_URL`.
 - Se o GED nao conseguir chamar o assinador internamente, revise conectividade entre os containers e confirme que `PYTHON_SERVICE_INTERNAL_URL` continua como `http://assinador-python:5000` no compose.
 - Se o assinador responder no navegador mas falhar em operacoes autenticadas, revise acesso ao banco, tabelas esperadas e caminhos persistidos dos documentos/certificados.
+- Se o upload do standalone falhar, revise as variaveis `FILE_STORAGE_R2_*` no servico `assinador-python`.
+- Se o download do PDF assinado falhar, verifique se o objeto foi gravado no bucket `gea` no prefixo `ged/assinador-python/uploads/`.
+- Se os certificados sumirem do standalone, revise apenas o volume `signer_certs`, porque ele continua local e nao usa R2.

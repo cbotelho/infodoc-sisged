@@ -20,6 +20,14 @@ class Config:
     UPLOAD_DIR = os.getenv('UPLOAD_DIR', '/var/www/vhosts/gea/assinatura/uploads/')
     CERT_DIR = os.getenv('CERT_DIR', '/var/www/vhosts/gea/assinatura/certs/')
     TEMP_DIR = os.getenv('TEMP_DIR', './temp/')
+
+    # Object storage para /uploads do assinador
+    FILE_STORAGE_R2_ENDPOINT = os.getenv('FILE_STORAGE_R2_ENDPOINT', '')
+    FILE_STORAGE_R2_REGION = os.getenv('FILE_STORAGE_R2_REGION', 'auto')
+    FILE_STORAGE_R2_BUCKET = os.getenv('FILE_STORAGE_R2_BUCKET', '')
+    FILE_STORAGE_R2_ACCESS_KEY_ID = os.getenv('FILE_STORAGE_R2_ACCESS_KEY_ID', '')
+    FILE_STORAGE_R2_SECRET_ACCESS_KEY = os.getenv('FILE_STORAGE_R2_SECRET_ACCESS_KEY', '')
+    FILE_STORAGE_R2_OBJECT_PREFIX = os.getenv('FILE_STORAGE_R2_OBJECT_PREFIX', 'ged')
     
     # Servidor
     HOST = os.getenv('HOST', '0.0.0.0')

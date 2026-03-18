@@ -19,6 +19,7 @@ pyHanko==0.25.3
 
 # Utilitários
 requests==2.32.3
+boto3==1.38.15
 pillow==10.4.0  # Para imagens
 reportlab==4.2.5
 
