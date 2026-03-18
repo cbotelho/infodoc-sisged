@@ -38,6 +38,7 @@ Se sua infraestrutura usar outro nome, ajuste a variavel `PROXY_EXTERNAL_NETWORK
 6. Informe a branch correta.
 7. Em `Compose path`, informe `docker-compose.production.yml`.
 8. Em `Environment variables`, cadastre as variaveis abaixo ajustando para o seu ambiente.
+9. Garanta que a VPS tenha acesso ao Docker Hub para baixar as imagens publicadas no namespace `cbotelho80`.
 
 ## Variaveis recomendadas
 
@@ -68,7 +69,7 @@ TOKEN_EXPIRY=3600
 ## Fazer o deploy
 
 1. Clique em `Deploy the stack`.
-2. Aguarde o build das imagens `web`, `assinador-python` e `file-storage-worker`.
+2. Aguarde o pull das imagens `cbotelho80/infodoc-web`, `cbotelho80/infodoc-assinador-python` e `cbotelho80/infodoc-file-storage-worker` na tag definida em `IMAGE_TAG`.
 3. Confirme se os containers `infodoc-web`, `infodoc-assinador` e `infodoc-file-storage-worker` ficaram em estado `running`.
 4. Valide no Portainer se os tres servicos estao conectados a rede padrao da stack e tambem a rede externa definida em `PROXY_EXTERNAL_NETWORK`.
 
@@ -81,7 +82,8 @@ TOKEN_EXPIRY=3600
 5. Confirme que `SIGNER_SECRET_KEY` nao esta com placeholder e ja usa uma chave forte.
 6. Confirme que o compose path no Portainer aponta para `docker-compose.production.yml`.
 7. Confirme que o repositório e a branch escolhidos no Portainer correspondem a esta versao com suporte a R2.
-8. Confirme que `IMAGE_TAG=1.0.10` esta definido para publicar a nova versao das imagens.
+8. Confirme que `IMAGE_TAG=1.0.10` esta definido para baixar a nova versao das imagens publicadas.
+9. Confirme que o servidor consegue acessar `docker.io/cbotelho80` para fazer pull das imagens.
 
 ## Validacoes apos o deploy
 
