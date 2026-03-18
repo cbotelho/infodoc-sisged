@@ -42,6 +42,7 @@ Se sua infraestrutura usar outro nome, ajuste a variavel `PROXY_EXTERNAL_NETWORK
 ## Variaveis recomendadas
 
 ```env
+IMAGE_TAG=1.0.10
 APP_PORT=8081
 SIGNER_PORT=5000
 APP_BASE_URL=https://gea.seu-dominio.com.br
@@ -80,6 +81,7 @@ TOKEN_EXPIRY=3600
 5. Confirme que `SIGNER_SECRET_KEY` nao esta com placeholder e ja usa uma chave forte.
 6. Confirme que o compose path no Portainer aponta para `docker-compose.production.yml`.
 7. Confirme que o repositório e a branch escolhidos no Portainer correspondem a esta versao com suporte a R2.
+8. Confirme que `IMAGE_TAG=1.0.10` esta definido para publicar a nova versao das imagens.
 
 ## Validacoes apos o deploy
 

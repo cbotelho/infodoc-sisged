@@ -1,5 +1,6 @@
 services:
   web:
+    image: infodoc-web:${IMAGE_TAG:-1.0.10}
     build:
       context: .
       dockerfile: Dockerfile
@@ -39,6 +40,7 @@ services:
       - proxy
 
   file-storage-worker:
+    image: infodoc-file-storage-worker:${IMAGE_TAG:-1.0.10}
     build:
       context: .
       dockerfile: Dockerfile
@@ -76,6 +78,7 @@ services:
       - proxy
 
   assinador-python:
+    image: infodoc-assinador-python:${IMAGE_TAG:-1.0.10}
     build:
       context: ./assinador-python
       dockerfile: Dockerfile
