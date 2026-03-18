@@ -20,10 +20,17 @@ services:
       PYTHON_SERVICE_INTERNAL_URL: ${PYTHON_SERVICE_INTERNAL_URL:-http://assinador-python:5000}
       PYTHON_SERVICE_PUBLIC_URL: ${PYTHON_SERVICE_PUBLIC_URL:-http://localhost:5000}
       APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
+      FILE_STORAGE_R2_ENDPOINT: ${FILE_STORAGE_R2_ENDPOINT:-}
+      FILE_STORAGE_R2_REGION: ${FILE_STORAGE_R2_REGION:-auto}
+      FILE_STORAGE_R2_BUCKET: ${FILE_STORAGE_R2_BUCKET:-}
+      FILE_STORAGE_R2_ACCESS_KEY_ID: ${FILE_STORAGE_R2_ACCESS_KEY_ID:-}
+      FILE_STORAGE_R2_SECRET_ACCESS_KEY: ${FILE_STORAGE_R2_SECRET_ACCESS_KEY:-}
+      FILE_STORAGE_R2_OBJECT_PREFIX: ${FILE_STORAGE_R2_OBJECT_PREFIX:-}
     ports:
       - "${APP_PORT:-8080}:80"
     volumes:
       - ./:/var/www/html
+      - r2_vendor:/var/www/html/plugins/ext/file_storage_modules/r2/vendor
 
   assinador-python:
     build:
@@ -51,3 +58,6 @@ services:
       - "${SIGNER_PORT:-5000}:5000"
     volumes:
       - ./assinador-python:/app
+
+volumes:
+  r2_vendor:
