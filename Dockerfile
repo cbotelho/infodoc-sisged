@@ -51,5 +51,6 @@ RUN mkdir -p /var/www/html/backups \
     && chown -R www-data:www-data /var/www/html
 
 ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["apache2-foreground"]
 
 EXPOSE 80
