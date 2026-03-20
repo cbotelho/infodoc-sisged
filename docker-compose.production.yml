@@ -1,32 +1,32 @@
 services:
   web:
-    image: cbotelho80/infodoc-web:${IMAGE_TAG:-1.0.11}
+    image: cbotelho80/infodoc-web:1.0.11
     container_name: infodoc-web
     restart: unless-stopped
     depends_on:
       - assinador-python
     environment:
       DB_SERVER: ${DB_SERVER}
-      DB_SERVER_PORT: ${DB_SERVER_PORT:-3306}
+      DB_SERVER_PORT: ${DB_SERVER_PORT}
       DB_SERVER_USERNAME: ${DB_SERVER_USERNAME}
       DB_SERVER_PASSWORD: ${DB_SERVER_PASSWORD}
       DB_DATABASE: ${DB_DATABASE}
       DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT:-3306}
+      DB_PORT: ${DB_PORT}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
       PYTHON_SERVICE_INTERNAL_URL: http://assinador-python:5000
       PYTHON_SERVICE_PUBLIC_URL: ${PYTHON_SERVICE_PUBLIC_URL}
       APP_BASE_URL: ${APP_BASE_URL}
-      FILE_STORAGE_R2_ENDPOINT: ${FILE_STORAGE_R2_ENDPOINT:-}
-      FILE_STORAGE_R2_REGION: ${FILE_STORAGE_R2_REGION:-auto}
-      FILE_STORAGE_R2_BUCKET: ${FILE_STORAGE_R2_BUCKET:-}
-      FILE_STORAGE_R2_ACCESS_KEY_ID: ${FILE_STORAGE_R2_ACCESS_KEY_ID:-}
-      FILE_STORAGE_R2_SECRET_ACCESS_KEY: ${FILE_STORAGE_R2_SECRET_ACCESS_KEY:-}
-      FILE_STORAGE_R2_OBJECT_PREFIX: ${FILE_STORAGE_R2_OBJECT_PREFIX:-}
+      FILE_STORAGE_R2_ENDPOINT: ${FILE_STORAGE_R2_ENDPOINT}
+      FILE_STORAGE_R2_REGION: ${FILE_STORAGE_R2_REGION}
+      FILE_STORAGE_R2_BUCKET: ${FILE_STORAGE_R2_BUCKET}
+      FILE_STORAGE_R2_ACCESS_KEY_ID: ${FILE_STORAGE_R2_ACCESS_KEY_ID}
+      FILE_STORAGE_R2_SECRET_ACCESS_KEY: ${FILE_STORAGE_R2_SECRET_ACCESS_KEY}
+      FILE_STORAGE_R2_OBJECT_PREFIX: ${FILE_STORAGE_R2_OBJECT_PREFIX}
     ports:
-      - "${APP_PORT:-8081}:80"
+      - "18081:80"
     volumes:
       - infodoc_backups:/var/www/html/backups
       - infodoc_uploads:/var/www/html/uploads
@@ -38,29 +38,29 @@ services:
       - proxy
 
   file-storage-worker:
-    image: cbotelho80/infodoc-file-storage-worker:${IMAGE_TAG:-1.0.11}
+    image: cbotelho80/infodoc-file-storage-worker:1.0.11
     container_name: infodoc-file-storage-worker
     restart: unless-stopped
     depends_on:
       - web
     environment:
       DB_SERVER: ${DB_SERVER}
-      DB_SERVER_PORT: ${DB_SERVER_PORT:-3306}
+      DB_SERVER_PORT: ${DB_SERVER_PORT}
       DB_SERVER_USERNAME: ${DB_SERVER_USERNAME}
       DB_SERVER_PASSWORD: ${DB_SERVER_PASSWORD}
       DB_DATABASE: ${DB_DATABASE}
       DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT:-3306}
+      DB_PORT: ${DB_PORT}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
-      FILE_STORAGE_R2_ENDPOINT: ${FILE_STORAGE_R2_ENDPOINT:-}
-      FILE_STORAGE_R2_REGION: ${FILE_STORAGE_R2_REGION:-auto}
-      FILE_STORAGE_R2_BUCKET: ${FILE_STORAGE_R2_BUCKET:-}
-      FILE_STORAGE_R2_ACCESS_KEY_ID: ${FILE_STORAGE_R2_ACCESS_KEY_ID:-}
-      FILE_STORAGE_R2_SECRET_ACCESS_KEY: ${FILE_STORAGE_R2_SECRET_ACCESS_KEY:-}
-      FILE_STORAGE_R2_OBJECT_PREFIX: ${FILE_STORAGE_R2_OBJECT_PREFIX:-}
-      FILE_STORAGE_CRON_INTERVAL: ${FILE_STORAGE_CRON_INTERVAL:-60}
+      FILE_STORAGE_R2_ENDPOINT: ${FILE_STORAGE_R2_ENDPOINT}
+      FILE_STORAGE_R2_REGION: ${FILE_STORAGE_R2_REGION}
+      FILE_STORAGE_R2_BUCKET: ${FILE_STORAGE_R2_BUCKET}
+      FILE_STORAGE_R2_ACCESS_KEY_ID: ${FILE_STORAGE_R2_ACCESS_KEY_ID}
+      FILE_STORAGE_R2_SECRET_ACCESS_KEY: ${FILE_STORAGE_R2_SECRET_ACCESS_KEY}
+      FILE_STORAGE_R2_OBJECT_PREFIX: ${FILE_STORAGE_R2_OBJECT_PREFIX}
+      FILE_STORAGE_CRON_INTERVAL: ${FILE_STORAGE_CRON_INTERVAL}
     command: >-
       sh -c "while true; do php /var/www/html/cron/file_storage.php; sleep \"$${FILE_STORAGE_CRON_INTERVAL}\"; done"
     volumes:
@@ -74,26 +74,26 @@ services:
       - proxy
 
   assinador-python:
-    image: cbotelho80/infodoc-assinador-python:${IMAGE_TAG:-1.0.11}
+    image: cbotelho80/infodoc-assinador-python:1.0.11
     container_name: infodoc-assinador
     restart: unless-stopped
     environment:
       DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT:-3306}
+      DB_PORT: ${DB_PORT}
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       SECRET_KEY: ${SIGNER_SECRET_KEY}
-      TOKEN_EXPIRY: ${TOKEN_EXPIRY:-3600}
+      TOKEN_EXPIRY: ${TOKEN_EXPIRY}
       UPLOAD_DIR: /app/uploads
       CERT_DIR: /app/certs
       TEMP_DIR: /app/temp
-      FILE_STORAGE_R2_ENDPOINT: ${FILE_STORAGE_R2_ENDPOINT:-}
-      FILE_STORAGE_R2_REGION: ${FILE_STORAGE_R2_REGION:-auto}
-      FILE_STORAGE_R2_BUCKET: ${FILE_STORAGE_R2_BUCKET:-}
-      FILE_STORAGE_R2_ACCESS_KEY_ID: ${FILE_STORAGE_R2_ACCESS_KEY_ID:-}
-      FILE_STORAGE_R2_SECRET_ACCESS_KEY: ${FILE_STORAGE_R2_SECRET_ACCESS_KEY:-}
-      FILE_STORAGE_R2_OBJECT_PREFIX: ${FILE_STORAGE_R2_OBJECT_PREFIX:-ged}
+      FILE_STORAGE_R2_ENDPOINT: ${FILE_STORAGE_R2_ENDPOINT}
+      FILE_STORAGE_R2_REGION: ${FILE_STORAGE_R2_REGION}
+      FILE_STORAGE_R2_BUCKET: ${FILE_STORAGE_R2_BUCKET}
+      FILE_STORAGE_R2_ACCESS_KEY_ID: ${FILE_STORAGE_R2_ACCESS_KEY_ID}
+      FILE_STORAGE_R2_SECRET_ACCESS_KEY: ${FILE_STORAGE_R2_SECRET_ACCESS_KEY}
+      FILE_STORAGE_R2_OBJECT_PREFIX: ${FILE_STORAGE_R2_OBJECT_PREFIX}
       HOST: 0.0.0.0
       PORT: 5000
       DEBUG: false
@@ -101,7 +101,7 @@ services:
       PYTHON_SERVICE_PUBLIC_URL: ${PYTHON_SERVICE_PUBLIC_URL}
       APP_BASE_URL: ${APP_BASE_URL}
     ports:
-      - "${SIGNER_PORT:-5000}:5000"
+      - "15000:5000"
     volumes:
       - signer_certs:/app/certs
       - signer_temp:/app/temp
@@ -113,7 +113,7 @@ services:
 networks:
   proxy:
     external: true
-    name: ${PROXY_EXTERNAL_NETWORK:-proxy}
+    name: proxy_net
 
 volumes:
   infodoc_backups:
