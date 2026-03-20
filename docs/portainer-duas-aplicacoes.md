@@ -43,7 +43,7 @@ Se sua infraestrutura usar outro nome, ajuste a variavel `PROXY_EXTERNAL_NETWORK
 ## Variaveis recomendadas
 
 ```env
-IMAGE_TAG=1.0.10
+IMAGE_TAG=1.0.11
 APP_PORT=8081
 SIGNER_PORT=5000
 APP_BASE_URL=https://gea.seu-dominio.com.br
@@ -70,8 +70,9 @@ TOKEN_EXPIRY=3600
 
 1. Clique em `Deploy the stack`.
 2. Aguarde o pull das imagens `cbotelho80/infodoc-web`, `cbotelho80/infodoc-assinador-python` e `cbotelho80/infodoc-file-storage-worker` na tag definida em `IMAGE_TAG`.
-3. Confirme se os containers `infodoc-web`, `infodoc-assinador` e `infodoc-file-storage-worker` ficaram em estado `running`.
-4. Valide no Portainer se os tres servicos estao conectados a rede padrao da stack e tambem a rede externa definida em `PROXY_EXTERNAL_NETWORK`.
+3. A imagem da aplicação cria automaticamente em runtime as pastas `backups`, `uploads/attachments`, `uploads/attachments_preview`, `uploads/images` e `uploads/users`, inclusive quando os volumes estão vazios.
+4. Confirme se os containers `infodoc-web`, `infodoc-assinador` e `infodoc-file-storage-worker` ficaram em estado `running`.
+5. Valide no Portainer se os tres servicos estao conectados a rede padrao da stack e tambem a rede externa definida em `PROXY_EXTERNAL_NETWORK`.
 
 ## Checklist final antes do deploy
 
@@ -82,7 +83,7 @@ TOKEN_EXPIRY=3600
 5. Confirme que `SIGNER_SECRET_KEY` nao esta com placeholder e ja usa uma chave forte.
 6. Confirme que o compose path no Portainer aponta para `docker-compose.production.yml`.
 7. Confirme que o repositório e a branch escolhidos no Portainer correspondem a esta versao com suporte a R2.
-8. Confirme que `IMAGE_TAG=1.0.10` esta definido para baixar a nova versao das imagens publicadas.
+8. Confirme que `IMAGE_TAG=1.0.11` esta definido para baixar a nova versao das imagens publicadas.
 9. Confirme que o servidor consegue acessar `docker.io/cbotelho80` para fazer pull das imagens.
 
 ## Validacoes apos o deploy

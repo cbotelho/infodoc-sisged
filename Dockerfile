@@ -27,6 +27,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY docker/php/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+COPY docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 WORKDIR /var/www/html
 
@@ -36,7 +39,17 @@ RUN if [ -f /var/www/html/plugins/ext/file_storage_modules/r2/composer.json ]; t
         composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader --working-dir=/var/www/html/plugins/ext/file_storage_modules/r2; \
     fi
 
-RUN mkdir -p /var/www/html/cache /var/www/html/log /var/www/html/tmp /var/www/html/uploads \
+RUN mkdir -p /var/www/html/backups \
+    /var/www/html/cache \
+    /var/www/html/log \
+    /var/www/html/tmp \
+    /var/www/html/uploads \
+    /var/www/html/uploads/attachments \
+    /var/www/html/uploads/attachments_preview \
+    /var/www/html/uploads/images \
+    /var/www/html/uploads/users \
     && chown -R www-data:www-data /var/www/html
+
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 EXPOSE 80

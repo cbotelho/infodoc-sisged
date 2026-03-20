@@ -1,6 +1,6 @@
 services:
   web:
-    image: cbotelho80/infodoc-web:${IMAGE_TAG:-1.0.10}
+    image: cbotelho80/infodoc-web:${IMAGE_TAG:-1.0.11}
     container_name: infodoc-web
     restart: unless-stopped
     depends_on:
@@ -28,6 +28,7 @@ services:
     ports:
       - "${APP_PORT:-8081}:80"
     volumes:
+      - infodoc_backups:/var/www/html/backups
       - infodoc_uploads:/var/www/html/uploads
       - infodoc_cache:/var/www/html/cache
       - infodoc_tmp:/var/www/html/tmp
@@ -37,7 +38,7 @@ services:
       - proxy
 
   file-storage-worker:
-    image: cbotelho80/infodoc-file-storage-worker:${IMAGE_TAG:-1.0.10}
+    image: cbotelho80/infodoc-file-storage-worker:${IMAGE_TAG:-1.0.11}
     container_name: infodoc-file-storage-worker
     restart: unless-stopped
     depends_on:
@@ -63,6 +64,7 @@ services:
     command: >-
       sh -c "while true; do php /var/www/html/cron/file_storage.php; sleep \"$${FILE_STORAGE_CRON_INTERVAL}\"; done"
     volumes:
+      - infodoc_backups:/var/www/html/backups
       - infodoc_uploads:/var/www/html/uploads
       - infodoc_cache:/var/www/html/cache
       - infodoc_tmp:/var/www/html/tmp
@@ -72,7 +74,7 @@ services:
       - proxy
 
   assinador-python:
-    image: cbotelho80/infodoc-assinador-python:${IMAGE_TAG:-1.0.10}
+    image: cbotelho80/infodoc-assinador-python:${IMAGE_TAG:-1.0.11}
     container_name: infodoc-assinador
     restart: unless-stopped
     environment:
@@ -114,6 +116,7 @@ networks:
     name: ${PROXY_EXTERNAL_NETWORK:-proxy}
 
 volumes:
+  infodoc_backups:
   infodoc_uploads:
   infodoc_cache:
   infodoc_tmp:
