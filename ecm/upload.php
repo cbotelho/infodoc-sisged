@@ -26,6 +26,66 @@ try {
     throw new \PDOException($e->getMessage(), (int)$e->getCode());
 }
 
+function load_r2_sdk() {
+    static $loaded = false;
+
+    if ($loaded) {
+        return;
+    }
+
+    $autoload = dirname(__DIR__) . '/plugins/ext/file_storage_modules/r2/vendor/autoload.php';
+
+    if (!is_file($autoload)) {
+        throw new RuntimeException('AWS SDK nao encontrada para envio ao R2.');
+    }
+
+    require_once $autoload;
+    $loaded = true;
+}
+
+function build_r2_client() {
+    load_r2_sdk();
+
+    $endpoint = getenv('FILE_STORAGE_R2_ENDPOINT') ?: '';
+    $region = getenv('FILE_STORAGE_R2_REGION') ?: 'auto';
+    $accessKeyId = getenv('FILE_STORAGE_R2_ACCESS_KEY_ID') ?: '';
+    $secretAccessKey = getenv('FILE_STORAGE_R2_SECRET_ACCESS_KEY') ?: '';
+    $bucket = getenv('FILE_STORAGE_R2_BUCKET') ?: '';
+
+    if ($endpoint === '' || $accessKeyId === '' || $secretAccessKey === '' || $bucket === '') {
+        throw new RuntimeException('Configuracao R2 incompleta no ambiente.');
+    }
+
+    return new Aws\S3\S3Client([
+        'version' => 'latest',
+        'region' => $region,
+        'endpoint' => $endpoint,
+        'credentials' => [
+            'key' => $accessKeyId,
+            'secret' => $secretAccessKey,
+        ],
+        'signature_version' => 'v4',
+    ]);
+}
+
+function upload_file_to_r2($localPath, $fileName) {
+    $bucket = getenv('FILE_STORAGE_R2_BUCKET') ?: '';
+    $prefix = trim((string)(getenv('FILE_STORAGE_R2_OBJECT_PREFIX') ?: 'ged'), '/');
+    $parts = array_filter([$prefix, 'upload', $fileName], 'strlen');
+    $objectKey = implode('/', $parts);
+
+    $client = build_r2_client();
+
+    $client->putObject([
+        'Bucket' => $bucket,
+        'Key' => $objectKey,
+        'SourceFile' => $localPath,
+        'ContentType' => mime_content_type($localPath) ?: 'application/octet-stream',
+    ]);
+
+    return $objectKey;
+}
+
 function saveRegistro($pdo, $parent_id, $parent_item_id, $linked_id, $date_added, $date_updated, $created_by, $sort_order, $field_432, $field_433, $field_434, $field_436, $field_437, $field_463) {
     $stmt = $pdo->prepare("INSERT INTO app_entity_41 (parent_id, parent_item_id, linked_id, date_added, date_updated, created_by, sort_order, field_432, field_433, field_434, field_436, field_437, field_463, field_476, field_505) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->execute([$parent_id, $parent_item_id, $linked_id, $date_added, $date_updated, $created_by, $sort_order, $field_432, $field_433, $field_434, $field_436, $field_437, $field_463, null, '159']);
@@ -136,6 +196,15 @@ function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc) {
 
         if (!move_uploaded_file($arquivo['tmp_name'], $target_file)) {
             echo "Erro ao mover o arquivo {$arquivo['nome']} para {$target_file}. Verifique as permissões do diretório.";
+            continue;
+        }
+
+        if (strtolower(pathinfo($originalFileName, PATHINFO_EXTENSION)) === 'pdf') {
+            try {
+                upload_file_to_r2($target_file, basename($target_file));
+            } catch (Exception $e) {
+                echo "Erro ao enviar o arquivo {$arquivo['nome']} para o R2. Detalhes: {$e->getMessage()}";
+            }
         }
     }
 }
