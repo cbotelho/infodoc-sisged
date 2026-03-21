@@ -43,7 +43,7 @@ Se sua infraestrutura usar outro nome, ajuste a variavel `PROXY_EXTERNAL_NETWORK
 ## Variaveis recomendadas
 
 ```env
-IMAGE_TAG=1.0.11
+IMAGE_TAG=1.0.14
 APP_PORT=8081
 SIGNER_PORT=5000
 APP_BASE_URL=https://gea.seu-dominio.com.br
@@ -83,7 +83,7 @@ TOKEN_EXPIRY=3600
 5. Confirme que `SIGNER_SECRET_KEY` nao esta com placeholder e ja usa uma chave forte.
 6. Confirme que o compose path no Portainer aponta para `docker-compose.production.yml`.
 7. Confirme que o repositório e a branch escolhidos no Portainer correspondem a esta versao com suporte a R2.
-8. Confirme que `IMAGE_TAG=1.0.11` esta definido para baixar a nova versao das imagens publicadas.
+8. Confirme que `IMAGE_TAG=1.0.14` esta definido para baixar a nova versao das imagens publicadas.
 9. Confirme que o servidor consegue acessar `docker.io/cbotelho80` para fazer pull das imagens.
 
 ## Validacoes apos o deploy

@@ -14,6 +14,7 @@
 /assinatura/uploads/
 /assinador-python/pytest_out.txt
 /assinador-python/unittest*.txt
+/plugins/ext/file_storage_modules/r2/vendor/
 *.out
 Thumbs.db
 .DS_Store

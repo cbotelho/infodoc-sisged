@@ -1,6 +1,6 @@
 services:
   web:
-    image: cbotelho80/infodoc-web:1.0.13
+    image: cbotelho80/infodoc-web:${IMAGE_TAG:-1.0.14}
     container_name: infodoc-web
     restart: unless-stopped
     depends_on:
@@ -38,7 +38,7 @@ services:
       - proxy
 
   file-storage-worker:
-    image: cbotelho80/infodoc-file-storage-worker:1.0.13
+    image: cbotelho80/infodoc-file-storage-worker:${IMAGE_TAG:-1.0.14}
     container_name: infodoc-file-storage-worker
     restart: unless-stopped
     depends_on:
@@ -74,7 +74,7 @@ services:
       - proxy
 
   assinador-python:
-    image: cbotelho80/infodoc-assinador-python:1.0.13
+    image: cbotelho80/infodoc-assinador-python:${IMAGE_TAG:-1.0.14}
     container_name: infodoc-assinador
     restart: unless-stopped
     environment:
@@ -113,7 +113,7 @@ services:
 networks:
   proxy:
     external: true
-    name: proxy_net
+    name: ${PROXY_EXTERNAL_NETWORK:-proxy}
 
 volumes:
   infodoc_backups:
