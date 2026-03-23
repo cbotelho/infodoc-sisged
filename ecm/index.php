@@ -20,6 +20,7 @@ error_reporting(E_ALL);
 		<link rel="stylesheet" href="css/bootstrap.min.css" />
 		<link rel="stylesheet" href="fonts/icomoon/icomoon.css" />
 		<link rel="stylesheet" href="css/main.min.css" />
+        <link rel="stylesheet" href="css/jquery-ui.css" />
 
 		<!-- Other CSS includes plugins - Cleanedup unnecessary CSS -->
 		<!-- Chartist css -->
@@ -30,6 +31,12 @@ error_reporting(E_ALL);
         }
         .container{
             max-width:100%;
+        }
+        .ui-autocomplete {
+            max-height: 260px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 2000;
         }
     </style>
 </head>
@@ -85,7 +92,7 @@ error_reporting(E_ALL);
                         </div>
                         <div class="form-group col-md-4">
                             <label for="numero">* Nº da Caixa/Pasta</label>
-                            <input type="text" class="form-control" id="numero" name="numero" required>
+                            <input type="text" class="form-control" id="numero" name="numero" placeholder="Pesquise e selecione um número existente" autocomplete="off" required>
                         </div>
                         <div class="form-group col-md-4">
                             <label for="tratado_por">* Enviado Por:</label>
@@ -158,6 +165,7 @@ error_reporting(E_ALL);
 
     <!-- jQuery e Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="../js/ui/jquery-ui-1.10.3.custom.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
     <script>
@@ -165,9 +173,50 @@ error_reporting(E_ALL);
         // Carregar registros ao abrir a página
         loadRegistros(1);
 
+        $('#numero').autocomplete({
+            minLength: 2,
+            delay: 250,
+            source: function(request, response) {
+                $.ajax({
+                    url: 'get_numeros.php',
+                    type: 'GET',
+                    dataType: 'json',
+                    data: {
+                        term: request.term,
+                        format: 'json',
+                        secretaria_id: $('#secretaria').val(),
+                        setor_id: $('#setor').val(),
+                        tipo_id: $('#tipo').val()
+                    },
+                    success: function(data) {
+                        response(data);
+                    },
+                    error: function() {
+                        response([]);
+                    }
+                });
+            },
+            select: function(event, ui) {
+                $('#numero').val(ui.item.value);
+                $('#id_registro').val(ui.item.id || '');
+                return false;
+            },
+            focus: function(event, ui) {
+                $('#numero').val(ui.item.value);
+                return false;
+            }
+        });
+
+        $('#numero').on('input', function() {
+            $('#id_registro').val('');
+        });
+
         // Carregar opções de setor quando a secretaria é selecionada
         $('#secretaria').change(function() {
             var secretariaId = $(this).val();
+            $('#numero').val('');
+            $('#id_registro').val('');
+
             if (secretariaId) {
                 $.ajax({
                     url: 'get_setores.php',
@@ -175,16 +224,30 @@ error_reporting(E_ALL);
                     data: { secretaria_id: secretariaId },
                     success: function(data) {
                         $('#setor').html(data);
+                        $('#numero').autocomplete('close');
                     }
                 });
             } else {
                 $('#setor').html('<option value="">Selecione o Setor</option>');
+                $('#numero').autocomplete('close');
             }
+        });
+
+        $('#setor, #tipo').change(function() {
+            $('#numero').val('');
+            $('#id_registro').val('');
+            $('#numero').autocomplete('close');
         });
 
         // Atualizar a barra de progresso durante o upload
         $('#uploadForm').submit(function(event) {
             event.preventDefault();
+
+            if (!$('#id_registro').val()) {
+                $('#status').html('Selecione um Nº da Caixa/Pasta existente na lista de autocomplete.');
+                return;
+            }
+
             var formData = new FormData($(this)[0]);
 
             $.ajax({
