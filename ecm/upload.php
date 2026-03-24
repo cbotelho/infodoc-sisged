@@ -161,6 +161,41 @@ function get_registro_by_id($pdo, $registroId) {
     return $stmt->fetch();
 }
 
+function resolve_registro_id_by_numero($pdo, $numero, $secretaria = null, $setor = null, $tipo = null) {
+    $conditions = ['field_437 = ?'];
+    $params = [trim((string) $numero)];
+
+    if ($secretaria !== null && $secretaria !== '') {
+        $conditions[] = 'field_433 = ?';
+        $params[] = $secretaria;
+    }
+
+    if ($setor !== null && $setor !== '') {
+        $conditions[] = 'field_434 = ?';
+        $params[] = $setor;
+    }
+
+    if ($tipo !== null && $tipo !== '') {
+        $conditions[] = 'field_436 = ?';
+        $params[] = $tipo;
+    }
+
+    $sql = 'SELECT id FROM app_entity_41 WHERE ' . implode(' AND ', $conditions) . ' ORDER BY id DESC LIMIT 2';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $registros = $stmt->fetchAll();
+
+    if (count($registros) === 0) {
+        throw new InvalidArgumentException('Nenhum registro pai foi localizado para o numero informado com os filtros atuais.');
+    }
+
+    if (count($registros) > 1) {
+        throw new InvalidArgumentException('Mais de um registro pai foi localizado para o numero informado. Selecione o item desejado no autocomplete.');
+    }
+
+    return (int) $registros[0]['id'];
+}
+
 function validate_selected_registro($pdo, $registroId, $numero, $secretaria = null, $setor = null, $tipo = null) {
     $registro = get_registro_by_id($pdo, $registroId);
 
@@ -317,9 +352,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        $requiredFields = require_post_fields(['id_registro', 'numero', 'tratado_por', 'tipodoc']);
+        $requiredFields = require_post_fields(['numero', 'tratado_por', 'tipodoc']);
 
-        $registroId = (int) $requiredFields['id_registro'];
+        $registroId = isset($_POST['id_registro']) && trim((string) $_POST['id_registro']) !== '' ? (int) $_POST['id_registro'] : 0;
         $numero = $requiredFields['numero'];
         $tratadoPorId = $requiredFields['tratado_por'];
         $tipodoc = (int) $requiredFields['tipodoc'];
@@ -328,7 +363,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $tipo = isset($_POST['tipo']) ? trim((string) $_POST['tipo']) : null;
 
         if ($registroId <= 0) {
-            throw new InvalidArgumentException('O registro selecionado para a Caixa/Pasta e invalido ou nao existe.');
+            $registroId = resolve_registro_id_by_numero($pdo, $numero, $secretaria, $setor, $tipo);
         }
 
         validate_selected_registro($pdo, $registroId, $numero, $secretaria, $setor, $tipo);

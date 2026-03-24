@@ -1,6 +1,6 @@
 services:
   web:
-    image: infodoc-web:${IMAGE_TAG:-1.0.15}
+    image: infodoc-web:${IMAGE_TAG:-1.0.16}
     build:
       context: .
       dockerfile: Dockerfile
@@ -43,7 +43,7 @@ services:
       - r2_vendor:/var/www/html/plugins/ext/file_storage_modules/r2/vendor
 
   assinador-python:
-    image: infodoc-assinador-python:${IMAGE_TAG:-1.0.15}
+    image: infodoc-assinador-python:${IMAGE_TAG:-1.0.16}
     build:
       context: ./assinador-python
       dockerfile: Dockerfile

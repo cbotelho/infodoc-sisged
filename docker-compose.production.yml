@@ -1,6 +1,6 @@
 services:
   web:
-    image: cbotelho80/infodoc-web:1.0.15
+    image: cbotelho80/infodoc-web:${IMAGE_TAG:-1.0.16}
     command: ["apache2-foreground"]
     container_name: infodoc-web
     restart: unless-stopped
@@ -36,7 +36,7 @@ services:
       PHP_DISPLAY_ERRORS: ${PHP_DISPLAY_ERRORS:-Off}
       PHP_LOG_ERRORS: ${PHP_LOG_ERRORS:-On}
     ports:
-      - "18081:80"
+      - "${APP_PORT:-18081}:80"
     volumes:
       - infodoc_backups:/var/www/html/backups
       - infodoc_uploads:/var/www/html/uploads
@@ -48,7 +48,7 @@ services:
       - proxy
 
   file-storage-worker:
-    image: cbotelho80/infodoc-file-storage-worker:1.0.15
+    image: cbotelho80/infodoc-file-storage-worker:${IMAGE_TAG:-1.0.16}
     container_name: infodoc-file-storage-worker
     restart: unless-stopped
     depends_on:
@@ -84,7 +84,7 @@ services:
       - proxy
 
   assinador-python:
-    image: cbotelho80/infodoc-assinador-python:1.0.15
+    image: cbotelho80/infodoc-assinador-python:${IMAGE_TAG:-1.0.16}
     container_name: infodoc-assinador
     restart: unless-stopped
     environment:
@@ -111,7 +111,7 @@ services:
       PYTHON_SERVICE_PUBLIC_URL: ${PYTHON_SERVICE_PUBLIC_URL}
       APP_BASE_URL: ${APP_BASE_URL}
     ports:
-      - "15000:5000"
+      - "${SIGNER_PORT:-15000}:5000"
     volumes:
       - signer_certs:/app/certs
       - signer_temp:/app/temp
@@ -123,7 +123,7 @@ services:
 networks:
   proxy:
     external: true
-    name: proxy_net
+    name: ${PROXY_EXTERNAL_NETWORK:-proxy_net}
 
 volumes:
   infodoc_backups:

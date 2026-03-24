@@ -243,11 +243,6 @@ error_reporting(E_ALL);
         $('#uploadForm').submit(function(event) {
             event.preventDefault();
 
-            if (!$('#id_registro').val()) {
-                $('#status').html('Selecione um Nº da Caixa/Pasta existente na lista de autocomplete.');
-                return;
-            }
-
             var formData = new FormData($(this)[0]);
 
             $.ajax({
