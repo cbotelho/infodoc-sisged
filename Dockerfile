@@ -39,6 +39,10 @@ RUN if [ -f /var/www/html/plugins/ext/file_storage_modules/r2/composer.json ]; t
         composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader --working-dir=/var/www/html/plugins/ext/file_storage_modules/r2; \
     fi
 
+RUN if [ -f /var/www/html/assinatura/composer.json ]; then \
+        composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader --working-dir=/var/www/html/assinatura; \
+    fi
+
 RUN mkdir -p /var/www/html/backups \
     /var/www/html/cache \
     /var/www/html/log \
