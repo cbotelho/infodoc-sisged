@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Guia Rápido do Usuário – infodoc-sisged - infodoc-sisged</title>
+  <title>Manual do Usuário – infodoc-sisged - infodoc-sisged</title>
     <meta name="theme-color" content="#18252b">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="docs.css">
 </head>
-<body class="page page-guia-rapido-do-usuario-infodoc-sisged">
+<body class="page page-manual-do-usuario-infodoc-sisged">
   <div class="docs-shell">
     <aside class="sidebar">
       <div class="brand">
@@ -77,11 +77,11 @@
   <span class="nav-label">Licença e Créditos</span>
   <span class="nav-file">licenca.md</span>
 </a>
-<a class="nav-link is-active" href="guia_rapido.html">
+<a class="nav-link" href="guia_rapido.html">
   <span class="nav-label">Guia Rápido do Usuário – infodoc-sisged</span>
   <span class="nav-file">guia_rapido.md</span>
 </a>
-<a class="nav-link" href="manual_usuario.html">
+<a class="nav-link is-active" href="manual_usuario.html">
   <span class="nav-label">Manual do Usuário – infodoc-sisged</span>
   <span class="nav-file">manual_usuario.md</span>
 </a>
@@ -98,87 +98,215 @@
     <main class="content-area">
       <header class="page-header">
         <div>
-          <span class="eyebrow">guia_rapido.md</span>
-          <h1>Guia Rápido do Usuário – infodoc-sisged</h1>
+          <span class="eyebrow">manual_usuario.md</span>
+          <h1>Manual do Usuário – infodoc-sisged</h1>
         </div>
       </header>
             
       <div class="page-grid">
         <article class="document">
-          <h1 id="guia-rapido-do-usuario-infodoc-sisged">Guia Rápido do Usuário – infodoc-sisged</h1>
-<p>Este guia apresenta, de forma resumida, os principais passos para utilizar o sistema de Gestão Eletrônica de Documentos (GED) <strong>infodoc-sisged</strong>.</p>
+          <h1 id="manual-do-usuario-infodoc-sisged">Manual do Usuário – infodoc-sisged</h1>
+<p>Bem-vindo ao sistema de Gestão Eletrônica de Documentos (GED) <strong>infodoc-sisged</strong>! Este manual apresenta, de forma simples e ilustrada, como utilizar as principais funções do sistema.</p>
 <hr>
-<h2 id="1-acesso-ao-sistema">1. Acesso ao Sistema</h2>
+<h2 id="1-apresentacao">1. Apresentação</h2>
+<p>O infodoc-sisged é uma plataforma web para organizar, armazenar, buscar e compartilhar documentos digitais com segurança e praticidade.</p>
+<hr>
+<h2 id="2-acesso-ao-sistema">2. Acesso ao Sistema</h2>
 <ul>
-<li>Abra o navegador e acesse o endereço fornecido pela empresa.</li>
-<li>Faça login com seu usuário e senha.</li>
+<li>Abra seu navegador e acesse o endereço fornecido pela sua empresa (ex: <code>http://localhost/infodoc-sisged</code> ou um domínio próprio).</li>
+<li>Você verá a tela de login.</li>
 </ul>
-<h2 id="2-upload-de-documentos">2. Upload de Documentos</h2>
+<hr>
+<h2 id="3-cadastro-e-login">3. Cadastro e Login</h2>
+<ul>
+<li><strong>Login:</strong> Informe seu usuário e senha e clique em <strong>Entrar</strong>.</li>
+<li><strong>Esqueceu a senha?</strong> Clique em &quot;Esqueci minha senha&quot; e siga as instruções.</li>
+<li><strong>Primeiro acesso:</strong> Caso o cadastro seja feito pelo administrador, você receberá os dados de acesso por e-mail.</li>
+</ul>
+<hr>
+<h2 id="4-navegacao-pelo-menu">4. Navegação pelo Menu</h2>
+<p>Após o login, o menu principal estará disponível (geralmente à esquerda ou no topo). Os módulos principais são:</p>
+<ul>
+<li><strong>Documentos:</strong> Área central para upload, consulta e organização dos arquivos.</li>
+<li><strong>Pastas:</strong> Estrutura para separar documentos por categorias, projetos ou setores.</li>
+<li><strong>Busca:</strong> Pesquisa rápida e avançada de documentos.</li>
+<li><strong>Configurações:</strong> Ajustes de perfil, senha, idioma e preferências.</li>
+</ul>
+<hr>
+<h2 id="5-gestao-de-documentos">5. Gestão de Documentos</h2>
+<h3 id="5-1-upload-de-documentos">5.1 Upload de Documentos</h3>
 <ol>
 <li>Clique em <strong>Novo Documento</strong> ou <strong>Upload</strong>.</li>
-<li>Preencha os campos obrigatórios.</li>
-<li>Selecione o arquivo desejado e clique em <strong>Salvar</strong>.</li>
+<li>Preencha os campos obrigatórios (nome, descrição, categoria, etc).</li>
+<li>Clique em <strong>Selecionar Arquivo</strong> e escolha o arquivo desejado.</li>
+<li>Clique em <strong>Salvar</strong>.</li>
 </ol>
-<h2 id="3-organizacao-em-pastas">3. Organização em Pastas</h2>
+<p><strong>Exemplo ilustrado:</strong></p>
+<figure class="doc-image"><img src="imagens/upload_documento.svg" alt="Tela de upload de documento" loading="lazy" onerror="this.onerror=null;this.src='doc-image-placeholder.svg';this.parentElement.classList.add('is-placeholder')"><figcaption>Tela de upload de documento</figcaption></figure>
+<blockquote><em>Dica: Personalize a arte em <code>docs/imagens/upload_documento.svg</code> se quiser aproximar esta ilustração da interface real do ambiente.</em></blockquote>
+<h3 id="5-2-organizacao-em-pastas">5.2 Organização em Pastas</h3>
 <ul>
-<li>Crie pastas em <strong>Nova Pasta</strong>.</li>
-<li>Arraste e solte documentos para organizar.</li>
+<li>Crie novas pastas clicando em <strong>Nova Pasta</strong>.</li>
+<li>Arraste e solte documentos para dentro das pastas (se disponível).</li>
 </ul>
-<h2 id="4-busca-e-filtros">4. Busca e Filtros</h2>
+<p><strong>Exemplo ilustrado:</strong></p>
+<figure class="doc-image"><img src="imagens/organizacao_pastas.svg" alt="Organização em pastas" loading="lazy" onerror="this.onerror=null;this.src='doc-image-placeholder.svg';this.parentElement.classList.add('is-placeholder')"><figcaption>Organização em pastas</figcaption></figure>
+<h3 id="5-3-busca-e-filtros">5.3 Busca e Filtros</h3>
 <ul>
-<li>Utilize o campo de busca para localizar documentos.</li>
-<li>Use filtros por data, tipo ou responsável.</li>
+<li>Utilize o campo de busca para localizar documentos por nome, conteúdo ou tags.</li>
+<li>Use filtros por data, tipo de documento, responsável, etc.</li>
 </ul>
-<h2 id="5-download-e-compartilhamento">5. Download e Compartilhamento</h2>
+<p><strong>Exemplo ilustrado:</strong></p>
+<figure class="doc-image"><img src="imagens/busca_avancada.svg" alt="Busca avançada de documentos" loading="lazy" onerror="this.onerror=null;this.src='doc-image-placeholder.svg';this.parentElement.classList.add('is-placeholder')"><figcaption>Busca avançada de documentos</figcaption></figure>
+<h3 id="5-4-download-e-compartilhamento">5.4 Download e Compartilhamento</h3>
 <ul>
-<li>Clique no documento e selecione <strong>Download</strong>.</li>
-<li>Use <strong>Compartilhar</strong> para gerar link ou enviar a outro usuário.</li>
+<li>Clique sobre o documento desejado e selecione <strong>Download</strong> para baixar.</li>
+<li>Para compartilhar, clique em <strong>Compartilhar</strong> e gere um link ou envie para um usuário específico.</li>
 </ul>
-<h2 id="6-controle-de-versoes">6. Controle de Versões</h2>
+<p><strong>Exemplo ilustrado:</strong></p>
+<figure class="doc-image"><img src="imagens/compartilhar_documento.svg" alt="Opções de download e compartilhamento" loading="lazy" onerror="this.onerror=null;this.src='doc-image-placeholder.svg';this.parentElement.classList.add('is-placeholder')"><figcaption>Opções de download e compartilhamento</figcaption></figure>
+<h3 id="5-5-controle-de-versoes">5.5 Controle de Versões</h3>
 <ul>
-<li>Envie um novo arquivo com mesmo nome para criar nova versão.</li>
+<li>Ao enviar um novo arquivo com o mesmo nome, o sistema pode criar uma nova versão.</li>
 <li>Consulte o histórico de versões no detalhe do documento.</li>
 </ul>
-<h2 id="7-permissoes">7. Permissões</h2>
+<p><strong>Exemplo ilustrado:</strong></p>
+<figure class="doc-image"><img src="imagens/historico_versoes.svg" alt="Histórico de versões" loading="lazy" onerror="this.onerror=null;this.src='doc-image-placeholder.svg';this.parentElement.classList.add('is-placeholder')"><figcaption>Histórico de versões</figcaption></figure>
+<hr>
+<h2 id="6-permissoes-e-compartilhamento">6. Permissões e Compartilhamento</h2>
 <ul>
-<li>Defina quem pode visualizar, editar ou excluir documentos ao cadastrar ou editar.</li>
-</ul>
-<h2 id="8-auditoria-e-relatorios">8. Auditoria e Relatórios</h2>
-<ul>
-<li>Consulte o módulo <strong>Auditoria</strong> para ver histórico de ações.</li>
-<li>Gere relatórios no menu <strong>Relatórios</strong>.</li>
-</ul>
-<h2 id="9-configuracoes-do-usuario">9. Configurações do Usuário</h2>
-<ul>
-<li>Altere senha, idioma e preferências no seu perfil.</li>
-</ul>
-<h2 id="10-integracao-via-api">10. Integração via API</h2>
-<ul>
-<li>Solicite ao administrador um token de API.</li>
-<li>Use comandos como:</li>
-</ul>
-<pre><code class="language-bash">  curl -X POST http://localhost/infodoc-sisged/api/rest.php -d &#x27;token=SEU_TOKEN&amp;action=list_documents&#x27;</code></pre>
-<h2 id="11-suporte">11. Suporte</h2>
-<ul>
-<li>Em caso de dúvidas, consulte o manual completo ou entre em contato com o suporte da empresa.</li>
+<li>Os documentos podem ter permissões restritas por usuário ou grupo.</li>
+<li>O administrador define quem pode visualizar, editar ou excluir cada documento.</li>
+<li>Para compartilhar, utilize a função <strong>Compartilhar</strong> e selecione os usuários ou grupos desejados.</li>
 </ul>
 <hr>
-<p><strong>Dica:</strong> Para melhor experiência, utilize navegadores atualizados (Chrome, Firefox, Edge).</p>
+<h2 id="7-consulta-de-historico">7. Consulta de Histórico</h2>
+<ul>
+<li>Cada documento possui um histórico de alterações e acessos.</li>
+<li>Para visualizar, acesse o detalhe do documento e clique em <strong>Histórico</strong>.</li>
+</ul>
+<hr>
+<h2 id="8-configuracoes-do-usuario">8. Configurações do Usuário</h2>
+<ul>
+<li>Clique em seu nome ou avatar no topo da tela.</li>
+<li>Altere senha, idioma, foto de perfil e preferências pessoais.</li>
+</ul>
+<hr>
+<h2 id="8-1-fluxos-para-outros-modulos">8.1 Fluxos para Outros Módulos</h2>
+<h3 id="auditoria-e-historico-de-acoes">Auditoria e Histórico de Ações</h3>
+<ul>
+<li>Acesse o módulo <strong>Auditoria</strong> ou <strong>Histórico</strong> no menu administrativo.</li>
+<li>Visualize logs de acesso, alterações e exclusões de documentos.</li>
+<li>Filtre por usuário, data, ação ou documento.</li>
+</ul>
+<p><strong>Exemplo ilustrado:</strong></p>
+<figure class="doc-image"><img src="imagens/auditoria.svg" alt="Tela de auditoria" loading="lazy" onerror="this.onerror=null;this.src='doc-image-placeholder.svg';this.parentElement.classList.add('is-placeholder')"><figcaption>Tela de auditoria</figcaption></figure>
+<h3 id="relatorios">Relatórios</h3>
+<ul>
+<li>No menu principal, clique em <strong>Relatórios</strong>.</li>
+<li>Escolha o tipo de relatório (por usuário, por data, por pasta, etc).</li>
+<li>Defina filtros e exporte em PDF, Excel ou CSV.</li>
+</ul>
+<p><strong>Exemplo ilustrado:</strong></p>
+<figure class="doc-image"><img src="imagens/relatorios.svg" alt="Tela de relatórios" loading="lazy" onerror="this.onerror=null;this.src='doc-image-placeholder.svg';this.parentElement.classList.add('is-placeholder')"><figcaption>Tela de relatórios</figcaption></figure>
+<h3 id="permissoes-avancadas">Permissões Avançadas</h3>
+<ul>
+<li>No cadastro ou edição de documentos, clique em <strong>Permissões</strong>.</li>
+<li>Defina quais usuários ou grupos podem visualizar, editar ou excluir.</li>
+<li>Utilize permissões hierárquicas para facilitar a gestão em grandes equipes.</li>
+</ul>
+<p><strong>Exemplo ilustrado:</strong></p>
+<figure class="doc-image"><img src="imagens/permissoes_avancadas.svg" alt="Configuração de permissões" loading="lazy" onerror="this.onerror=null;this.src='doc-image-placeholder.svg';this.parentElement.classList.add('is-placeholder')"><figcaption>Configuração de permissões</figcaption></figure>
+<hr>
+<h2 id="9-fluxos-especificos">9. Fluxos Específicos</h2>
+<h3 id="9-1-integracao-via-api-rest">9.1 Integração via API (REST)</h3>
+<p>O sistema permite integração com outros sistemas por meio de APIs RESTful.</p>
+<p><strong>Exemplo de uso:</strong></p>
+<ol>
+<li>Solicite ao administrador um token de acesso à API.</li>
+<li>Realize requisições HTTP para os endpoints disponíveis, por exemplo:</li>
+</ol>
+<pre><code class="language-bash">   curl -X POST http://localhost/infodoc-sisged/api/rest.php -d &#x27;token=SEU_TOKEN&amp;action=list_documents&#x27;</code></pre>
+<ol>
+<li>Consulte a documentação técnica para detalhes dos parâmetros e formatos de resposta.</li>
+</ol>
+<p><strong>Principais ações da API:</strong></p>
+<ul>
+<li>Listar documentos</li>
+<li>Fazer upload via API</li>
+<li>Buscar documentos por critérios</li>
+<li>Baixar arquivos</li>
+</ul>
+<h3 id="9-2-cadastro-de-usuarios">9.2 Cadastro de Usuários</h3>
+<h4 id="a-cadastro-pelo-administrador">a) Cadastro pelo Administrador</h4>
+<ol>
+<li>Acesse o módulo <strong>Usuários</strong> no menu administrativo.</li>
+<li>Clique em <strong>Novo Usuário</strong>.</li>
+<li>Preencha os dados obrigatórios (nome, e-mail, grupo, etc).</li>
+<li>Defina permissões e grupos de acesso.</li>
+<li>O novo usuário receberá um e-mail com as instruções de acesso (se configurado).</li>
+</ol>
+<h4 id="b-auto-registro-quando-habilitado">b) Auto-registro (quando habilitado)</h4>
+<ol>
+<li>Na tela de login, clique em <strong>Registrar-se</strong> ou <strong>Criar Conta</strong>.</li>
+<li>Preencha o formulário de cadastro.</li>
+<li>Confirme o e-mail (se necessário).</li>
+<li>Aguarde aprovação do administrador (se exigido pela política da empresa).</li>
+</ol>
+<h3 id="9-3-dicas-avancadas-de-uso">9.3 Dicas Avançadas de Uso</h3>
+<ul>
+<li><strong>Busca Avançada:</strong> Use filtros combinados (data, tags, autor) para refinar resultados.</li>
+<li><strong>Favoritos:</strong> Marque documentos como favoritos para acesso rápido.</li>
+<li><strong>Notificações:</strong> Ative notificações para ser avisado sobre alterações em documentos importantes.</li>
+<li><strong>Histórico de Versões:</strong> Consulte versões anteriores e restaure se necessário.</li>
+<li><strong>Exportação de Dados:</strong> Utilize funções de exportação para gerar relatórios ou cópias de segurança dos seus documentos.</li>
+<li><strong>Atalhos de Teclado:</strong> Alguns módulos oferecem atalhos para agilizar operações (consulte o menu de ajuda do sistema).</li>
+<li><strong>Personalização:</strong> Ajuste preferências de idioma, tema e notificações no seu perfil.</li>
+</ul>
+<hr>
+<h2 id="10-duvidas-frequentes">10. Dúvidas Frequentes</h2>
+<ul>
+<li><strong>Não consigo fazer upload:</strong> Verifique o tamanho do arquivo e sua conexão.</li>
+<li><strong>Não encontro um documento:</strong> Use filtros e verifique se possui permissão de acesso.</li>
+<li><strong>Erro de permissão:</strong> Fale com o administrador do sistema.</li>
+</ul>
+<hr>
+<h2 id="11-contato-e-suporte">11. Contato e Suporte</h2>
+<ul>
+<li>Para dúvidas técnicas ou problemas, entre em contato com o suporte da sua empresa ou o administrador do sistema.</li>
+<li>Consulte também a seção de FAQ e a documentação técnica para mais informações.</li>
+</ul>
+<hr>
+<p><strong>Dica:</strong> Para melhor experiência, utilize navegadores atualizados (Google Chrome, Firefox, Edge).</p>
+<hr>
+<p><em>Este manual pode ser atualizado conforme novas funcionalidades forem implementadas.</em></p>
         </article>
         <aside class="toc">
           <div class="toc-card">
             <h2>Nesta pagina</h2>
-            <a class="toc-link" href="#1-acesso-ao-sistema">1. Acesso ao Sistema</a>
-<a class="toc-link" href="#2-upload-de-documentos">2. Upload de Documentos</a>
-<a class="toc-link" href="#3-organizacao-em-pastas">3. Organização em Pastas</a>
-<a class="toc-link" href="#4-busca-e-filtros">4. Busca e Filtros</a>
-<a class="toc-link" href="#5-download-e-compartilhamento">5. Download e Compartilhamento</a>
-<a class="toc-link" href="#6-controle-de-versoes">6. Controle de Versões</a>
-<a class="toc-link" href="#7-permissoes">7. Permissões</a>
-<a class="toc-link" href="#8-auditoria-e-relatorios">8. Auditoria e Relatórios</a>
-<a class="toc-link" href="#9-configuracoes-do-usuario">9. Configurações do Usuário</a>
-<a class="toc-link" href="#10-integracao-via-api">10. Integração via API</a>
-<a class="toc-link" href="#11-suporte">11. Suporte</a>
+            <a class="toc-link" href="#1-apresentacao">1. Apresentação</a>
+<a class="toc-link" href="#2-acesso-ao-sistema">2. Acesso ao Sistema</a>
+<a class="toc-link" href="#3-cadastro-e-login">3. Cadastro e Login</a>
+<a class="toc-link" href="#4-navegacao-pelo-menu">4. Navegação pelo Menu</a>
+<a class="toc-link" href="#5-gestao-de-documentos">5. Gestão de Documentos</a>
+<a class="toc-link toc-sub" href="#5-1-upload-de-documentos">5.1 Upload de Documentos</a>
+<a class="toc-link toc-sub" href="#5-2-organizacao-em-pastas">5.2 Organização em Pastas</a>
+<a class="toc-link toc-sub" href="#5-3-busca-e-filtros">5.3 Busca e Filtros</a>
+<a class="toc-link toc-sub" href="#5-4-download-e-compartilhamento">5.4 Download e Compartilhamento</a>
+<a class="toc-link toc-sub" href="#5-5-controle-de-versoes">5.5 Controle de Versões</a>
+<a class="toc-link" href="#6-permissoes-e-compartilhamento">6. Permissões e Compartilhamento</a>
+<a class="toc-link" href="#7-consulta-de-historico">7. Consulta de Histórico</a>
+<a class="toc-link" href="#8-configuracoes-do-usuario">8. Configurações do Usuário</a>
+<a class="toc-link" href="#8-1-fluxos-para-outros-modulos">8.1 Fluxos para Outros Módulos</a>
+<a class="toc-link toc-sub" href="#auditoria-e-historico-de-acoes">Auditoria e Histórico de Ações</a>
+<a class="toc-link toc-sub" href="#relatorios">Relatórios</a>
+<a class="toc-link toc-sub" href="#permissoes-avancadas">Permissões Avançadas</a>
+<a class="toc-link" href="#9-fluxos-especificos">9. Fluxos Específicos</a>
+<a class="toc-link toc-sub" href="#9-1-integracao-via-api-rest">9.1 Integração via API (REST)</a>
+<a class="toc-link toc-sub" href="#9-2-cadastro-de-usuarios">9.2 Cadastro de Usuários</a>
+<a class="toc-link toc-sub" href="#9-3-dicas-avancadas-de-uso">9.3 Dicas Avançadas de Uso</a>
+<a class="toc-link" href="#10-duvidas-frequentes">10. Dúvidas Frequentes</a>
+<a class="toc-link" href="#11-contato-e-suporte">11. Contato e Suporte</a>
           </div>
         </aside>
       </div>

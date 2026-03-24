@@ -41,6 +41,16 @@ Esta documentação está pronta para ser utilizada com o [MkDocs](https://www.m
    ```
    Os arquivos serão gerados na pasta `site/`.
 
+### Geracao HTML local com menu lateral
+
+Se quiser publicar rapidamente a documentacao desta pasta sem depender do MkDocs, execute:
+
+```bash
+python docs/build_html.py
+```
+
+Esse comando gera `index.html`, os arquivos `*.html` correspondentes aos `*.md` e o estilo compartilhado `docs.css` diretamente na pasta `docs/`.
+
 ---
 
 Se precisar de ajuda para customizar o visual, automatizar deploy ou integrar com outros sistemas, consulte os arquivos desta pasta ou entre em contato com o responsável pelo projeto.

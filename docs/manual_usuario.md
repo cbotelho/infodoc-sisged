@@ -44,37 +44,37 @@ Após o login, o menu principal estará disponível (geralmente à esquerda ou n
 4. Clique em **Salvar**.
 
 **Exemplo ilustrado:**
-![Tela de upload de documento](imagens/upload_documento.png)
+![Tela de upload de documento](imagens/upload_documento.svg)
 
-> *Dica: Capture a tela do formulário de upload e salve como `docs/imagens/upload_documento.png` para ilustrar este passo.*
+> *Dica: Personalize a arte em `docs/imagens/upload_documento.svg` se quiser aproximar esta ilustração da interface real do ambiente.*
 
 ### 5.2 Organização em Pastas
 - Crie novas pastas clicando em **Nova Pasta**.
 - Arraste e solte documentos para dentro das pastas (se disponível).
 
 **Exemplo ilustrado:**
-![Organização em pastas](imagens/organizacao_pastas.png)
+![Organização em pastas](imagens/organizacao_pastas.svg)
 
 ### 5.3 Busca e Filtros
 - Utilize o campo de busca para localizar documentos por nome, conteúdo ou tags.
 - Use filtros por data, tipo de documento, responsável, etc.
 
 **Exemplo ilustrado:**
-![Busca avançada de documentos](imagens/busca_avancada.png)
+![Busca avançada de documentos](imagens/busca_avancada.svg)
 
 ### 5.4 Download e Compartilhamento
 - Clique sobre o documento desejado e selecione **Download** para baixar.
 - Para compartilhar, clique em **Compartilhar** e gere um link ou envie para um usuário específico.
 
 **Exemplo ilustrado:**
-![Opções de download e compartilhamento](imagens/compartilhar_documento.png)
+![Opções de download e compartilhamento](imagens/compartilhar_documento.svg)
 
 ### 5.5 Controle de Versões
 - Ao enviar um novo arquivo com o mesmo nome, o sistema pode criar uma nova versão.
 - Consulte o histórico de versões no detalhe do documento.
 
 **Exemplo ilustrado:**
-![Histórico de versões](imagens/historico_versoes.png)
+![Histórico de versões](imagens/historico_versoes.svg)
 
 ---
 
@@ -108,7 +108,7 @@ Após o login, o menu principal estará disponível (geralmente à esquerda ou n
 - Filtre por usuário, data, ação ou documento.
 
 **Exemplo ilustrado:**
-![Tela de auditoria](imagens/auditoria.png)
+![Tela de auditoria](imagens/auditoria.svg)
 
 ### Relatórios
 - No menu principal, clique em **Relatórios**.
@@ -116,7 +116,7 @@ Após o login, o menu principal estará disponível (geralmente à esquerda ou n
 - Defina filtros e exporte em PDF, Excel ou CSV.
 
 **Exemplo ilustrado:**
-![Tela de relatórios](imagens/relatorios.png)
+![Tela de relatórios](imagens/relatorios.svg)
 
 ### Permissões Avançadas
 - No cadastro ou edição de documentos, clique em **Permissões**.
@@ -124,7 +124,7 @@ Após o login, o menu principal estará disponível (geralmente à esquerda ou n
 - Utilize permissões hierárquicas para facilitar a gestão em grandes equipes.
 
 **Exemplo ilustrado:**
-![Configuração de permissões](imagens/permissoes_avancadas.png)
+![Configuração de permissões](imagens/permissoes_avancadas.svg)
 
 ---
 

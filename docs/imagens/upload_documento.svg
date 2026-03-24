@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Upload de documento</title>
+  <desc id="desc">Ilustracao vetorial do formulario de upload de documento.</desc>
+  <rect width="1280" height="720" fill="#f4ecdf" />
+  <rect x="80" y="90" width="1120" height="540" rx="32" fill="#fffaf3" stroke="#dccbb5" />
+  <rect x="80" y="90" width="1120" height="84" rx="32" fill="#18252b" />
+  <rect x="140" y="235" width="430" height="270" rx="26" fill="#f7efe2" stroke="#d4c1a8" stroke-dasharray="16 12" />
+  <path d="M355 335l65-72 65 72h-42v78h-46v-78z" fill="#b85c2d" />
+  <rect x="640" y="235" width="430" height="54" rx="16" fill="#f7efe2" />
+  <rect x="640" y="320" width="430" height="54" rx="16" fill="#f7efe2" />
+  <rect x="640" y="405" width="430" height="54" rx="16" fill="#f7efe2" />
+  <rect x="895" y="520" width="175" height="54" rx="18" fill="#b85c2d" />
+  <text x="135" y="145" font-family="Georgia, serif" font-size="42" font-weight="700" fill="#fff7eb">Novo documento</text>
+  <text x="250" y="470" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" fill="#7b4a29">Selecionar arquivo</text>
+  <text x="665" y="268" font-family="Segoe UI, Arial, sans-serif" font-size="22" fill="#625d56">Titulo do documento</text>
+  <text x="665" y="353" font-family="Segoe UI, Arial, sans-serif" font-size="22" fill="#625d56">Categoria</text>
+  <text x="665" y="438" font-family="Segoe UI, Arial, sans-serif" font-size="22" fill="#625d56">Descricao resumida</text>
+  <text x="955" y="554" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700" fill="#fff7eb">Salvar</text>
+</svg>

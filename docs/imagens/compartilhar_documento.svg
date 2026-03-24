@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Compartilhamento de documento</title>
+  <desc id="desc">Ilustracao vetorial do fluxo de compartilhamento.</desc>
+  <rect width="1280" height="720" fill="#f3ebde" />
+  <rect x="90" y="80" width="1100" height="560" rx="30" fill="#fffaf2" stroke="#d8c8b1" />
+  <rect x="140" y="150" width="430" height="420" rx="24" fill="#f7efe2" />
+  <rect x="650" y="150" width="390" height="300" rx="24" fill="#f7efe2" />
+  <rect x="650" y="485" width="220" height="54" rx="18" fill="#b85c2d" />
+  <circle cx="725" cy="250" r="38" fill="#2f6b73" />
+  <circle cx="805" cy="310" r="38" fill="#2f6b73" opacity="0.82" />
+  <circle cx="885" cy="250" r="38" fill="#2f6b73" opacity="0.64" />
+  <path d="M725 250l80 60 80-60" fill="none" stroke="#b85c2d" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+  <rect x="190" y="205" width="280" height="28" rx="14" fill="#d9ccb7" />
+  <rect x="190" y="260" width="220" height="18" rx="9" fill="#e4d7c4" />
+  <rect x="190" y="355" width="280" height="18" rx="9" fill="#e4d7c4" />
+  <rect x="190" y="410" width="230" height="18" rx="9" fill="#e4d7c4" />
+  <text x="140" y="125" font-family="Georgia, serif" font-size="38" font-weight="700" fill="#18252b">Documento e compartilhamento</text>
+  <text x="693" y="520" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700" fill="#fff7eb">Gerar link</text>
+</svg>

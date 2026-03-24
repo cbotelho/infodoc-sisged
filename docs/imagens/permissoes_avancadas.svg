@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Permissoes avancadas</title>
+  <desc id="desc">Ilustracao vetorial da tela de configuracao de permissoes.</desc>
+  <rect width="1280" height="720" fill="#f2eadb" />
+  <rect x="70" y="80" width="1140" height="560" rx="34" fill="#fffaf2" stroke="#d7c7b0" />
+  <rect x="120" y="150" width="430" height="420" rx="26" fill="#f7efe2" />
+  <rect x="610" y="150" width="480" height="420" rx="26" fill="#fbf7ef" stroke="#dccbb3" />
+  <rect x="165" y="220" width="340" height="22" rx="11" fill="#ddd1bf" />
+  <rect x="165" y="282" width="290" height="16" rx="8" fill="#e7dbc9" />
+  <rect x="165" y="336" width="310" height="16" rx="8" fill="#e7dbc9" />
+  <g>
+    <rect x="665" y="220" width="370" height="64" rx="18" fill="#f4ecdf" />
+    <rect x="665" y="312" width="370" height="64" rx="18" fill="#f4ecdf" />
+    <rect x="665" y="404" width="370" height="64" rx="18" fill="#f4ecdf" />
+    <circle cx="980" cy="252" r="18" fill="#2f6b73" />
+    <circle cx="980" cy="344" r="18" fill="#b85c2d" />
+    <circle cx="980" cy="436" r="18" fill="#2f6b73" />
+  </g>
+  <path d="M255 446c0-46 37-83 83-83s83 37 83 83v62H255z" fill="#2f6b73" opacity="0.88" />
+  <circle cx="338" cy="336" r="54" fill="#2f6b73" opacity="0.88" />
+  <text x="120" y="128" font-family="Georgia, serif" font-size="40" font-weight="700" fill="#18252b">Governanca de acesso</text>
+  <text x="695" y="260" font-family="Segoe UI, Arial, sans-serif" font-size="24" fill="#5c615f">Visualizar documentos</text>
+  <text x="695" y="352" font-family="Segoe UI, Arial, sans-serif" font-size="24" fill="#5c615f">Editar metadados</text>
+  <text x="695" y="444" font-family="Segoe UI, Arial, sans-serif" font-size="24" fill="#5c615f">Excluir registros</text>
+</svg>

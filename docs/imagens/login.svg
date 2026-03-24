@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Tela de login</title>
+  <desc id="desc">Ilustracao vetorial da tela de login do infodoc-sisged.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#16323a" />
+      <stop offset="100%" stop-color="#285b60" />
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="#efe3d1" />
+  <rect x="60" y="60" width="1160" height="600" rx="34" fill="url(#bg)" />
+  <circle cx="245" cy="210" r="78" fill="#f4ede2" opacity="0.18" />
+  <rect x="770" y="120" width="320" height="470" rx="28" fill="#fffaf1" />
+  <rect x="815" y="190" width="230" height="18" rx="9" fill="#18313a" opacity="0.16" />
+  <rect x="815" y="250" width="230" height="56" rx="16" fill="#f0e6d8" />
+  <rect x="815" y="330" width="230" height="56" rx="16" fill="#f0e6d8" />
+  <rect x="815" y="420" width="230" height="56" rx="18" fill="#b85c2d" />
+  <text x="815" y="170" font-family="Segoe UI, Arial, sans-serif" font-size="34" font-weight="700" fill="#18252b">Acesso seguro</text>
+  <text x="815" y="286" font-family="Segoe UI, Arial, sans-serif" font-size="22" fill="#5f676d">Usuario</text>
+  <text x="815" y="366" font-family="Segoe UI, Arial, sans-serif" font-size="22" fill="#5f676d">Senha</text>
+  <text x="883" y="455" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700" fill="#fff7eb">Entrar</text>
+  <text x="140" y="190" font-family="Georgia, serif" font-size="54" font-weight="700" fill="#fff6e9">infodoc-sisged</text>
+  <text x="140" y="245" font-family="Segoe UI, Arial, sans-serif" font-size="28" fill="#d9ebe3">Portal de autenticacao e acesso ao acervo documental.</text>
+  <text x="140" y="315" font-family="Segoe UI, Arial, sans-serif" font-size="22" fill="#f8ead8">Tela ilustrativa para treinamentos, onboarding e apoio de suporte.</text>
+</svg>

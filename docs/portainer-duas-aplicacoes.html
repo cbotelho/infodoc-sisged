@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Guia Rápido do Usuário – infodoc-sisged - infodoc-sisged</title>
+  <title>Deploy via Portainer com duas aplicacoes publicas - infodoc-sisged</title>
     <meta name="theme-color" content="#18252b">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="docs.css">
 </head>
-<body class="page page-guia-rapido-do-usuario-infodoc-sisged">
+<body class="page page-deploy-via-portainer-com-duas-aplicacoes-publicas">
   <div class="docs-shell">
     <aside class="sidebar">
       <div class="brand">
@@ -77,7 +77,7 @@
   <span class="nav-label">Licença e Créditos</span>
   <span class="nav-file">licenca.md</span>
 </a>
-<a class="nav-link is-active" href="guia_rapido.html">
+<a class="nav-link" href="guia_rapido.html">
   <span class="nav-label">Guia Rápido do Usuário – infodoc-sisged</span>
   <span class="nav-file">guia_rapido.md</span>
 </a>
@@ -85,7 +85,7 @@
   <span class="nav-label">Manual do Usuário – infodoc-sisged</span>
   <span class="nav-file">manual_usuario.md</span>
 </a>
-<a class="nav-link" href="portainer-duas-aplicacoes.html">
+<a class="nav-link is-active" href="portainer-duas-aplicacoes.html">
   <span class="nav-label">Deploy via Portainer com duas aplicacoes publicas</span>
   <span class="nav-file">portainer-duas-aplicacoes.md</span>
 </a>
@@ -98,87 +98,138 @@
     <main class="content-area">
       <header class="page-header">
         <div>
-          <span class="eyebrow">guia_rapido.md</span>
-          <h1>Guia Rápido do Usuário – infodoc-sisged</h1>
+          <span class="eyebrow">portainer-duas-aplicacoes.md</span>
+          <h1>Deploy via Portainer com duas aplicacoes publicas</h1>
         </div>
       </header>
             
       <div class="page-grid">
         <article class="document">
-          <h1 id="guia-rapido-do-usuario-infodoc-sisged">Guia Rápido do Usuário – infodoc-sisged</h1>
-<p>Este guia apresenta, de forma resumida, os principais passos para utilizar o sistema de Gestão Eletrônica de Documentos (GED) <strong>infodoc-sisged</strong>.</p>
-<hr>
-<h2 id="1-acesso-ao-sistema">1. Acesso ao Sistema</h2>
+          <h1 id="deploy-via-portainer-com-duas-aplicacoes-publicas">Deploy via Portainer com duas aplicacoes publicas</h1>
+<p>Este guia publica o GED PHP e o assinador Python em dois dominios separados, mantendo a comunicacao interna entre os containers pela rede Docker.</p>
+<h2 id="topologia">Topologia</h2>
 <ul>
-<li>Abra o navegador e acesse o endereço fornecido pela empresa.</li>
-<li>Faça login com seu usuário e senha.</li>
+<li>GED PHP: <code>https://gea.seu-dominio.com.br</code></li>
+<li>Assinador Python: <code>https://assinador.seu-dominio.com.br</code></li>
+<li>Comunicacao interna entre containers: <code>http://assinador-python:5000</code></li>
 </ul>
-<h2 id="2-upload-de-documentos">2. Upload de Documentos</h2>
+<h2 id="antes-de-criar-a-stack">Antes de criar a stack</h2>
 <ol>
-<li>Clique em <strong>Novo Documento</strong> ou <strong>Upload</strong>.</li>
-<li>Preencha os campos obrigatórios.</li>
-<li>Selecione o arquivo desejado e clique em <strong>Salvar</strong>.</li>
+<li>Garanta que a VPS tenha Docker, Portainer e acesso ao repositório.</li>
+<li>Garanta que exista uma rede Docker externa para o proxy reverso.</li>
+<li>Garanta que os dois dominios apontem para a VPS.</li>
+<li>Garanta que o proxy reverso ou publicador HTTP da sua infraestrutura encaminhe:</li>
 </ol>
-<h2 id="3-organizacao-em-pastas">3. Organização em Pastas</h2>
 <ul>
-<li>Crie pastas em <strong>Nova Pasta</strong>.</li>
-<li>Arraste e solte documentos para organizar.</li>
+<li><code>gea.seu-dominio.com.br</code> para a porta <code>8081</code> do host ou diretamente para o container <code>infodoc-web</code>.</li>
+<li><code>assinador.seu-dominio.com.br</code> para a porta <code>5000</code> do host ou diretamente para o container <code>infodoc-assinador</code>.</li>
 </ul>
-<h2 id="4-busca-e-filtros">4. Busca e Filtros</h2>
+<ol>
+<li>Garanta que o banco de dados aceite conexao a partir da VPS.</li>
+</ol>
+<h2 id="criar-a-rede-externa-do-proxy">Criar a rede externa do proxy</h2>
+<p>Se a rede ainda nao existir, crie antes do deploy:</p>
+<pre><code class="language-bash">docker network create proxy</code></pre>
+<p>Se sua infraestrutura usar outro nome, ajuste a variavel <code>PROXY_EXTERNAL_NETWORK</code> no Portainer.</p>
+<h2 id="criar-a-stack-no-portainer">Criar a stack no Portainer</h2>
+<ol>
+<li>Acesse <code>Stacks</code>.</li>
+<li>Clique em <code>Add stack</code>.</li>
+<li>Defina o nome da stack como <code>infodoc-sisged</code>.</li>
+<li>Escolha <code>Repository</code>.</li>
+<li>Informe a URL do repositório.</li>
+<li>Informe a branch correta.</li>
+<li>Em <code>Compose path</code>, informe <code>docker-compose.production.yml</code>.</li>
+<li>Em <code>Environment variables</code>, cadastre as variaveis abaixo ajustando para o seu ambiente.</li>
+<li>Garanta que a VPS tenha acesso ao Docker Hub para baixar as imagens publicadas no namespace <code>cbotelho80</code>.</li>
+</ol>
+<h2 id="variaveis-recomendadas">Variaveis recomendadas</h2>
+<pre><code class="language-env">IMAGE_TAG=1.0.16
+APP_PORT=8081
+SIGNER_PORT=5000
+APP_BASE_URL=https://gea.seu-dominio.com.br
+PYTHON_SERVICE_PUBLIC_URL=https://assinador.seu-dominio.com.br
+PROXY_EXTERNAL_NETWORK=proxy
+
+DB_SERVER=seu-host-do-banco
+DB_SERVER_PORT=3306
+DB_SERVER_USERNAME=seu-usuario
+DB_SERVER_PASSWORD=sua-senha
+DB_DATABASE=seu_banco
+
+DB_HOST=seu-host-do-banco
+DB_PORT=3306
+DB_USER=seu-usuario
+DB_PASSWORD=sua-senha
+DB_NAME=seu_banco
+
+SIGNER_SECRET_KEY=gere-uma-chave-forte-com-pelo-menos-32-caracteres
+TOKEN_EXPIRY=3600</code></pre>
+<h2 id="fazer-o-deploy">Fazer o deploy</h2>
+<ol>
+<li>Clique em <code>Deploy the stack</code>.</li>
+<li>Aguarde o pull das imagens <code>cbotelho80/infodoc-web</code>, <code>cbotelho80/infodoc-assinador-python</code> e <code>cbotelho80/infodoc-file-storage-worker</code> na tag definida em <code>IMAGE_TAG</code>.</li>
+<li>A imagem da aplicação cria automaticamente em runtime as pastas <code>backups</code>, <code>uploads/attachments</code>, <code>uploads/attachments_preview</code>, <code>uploads/images</code> e <code>uploads/users</code>, inclusive quando os volumes estão vazios.</li>
+<li>Confirme se os containers <code>infodoc-web</code>, <code>infodoc-assinador</code> e <code>infodoc-file-storage-worker</code> ficaram em estado <code>running</code>.</li>
+<li>Valide no Portainer se os tres servicos estao conectados a rede padrao da stack e tambem a rede externa definida em <code>PROXY_EXTERNAL_NETWORK</code>.</li>
+</ol>
+<h2 id="checklist-final-antes-do-deploy">Checklist final antes do deploy</h2>
+<ol>
+<li>Confirme que a rede Docker externa <code>proxy</code> ja existe na VPS.</li>
+<li>Confirme que o DNS de <code>gea.infodocsisged.com.br</code> e <code>assinador.infodocsisged.com.br</code> aponta para a VPS.</li>
+<li>Confirme que o banco <code>sisged_gea</code> aceita conexao da VPS em <code>195.200.4.41:3306</code>.</li>
+<li>Confirme que <code>FILE_STORAGE_R2_BUCKET=gea</code> esta definido nas variaveis da stack.</li>
+<li>Confirme que <code>SIGNER_SECRET_KEY</code> nao esta com placeholder e ja usa uma chave forte.</li>
+<li>Confirme que o compose path no Portainer aponta para <code>docker-compose.production.yml</code>.</li>
+<li>Confirme que o repositório e a branch escolhidos no Portainer correspondem a esta versao com suporte a R2.</li>
+<li>Confirme que <code>IMAGE_TAG=1.0.16</code> esta definido para baixar a nova versao das imagens publicadas.</li>
+<li>Confirme que o servidor consegue acessar <code>docker.io/cbotelho80</code> para fazer pull das imagens.</li>
+</ol>
+<h2 id="validacoes-apos-o-deploy">Validacoes apos o deploy</h2>
+<ol>
+<li>Abra <code>https://gea.seu-dominio.com.br</code> e valide o carregamento do GED.</li>
+<li>Abra <code>https://assinador.seu-dominio.com.br/health</code> e confirme retorno HTTP 200.</li>
+<li>Abra <code>https://assinador.seu-dominio.com.br/standalone/</code> e confirme o carregamento da interface do assinador.</li>
+<li>Valide um fluxo real de assinatura iniciado pelo GED, porque esse fluxo depende de banco, token e arquivo PDF acessivel ao assinador.</li>
+</ol>
+<h2 id="validacao-guiada-do-assinador-com-r2">Validacao guiada do assinador com R2</h2>
+<ol>
+<li>Abra <code>https://assinador.infodocsisged.com.br/standalone/</code>.</li>
+<li>Envie um PDF pequeno no modo standalone.</li>
+<li>Confirme que o upload retorna sucesso e gera uma URL em <code>/standalone/uploads/&amp;lt;arquivo&amp;gt;</code>.</li>
+<li>Abra essa URL no navegador e confirme que o PDF e servido normalmente.</li>
+<li>Assine o PDF com um certificado ja presente em <code>/app/certs</code>.</li>
+<li>Confirme que o retorno da assinatura informa <code>signed_file</code> com nome <code>assinado_...pdf</code>.</li>
+<li>Abra <code>/standalone/download/&amp;lt;arquivo-assinado&amp;gt;</code> e confirme o download do PDF assinado.</li>
+<li>No bucket <code>gea</code>, confirme a criacao de objetos sob o prefixo <code>ged/assinador-python/uploads/</code>.</li>
+<li>Confirme no container do assinador que <code>/app/certs</code> continua local e que os certificados nao foram enviados ao R2.</li>
+<li>Confirme que nao existe dependencia operacional do volume local <code>/app/uploads</code> na stack de producao, porque o fluxo do assinador agora usa R2 para esse diretorio.</li>
+</ol>
+<h2 id="diagnostico-rapido">Diagnostico rapido</h2>
 <ul>
-<li>Utilize o campo de busca para localizar documentos.</li>
-<li>Use filtros por data, tipo ou responsável.</li>
+<li>Se a stack falhar ao subir, verifique primeiro se a rede <code>proxy</code> existe.</li>
+<li>Se o GED abrir mas o assinador nao, verifique o DNS e o proxy do dominio <code>assinador</code>.</li>
+<li>Se o navegador abrir o GED mas o redirecionamento para o assinador for incorreto, revise <code>PYTHON_SERVICE_PUBLIC_URL</code>.</li>
+<li>Se o GED nao conseguir chamar o assinador internamente, revise conectividade entre os containers e confirme que <code>PYTHON_SERVICE_INTERNAL_URL</code> continua como <code>http://assinador-python:5000</code> no compose.</li>
+<li>Se o assinador responder no navegador mas falhar em operacoes autenticadas, revise acesso ao banco, tabelas esperadas e caminhos persistidos dos documentos/certificados.</li>
+<li>Se o upload do standalone falhar, revise as variaveis <code>FILE_STORAGE_R2_*</code> no servico <code>assinador-python</code>.</li>
+<li>Se o download do PDF assinado falhar, verifique se o objeto foi gravado no bucket <code>gea</code> no prefixo <code>ged/assinador-python/uploads/</code>.</li>
+<li>Se os certificados sumirem do standalone, revise apenas o volume <code>signer_certs</code>, porque ele continua local e nao usa R2.</li>
 </ul>
-<h2 id="5-download-e-compartilhamento">5. Download e Compartilhamento</h2>
-<ul>
-<li>Clique no documento e selecione <strong>Download</strong>.</li>
-<li>Use <strong>Compartilhar</strong> para gerar link ou enviar a outro usuário.</li>
-</ul>
-<h2 id="6-controle-de-versoes">6. Controle de Versões</h2>
-<ul>
-<li>Envie um novo arquivo com mesmo nome para criar nova versão.</li>
-<li>Consulte o histórico de versões no detalhe do documento.</li>
-</ul>
-<h2 id="7-permissoes">7. Permissões</h2>
-<ul>
-<li>Defina quem pode visualizar, editar ou excluir documentos ao cadastrar ou editar.</li>
-</ul>
-<h2 id="8-auditoria-e-relatorios">8. Auditoria e Relatórios</h2>
-<ul>
-<li>Consulte o módulo <strong>Auditoria</strong> para ver histórico de ações.</li>
-<li>Gere relatórios no menu <strong>Relatórios</strong>.</li>
-</ul>
-<h2 id="9-configuracoes-do-usuario">9. Configurações do Usuário</h2>
-<ul>
-<li>Altere senha, idioma e preferências no seu perfil.</li>
-</ul>
-<h2 id="10-integracao-via-api">10. Integração via API</h2>
-<ul>
-<li>Solicite ao administrador um token de API.</li>
-<li>Use comandos como:</li>
-</ul>
-<pre><code class="language-bash">  curl -X POST http://localhost/infodoc-sisged/api/rest.php -d &#x27;token=SEU_TOKEN&amp;action=list_documents&#x27;</code></pre>
-<h2 id="11-suporte">11. Suporte</h2>
-<ul>
-<li>Em caso de dúvidas, consulte o manual completo ou entre em contato com o suporte da empresa.</li>
-</ul>
-<hr>
-<p><strong>Dica:</strong> Para melhor experiência, utilize navegadores atualizados (Chrome, Firefox, Edge).</p>
         </article>
         <aside class="toc">
           <div class="toc-card">
             <h2>Nesta pagina</h2>
-            <a class="toc-link" href="#1-acesso-ao-sistema">1. Acesso ao Sistema</a>
-<a class="toc-link" href="#2-upload-de-documentos">2. Upload de Documentos</a>
-<a class="toc-link" href="#3-organizacao-em-pastas">3. Organização em Pastas</a>
-<a class="toc-link" href="#4-busca-e-filtros">4. Busca e Filtros</a>
-<a class="toc-link" href="#5-download-e-compartilhamento">5. Download e Compartilhamento</a>
-<a class="toc-link" href="#6-controle-de-versoes">6. Controle de Versões</a>
-<a class="toc-link" href="#7-permissoes">7. Permissões</a>
-<a class="toc-link" href="#8-auditoria-e-relatorios">8. Auditoria e Relatórios</a>
-<a class="toc-link" href="#9-configuracoes-do-usuario">9. Configurações do Usuário</a>
-<a class="toc-link" href="#10-integracao-via-api">10. Integração via API</a>
-<a class="toc-link" href="#11-suporte">11. Suporte</a>
+            <a class="toc-link" href="#topologia">Topologia</a>
+<a class="toc-link" href="#antes-de-criar-a-stack">Antes de criar a stack</a>
+<a class="toc-link" href="#criar-a-rede-externa-do-proxy">Criar a rede externa do proxy</a>
+<a class="toc-link" href="#criar-a-stack-no-portainer">Criar a stack no Portainer</a>
+<a class="toc-link" href="#variaveis-recomendadas">Variaveis recomendadas</a>
+<a class="toc-link" href="#fazer-o-deploy">Fazer o deploy</a>
+<a class="toc-link" href="#checklist-final-antes-do-deploy">Checklist final antes do deploy</a>
+<a class="toc-link" href="#validacoes-apos-o-deploy">Validacoes apos o deploy</a>
+<a class="toc-link" href="#validacao-guiada-do-assinador-com-r2">Validacao guiada do assinador com R2</a>
+<a class="toc-link" href="#diagnostico-rapido">Diagnostico rapido</a>
           </div>
         </aside>
       </div>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Relatorios</title>
+  <desc id="desc">Ilustracao vetorial da tela de relatorios e indicadores.</desc>
+  <rect width="1280" height="720" fill="#f3eadc" />
+  <rect x="70" y="80" width="1140" height="560" rx="34" fill="#fffaf3" stroke="#d8c7b1" />
+  <rect x="110" y="150" width="340" height="190" rx="24" fill="#f7efe2" />
+  <rect x="485" y="150" width="310" height="190" rx="24" fill="#f7efe2" />
+  <rect x="830" y="150" width="310" height="190" rx="24" fill="#f7efe2" />
+  <rect x="110" y="375" width="1030" height="205" rx="24" fill="#fbf7ef" stroke="#dccab2" />
+  <rect x="170" y="470" width="72" height="70" rx="18" fill="#2f6b73" />
+  <rect x="290" y="430" width="72" height="110" rx="18" fill="#b85c2d" />
+  <rect x="410" y="392" width="72" height="148" rx="18" fill="#21343c" />
+  <rect x="530" y="450" width="72" height="90" rx="18" fill="#2f6b73" opacity="0.84" />
+  <path d="M690 520c58-128 144-110 198-78s109 27 164-54" fill="none" stroke="#b85c2d" stroke-width="14" stroke-linecap="round" />
+  <text x="110" y="128" font-family="Georgia, serif" font-size="40" font-weight="700" fill="#18252b">Relatorios executivos</text>
+  <text x="150" y="220" font-family="Segoe UI, Arial, sans-serif" font-size="22" fill="#5f645f">Total de documentos</text>
+  <text x="150" y="285" font-family="Georgia, serif" font-size="54" font-weight="700" fill="#18252b">12.480</text>
+  <text x="525" y="220" font-family="Segoe UI, Arial, sans-serif" font-size="22" fill="#5f645f">Assinaturas</text>
+  <text x="870" y="220" font-family="Segoe UI, Arial, sans-serif" font-size="22" fill="#5f645f">Pendencias</text>
+</svg>

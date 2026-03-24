@@ -11,7 +11,7 @@ Este documento reúne tutoriais ilustrados para os principais fluxos do sistema.
 2. Informe seu usuário e senha.
 3. Clique em **Entrar**.
 
-> ![Tela de login](imagens/login.png)
+> ![Tela de login](imagens/login.svg)
 
 ---
 
@@ -23,7 +23,7 @@ Este documento reúne tutoriais ilustrados para os principais fluxos do sistema.
 3. Preencha os campos obrigatórios (nome, e-mail, grupo, etc).
 4. Defina permissões e clique em **Salvar**.
 
-> ![Cadastro de usuário](imagens/cadastro_usuario.png)
+> ![Cadastro de usuário](imagens/cadastro_usuario.svg)
 
 ---
 
@@ -34,7 +34,7 @@ Este documento reúne tutoriais ilustrados para os principais fluxos do sistema.
 2. Preencha os campos obrigatórios.
 3. Selecione o arquivo e clique em **Salvar**.
 
-> ![Upload de documento](imagens/upload_documento.png)
+> ![Upload de documento](imagens/upload_documento.svg)
 
 ---
 
@@ -45,7 +45,7 @@ Este documento reúne tutoriais ilustrados para os principais fluxos do sistema.
 2. Dê um nome à pasta e salve.
 3. Arraste e solte documentos para dentro da pasta.
 
-> ![Organização em pastas](imagens/organizacao_pastas.png)
+> ![Organização em pastas](imagens/organizacao_pastas.svg)
 
 ---
 
@@ -55,7 +55,7 @@ Este documento reúne tutoriais ilustrados para os principais fluxos do sistema.
 1. Use o campo de busca para localizar documentos.
 2. Utilize filtros para refinar os resultados (data, tipo, autor).
 
-> ![Busca avançada](imagens/busca_avancada.png)
+> ![Busca avançada](imagens/busca_avancada.svg)
 
 ---
 
@@ -66,7 +66,7 @@ Este documento reúne tutoriais ilustrados para os principais fluxos do sistema.
 2. Selecione **Download**.
 3. Para compartilhar, clique em **Compartilhar** e gere um link ou envie para outro usuário.
 
-> ![Compartilhamento](imagens/compartilhar_documento.png)
+> ![Compartilhamento](imagens/compartilhar_documento.svg)
 
 ---
 
@@ -76,7 +76,7 @@ Este documento reúne tutoriais ilustrados para os principais fluxos do sistema.
 1. Envie um novo arquivo com o mesmo nome para criar nova versão.
 2. Consulte o histórico de versões no detalhe do documento.
 
-> ![Histórico de versões](imagens/historico_versoes.png)
+> ![Histórico de versões](imagens/historico_versoes.svg)
 
 ---
 
@@ -87,7 +87,7 @@ Este documento reúne tutoriais ilustrados para os principais fluxos do sistema.
 2. Defina os usuários ou grupos com acesso.
 3. Salve as configurações.
 
-> ![Permissões avançadas](imagens/permissoes_avancadas.png)
+> ![Permissões avançadas](imagens/permissoes_avancadas.svg)
 
 ---
 
@@ -98,7 +98,7 @@ Este documento reúne tutoriais ilustrados para os principais fluxos do sistema.
 2. Filtre por usuário, data ou ação.
 3. Consulte detalhes de cada evento.
 
-> ![Tela de auditoria](imagens/auditoria.png)
+> ![Tela de auditoria](imagens/auditoria.svg)
 
 ---
 
@@ -109,7 +109,7 @@ Este documento reúne tutoriais ilustrados para os principais fluxos do sistema.
 2. Escolha o tipo de relatório e defina os filtros.
 3. Exporte em PDF, Excel ou CSV.
 
-> ![Relatórios](imagens/relatorios.png)
+> ![Relatórios](imagens/relatorios.svg)
 
 ---
 
@@ -132,7 +132,7 @@ Este documento reúne tutoriais ilustrados para os principais fluxos do sistema.
 2. Altere senha, idioma ou preferências.
 3. Salve as alterações.
 
-> ![Configurações do usuário](imagens/configuracoes_usuario.png)
+> ![Configurações do usuário](imagens/configuracoes_usuario.svg)
 
 ---
 

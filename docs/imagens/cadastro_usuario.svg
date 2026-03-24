@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Cadastro de usuario</title>
+  <desc id="desc">Ilustracao vetorial do fluxo de cadastro de usuario.</desc>
+  <rect width="1280" height="720" fill="#f3eadc" />
+  <rect x="70" y="70" width="1140" height="580" rx="30" fill="#ffffff" stroke="#d9c8b0" />
+  <rect x="70" y="70" width="250" height="580" rx="30" fill="#18252b" />
+  <rect x="110" y="145" width="170" height="18" rx="9" fill="#fff7eb" opacity="0.8" />
+  <rect x="110" y="190" width="130" height="12" rx="6" fill="#fff7eb" opacity="0.4" />
+  <rect x="360" y="130" width="410" height="34" rx="17" fill="#21343c" opacity="0.12" />
+  <rect x="360" y="210" width="360" height="62" rx="16" fill="#f7efe4" />
+  <rect x="770" y="210" width="270" height="62" rx="16" fill="#f7efe4" />
+  <rect x="360" y="300" width="680" height="62" rx="16" fill="#f7efe4" />
+  <rect x="360" y="390" width="680" height="120" rx="22" fill="#f7efe4" />
+  <rect x="860" y="545" width="180" height="50" rx="18" fill="#2f6b73" />
+  <text x="360" y="120" font-family="Georgia, serif" font-size="48" font-weight="700" fill="#18252b">Cadastro de usuarios</text>
+  <text x="385" y="250" font-family="Segoe UI, Arial, sans-serif" font-size="22" fill="#6a6259">Nome completo</text>
+  <text x="795" y="250" font-family="Segoe UI, Arial, sans-serif" font-size="22" fill="#6a6259">Perfil</text>
+  <text x="385" y="340" font-family="Segoe UI, Arial, sans-serif" font-size="22" fill="#6a6259">Email corporativo</text>
+  <text x="385" y="430" font-family="Segoe UI, Arial, sans-serif" font-size="22" fill="#6a6259">Permissoes e observacoes</text>
+  <text x="916" y="578" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="700" fill="#eef8f7">Salvar</text>
+</svg>

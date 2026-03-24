@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Busca avancada</title>
+  <desc id="desc">Ilustracao vetorial da tela de busca avancada.</desc>
+  <rect width="1280" height="720" fill="#f4ecdf" />
+  <rect x="60" y="70" width="1160" height="580" rx="34" fill="#fffaf2" stroke="#d8c7af" />
+  <rect x="100" y="125" width="820" height="72" rx="24" fill="#f2e7d8" />
+  <circle cx="165" cy="161" r="22" fill="#2f6b73" />
+  <rect x="960" y="125" width="160" height="72" rx="24" fill="#2f6b73" />
+  <rect x="100" y="245" width="240" height="300" rx="24" fill="#f7efe2" />
+  <rect x="385" y="245" width="735" height="110" rx="22" fill="#f7efe2" />
+  <rect x="385" y="385" width="735" height="110" rx="22" fill="#f7efe2" />
+  <rect x="385" y="525" width="735" height="20" rx="10" fill="#d7c5af" />
+  <text x="215" y="168" font-family="Segoe UI, Arial, sans-serif" font-size="28" fill="#5d635f">contratos 2026 assinados</text>
+  <text x="997" y="168" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700" fill="#edf8f7">Buscar</text>
+  <text x="130" y="285" font-family="Georgia, serif" font-size="34" font-weight="700" fill="#18252b">Filtros</text>
+  <text x="415" y="295" font-family="Georgia, serif" font-size="32" font-weight="700" fill="#18252b">Resultados encontrados</text>
+</svg>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Historico de versoes</title>
+  <desc id="desc">Ilustracao vetorial do historico de versoes de um documento.</desc>
+  <rect width="1280" height="720" fill="#f4ecdf" />
+  <rect x="100" y="90" width="1080" height="540" rx="32" fill="#fffaf3" stroke="#d9c7b0" />
+  <path d="M270 180v360" stroke="#2f6b73" stroke-width="10" stroke-linecap="round" />
+  <circle cx="270" cy="220" r="24" fill="#b85c2d" />
+  <circle cx="270" cy="340" r="24" fill="#2f6b73" />
+  <circle cx="270" cy="460" r="24" fill="#18252b" />
+  <rect x="340" y="180" width="620" height="84" rx="20" fill="#f7efe2" />
+  <rect x="340" y="300" width="620" height="84" rx="20" fill="#f7efe2" />
+  <rect x="340" y="420" width="620" height="84" rx="20" fill="#f7efe2" />
+  <text x="150" y="145" font-family="Georgia, serif" font-size="40" font-weight="700" fill="#18252b">Linha do tempo de versoes</text>
+  <text x="385" y="230" font-family="Segoe UI, Arial, sans-serif" font-size="26" fill="#5c5f5f">Versao 3 publicada e assinada digitalmente</text>
+  <text x="385" y="350" font-family="Segoe UI, Arial, sans-serif" font-size="26" fill="#5c5f5f">Versao 2 revisada pelo setor responsavel</text>
+  <text x="385" y="470" font-family="Segoe UI, Arial, sans-serif" font-size="26" fill="#5c5f5f">Versao 1 criada no upload inicial</text>
+</svg>
