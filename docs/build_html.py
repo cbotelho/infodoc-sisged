@@ -15,6 +15,54 @@ FAVICON_PATH = DOCS_DIR / "favicon.svg"
 PLACEHOLDER_IMAGE = "doc-image-placeholder.svg"
 SEARCH_SCRIPT_PATH = DOCS_DIR / "search.js"
 
+NAV_GROUPS = [
+    {
+        "id": "visao-geral",
+        "title": "Visao Geral",
+        "icon": "fa-book",
+        "sources": [
+            "introducao.md",
+            "arquitetura.md",
+            "estrutura.md",
+            "configuracao.md",
+            "modulos.md",
+            "fluxo.md",
+            "exemplos.md",
+        ],
+    },
+    {
+        "id": "uso-e-suporte",
+        "title": "Uso e Suporte",
+        "icon": "fa-envelope",
+        "sources": [
+            "guia_rapido.md",
+            "manual_usuario.md",
+            "tutoriais.md",
+            "faq.md",
+            "problemas.md",
+        ],
+    },
+    {
+        "id": "integracoes",
+        "title": "Integracoes",
+        "icon": "fa-plug",
+        "sources": [
+            "integracao.md",
+            "portainer-duas-aplicacoes.md",
+        ],
+    },
+    {
+        "id": "administracao",
+        "title": "Administracao",
+        "icon": "fa-gear",
+        "sources": [
+            "customizacao.md",
+            "backup.md",
+            "licenca.md",
+        ],
+    },
+]
+
 
 def slugify(text: str) -> str:
     normalized = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
@@ -264,20 +312,89 @@ def render_markdown(markdown_text: str) -> tuple[str, list[tuple[str, str, int]]
     return "\n".join(output), headings
 
 
+def build_nav_groups(navigation: Iterable[dict[str, str]]) -> list[dict[str, object]]:
+    navigation_by_source = {item["source"]: item for item in navigation}
+    grouped_sources: set[str] = set()
+    groups: list[dict[str, object]] = []
+
+    for group in NAV_GROUPS:
+        items = [navigation_by_source[source] for source in group["sources"] if source in navigation_by_source]
+        if not items:
+            continue
+        groups.append({**group, "items": items})
+        grouped_sources.update(item["source"] for item in items)
+
+    remaining_items = [
+        item
+        for item in navigation
+        if item["source"] not in grouped_sources and item["source"] != "README.md"
+    ]
+    if remaining_items:
+        groups.append(
+            {
+                "id": "outros",
+                "title": "Outros",
+                "icon": "fa-folder-open",
+                "items": remaining_items,
+            }
+        )
+
+    return groups
+
+
 def build_sidebar(navigation: Iterable[dict[str, str]], current_output: str) -> str:
-    items: list[str] = []
-    for item in navigation:
-        active = " is-active" if item["output"] == current_output else ""
+    nav_items = list(navigation)
+    home_item = next((item for item in nav_items if item["source"] == "README.md"), None)
+    groups = build_nav_groups(nav_items)
+    items: list[str] = ['<ul class="menu-root">']
+
+    if home_item:
+        home_active = " is-active" if home_item["output"] == current_output else ""
+        items.extend(
+            [
+                "<li>",
+                f'  <a class="menu-link{home_active}" href="{html.escape(home_item["output"], quote=True)}">',
+                '    <span class="menu-main"><i class="fa fa-user"></i><span>Portal</span></span>',
+                "  </a>",
+                "</li>",
+            ]
+        )
+
+    for group in groups:
+        group_items = group["items"]
+        is_open = any(item["output"] == current_output for item in group_items)
+        group_class = "sub-menu is-open" if is_open else "sub-menu"
+        caret_class = "fa-caret-up" if is_open else "fa-caret-down"
+        submenu_hidden = "false" if is_open else "true"
+        items.append(f'<li class="{group_class}">')
         items.append(
-            "\n".join(
+            f'  <a class="menu-link menu-toggle" href="#{html.escape(str(group["id"]), quote=True)}" data-submenu-toggle aria-expanded="{str(is_open).lower()}" aria-controls="submenu-{html.escape(str(group["id"]), quote=True)}">'
+        )
+        items.append(
+            f'    <span class="menu-main"><i class="fa {html.escape(str(group["icon"]), quote=True)}"></i><span>{html.escape(str(group["title"]))}</span></span>'
+        )
+        items.append(f'    <span class="badge right">{len(group_items)}</span>')
+        items.append(f'    <i class="fa {caret_class} right caret-icon"></i>')
+        items.append("  </a>")
+        items.append(
+            f'  <ul id="submenu-{html.escape(str(group["id"]), quote=True)}" class="sub-menu-list" aria-hidden="{submenu_hidden}">'
+        )
+        for item in group_items:
+            active = " is-active" if item["output"] == current_output else ""
+            items.extend(
                 [
-                    f'<a class="nav-link{active}" href="{html.escape(item["output"], quote=True)}">',
-                    f'  <span class="nav-label">{html.escape(item["title"])}</span>',
-                    f'  <span class="nav-file">{html.escape(item["source"])}</span>',
-                    "</a>",
+                    "    <li>",
+                    f'      <a class="submenu-link{active}" href="{html.escape(item["output"], quote=True)}">',
+                    f'        <span class="submenu-title">{html.escape(item["title"])}</span>',
+                    f'        <span class="submenu-meta">{html.escape(item["source"])}</span>',
+                    "      </a>",
+                    "    </li>",
                 ]
             )
-        )
+        items.append("  </ul>")
+        items.append("</li>")
+
+    items.append("</ul>")
     return "\n".join(items)
 
 
@@ -345,6 +462,7 @@ def render_page(*, title: str, content_html: str, sidebar_html: str, toc_html: s
   <title>{html.escape(title)} - infodoc-sisged</title>
     <meta name=\"theme-color\" content=\"#18252b\">
     <link rel=\"icon\" type=\"image/svg+xml\" href=\"{FAVICON_PATH.name}\">
+    <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css\">
   <link rel=\"stylesheet\" href=\"{CSS_PATH.name}\">
 </head>
 <body class=\"{html.escape(page_class, quote=True)}\">
@@ -359,7 +477,7 @@ def render_page(*, title: str, content_html: str, sidebar_html: str, toc_html: s
                 <input id="docs-search-input" class="search-input" type="search" placeholder="Buscar páginas, tópicos e termos" autocomplete="off">
                 <div id="docs-search-results" class="search-results" hidden></div>
       </div>
-      <nav class=\"nav-list\">
+            <nav class=\"nav-list animated bounceInDown\">
         {sidebar_html}
       </nav>
     </aside>

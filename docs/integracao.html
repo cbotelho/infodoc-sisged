@@ -6,6 +6,7 @@
   <title>Integração com Sistemas Externos - infodoc-sisged</title>
     <meta name="theme-color" content="#18252b">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <link rel="stylesheet" href="docs.css">
 </head>
 <body class="page page-integracao-com-sistemas-externos">
@@ -20,79 +21,152 @@
                 <input id="docs-search-input" class="search-input" type="search" placeholder="Buscar páginas, tópicos e termos" autocomplete="off">
                 <div id="docs-search-results" class="search-results" hidden></div>
       </div>
-      <nav class="nav-list">
-        <a class="nav-link" href="index.html">
-  <span class="nav-label">Documentação do Sistema infodoc-sisged</span>
-  <span class="nav-file">README.md</span>
-</a>
-<a class="nav-link" href="introducao.html">
-  <span class="nav-label">Introdução</span>
-  <span class="nav-file">introducao.md</span>
-</a>
-<a class="nav-link" href="arquitetura.html">
-  <span class="nav-label">Arquitetura do Sistema</span>
-  <span class="nav-file">arquitetura.md</span>
-</a>
-<a class="nav-link" href="estrutura.html">
-  <span class="nav-label">Estrutura de Diretórios</span>
-  <span class="nav-file">estrutura.md</span>
-</a>
-<a class="nav-link" href="configuracao.html">
-  <span class="nav-label">Configuração Inicial</span>
-  <span class="nav-file">configuracao.md</span>
-</a>
-<a class="nav-link" href="modulos.html">
-  <span class="nav-label">Principais Módulos e Funcionalidades</span>
-  <span class="nav-file">modulos.md</span>
-</a>
-<a class="nav-link" href="fluxo.html">
-  <span class="nav-label">Fluxo de Funcionamento</span>
-  <span class="nav-file">fluxo.md</span>
-</a>
-<a class="nav-link" href="exemplos.html">
-  <span class="nav-label">Exemplos de Uso</span>
-  <span class="nav-file">exemplos.md</span>
-</a>
-<a class="nav-link is-active" href="integracao.html">
-  <span class="nav-label">Integração com Sistemas Externos</span>
-  <span class="nav-file">integracao.md</span>
-</a>
-<a class="nav-link" href="customizacao.html">
-  <span class="nav-label">Customização e Desenvolvimento</span>
-  <span class="nav-file">customizacao.md</span>
-</a>
-<a class="nav-link" href="backup.html">
-  <span class="nav-label">Backup e Recuperação</span>
-  <span class="nav-file">backup.md</span>
-</a>
-<a class="nav-link" href="problemas.html">
-  <span class="nav-label">Resolução de Problemas</span>
-  <span class="nav-file">problemas.md</span>
-</a>
-<a class="nav-link" href="faq.html">
-  <span class="nav-label">FAQ</span>
-  <span class="nav-file">faq.md</span>
-</a>
-<a class="nav-link" href="licenca.html">
-  <span class="nav-label">Licença e Créditos</span>
-  <span class="nav-file">licenca.md</span>
-</a>
-<a class="nav-link" href="guia_rapido.html">
-  <span class="nav-label">Guia Rápido do Usuário – infodoc-sisged</span>
-  <span class="nav-file">guia_rapido.md</span>
-</a>
-<a class="nav-link" href="manual_usuario.html">
-  <span class="nav-label">Manual do Usuário – infodoc-sisged</span>
-  <span class="nav-file">manual_usuario.md</span>
-</a>
-<a class="nav-link" href="portainer-duas-aplicacoes.html">
-  <span class="nav-label">Deploy via Portainer com duas aplicacoes publicas</span>
-  <span class="nav-file">portainer-duas-aplicacoes.md</span>
-</a>
-<a class="nav-link" href="tutoriais.html">
-  <span class="nav-label">Tutoriais Práticos – infodoc-sisged</span>
-  <span class="nav-file">tutoriais.md</span>
-</a>
+            <nav class="nav-list animated bounceInDown">
+        <ul class="menu-root">
+<li>
+  <a class="menu-link" href="index.html">
+    <span class="menu-main"><i class="fa fa-user"></i><span>Portal</span></span>
+  </a>
+</li>
+<li class="sub-menu">
+  <a class="menu-link menu-toggle" href="#visao-geral" data-submenu-toggle aria-expanded="false" aria-controls="submenu-visao-geral">
+    <span class="menu-main"><i class="fa fa-book"></i><span>Visao Geral</span></span>
+    <span class="badge right">7</span>
+    <i class="fa fa-caret-down right caret-icon"></i>
+  </a>
+  <ul id="submenu-visao-geral" class="sub-menu-list" aria-hidden="true">
+    <li>
+      <a class="submenu-link" href="introducao.html">
+        <span class="submenu-title">Introdução</span>
+        <span class="submenu-meta">introducao.md</span>
+      </a>
+    </li>
+    <li>
+      <a class="submenu-link" href="arquitetura.html">
+        <span class="submenu-title">Arquitetura do Sistema</span>
+        <span class="submenu-meta">arquitetura.md</span>
+      </a>
+    </li>
+    <li>
+      <a class="submenu-link" href="estrutura.html">
+        <span class="submenu-title">Estrutura de Diretórios</span>
+        <span class="submenu-meta">estrutura.md</span>
+      </a>
+    </li>
+    <li>
+      <a class="submenu-link" href="configuracao.html">
+        <span class="submenu-title">Configuração Inicial</span>
+        <span class="submenu-meta">configuracao.md</span>
+      </a>
+    </li>
+    <li>
+      <a class="submenu-link" href="modulos.html">
+        <span class="submenu-title">Principais Módulos e Funcionalidades</span>
+        <span class="submenu-meta">modulos.md</span>
+      </a>
+    </li>
+    <li>
+      <a class="submenu-link" href="fluxo.html">
+        <span class="submenu-title">Fluxo de Funcionamento</span>
+        <span class="submenu-meta">fluxo.md</span>
+      </a>
+    </li>
+    <li>
+      <a class="submenu-link" href="exemplos.html">
+        <span class="submenu-title">Exemplos de Uso</span>
+        <span class="submenu-meta">exemplos.md</span>
+      </a>
+    </li>
+  </ul>
+</li>
+<li class="sub-menu">
+  <a class="menu-link menu-toggle" href="#uso-e-suporte" data-submenu-toggle aria-expanded="false" aria-controls="submenu-uso-e-suporte">
+    <span class="menu-main"><i class="fa fa-envelope"></i><span>Uso e Suporte</span></span>
+    <span class="badge right">5</span>
+    <i class="fa fa-caret-down right caret-icon"></i>
+  </a>
+  <ul id="submenu-uso-e-suporte" class="sub-menu-list" aria-hidden="true">
+    <li>
+      <a class="submenu-link" href="guia_rapido.html">
+        <span class="submenu-title">Guia Rápido do Usuário – infodoc-sisged</span>
+        <span class="submenu-meta">guia_rapido.md</span>
+      </a>
+    </li>
+    <li>
+      <a class="submenu-link" href="manual_usuario.html">
+        <span class="submenu-title">Manual do Usuário – infodoc-sisged</span>
+        <span class="submenu-meta">manual_usuario.md</span>
+      </a>
+    </li>
+    <li>
+      <a class="submenu-link" href="tutoriais.html">
+        <span class="submenu-title">Tutoriais Práticos – infodoc-sisged</span>
+        <span class="submenu-meta">tutoriais.md</span>
+      </a>
+    </li>
+    <li>
+      <a class="submenu-link" href="faq.html">
+        <span class="submenu-title">FAQ</span>
+        <span class="submenu-meta">faq.md</span>
+      </a>
+    </li>
+    <li>
+      <a class="submenu-link" href="problemas.html">
+        <span class="submenu-title">Resolução de Problemas</span>
+        <span class="submenu-meta">problemas.md</span>
+      </a>
+    </li>
+  </ul>
+</li>
+<li class="sub-menu is-open">
+  <a class="menu-link menu-toggle" href="#integracoes" data-submenu-toggle aria-expanded="true" aria-controls="submenu-integracoes">
+    <span class="menu-main"><i class="fa fa-plug"></i><span>Integracoes</span></span>
+    <span class="badge right">2</span>
+    <i class="fa fa-caret-up right caret-icon"></i>
+  </a>
+  <ul id="submenu-integracoes" class="sub-menu-list" aria-hidden="false">
+    <li>
+      <a class="submenu-link is-active" href="integracao.html">
+        <span class="submenu-title">Integração com Sistemas Externos</span>
+        <span class="submenu-meta">integracao.md</span>
+      </a>
+    </li>
+    <li>
+      <a class="submenu-link" href="portainer-duas-aplicacoes.html">
+        <span class="submenu-title">Deploy via Portainer com duas aplicacoes publicas</span>
+        <span class="submenu-meta">portainer-duas-aplicacoes.md</span>
+      </a>
+    </li>
+  </ul>
+</li>
+<li class="sub-menu">
+  <a class="menu-link menu-toggle" href="#administracao" data-submenu-toggle aria-expanded="false" aria-controls="submenu-administracao">
+    <span class="menu-main"><i class="fa fa-gear"></i><span>Administracao</span></span>
+    <span class="badge right">3</span>
+    <i class="fa fa-caret-down right caret-icon"></i>
+  </a>
+  <ul id="submenu-administracao" class="sub-menu-list" aria-hidden="true">
+    <li>
+      <a class="submenu-link" href="customizacao.html">
+        <span class="submenu-title">Customização e Desenvolvimento</span>
+        <span class="submenu-meta">customizacao.md</span>
+      </a>
+    </li>
+    <li>
+      <a class="submenu-link" href="backup.html">
+        <span class="submenu-title">Backup e Recuperação</span>
+        <span class="submenu-meta">backup.md</span>
+      </a>
+    </li>
+    <li>
+      <a class="submenu-link" href="licenca.html">
+        <span class="submenu-title">Licença e Créditos</span>
+        <span class="submenu-meta">licenca.md</span>
+      </a>
+    </li>
+  </ul>
+</li>
+</ul>
       </nav>
     </aside>
     <main class="content-area">

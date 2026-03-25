@@ -1,7 +1,32 @@
 (() => {
+  const submenuToggles = document.querySelectorAll("[data-submenu-toggle]");
   const input = document.getElementById("docs-search-input");
   const results = document.getElementById("docs-search-results");
   const index = Array.isArray(window.DOCS_SEARCH_INDEX) ? window.DOCS_SEARCH_INDEX : [];
+
+  submenuToggles.forEach((toggle) => {
+    const parent = toggle.parentElement;
+    const targetId = toggle.getAttribute("aria-controls");
+    const submenu = targetId ? document.getElementById(targetId) : null;
+    const caret = toggle.querySelector(".caret-icon");
+
+    if (!parent || !submenu || !caret) {
+      return;
+    }
+
+    const isOpen = parent.classList.contains("is-open");
+    submenu.setAttribute("aria-hidden", isOpen ? "false" : "true");
+    toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+
+    toggle.addEventListener("click", (event) => {
+      event.preventDefault();
+      const open = parent.classList.toggle("is-open");
+      submenu.setAttribute("aria-hidden", open ? "false" : "true");
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+      caret.classList.toggle("fa-caret-up", open);
+      caret.classList.toggle("fa-caret-down", !open);
+    });
+  });
 
   if (!input || !results || index.length === 0) {
     return;
