@@ -144,6 +144,7 @@ Exemplos prontos de proxy reverso:
 - O modo Web editor do Portainer não é indicado para este compose, porque o build usa contextos locais do repositório.
 - A rede externa definida por `PROXY_EXTERNAL_NETWORK` precisa existir antes do deploy da stack.
 - Se optar por rota explícita no domínio atual, publique essa rota no proxy reverso em vez de expor a porta `5000` diretamente para o usuário final.
+- A stack aceita `IMAGE_TAG` como fallback global e também tags por serviço: `WEB_IMAGE_TAG`, `WORKER_IMAGE_TAG` e `SIGNER_IMAGE_TAG`.
 
 ## Licença
 
