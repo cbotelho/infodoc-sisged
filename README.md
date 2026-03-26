@@ -102,6 +102,18 @@ Para deploy na VPS via Portainer, use o arquivo `docker-compose.production.yml` 
 4. Configure as variáveis usando `.env.production.portainer.example`.
 5. Faça o deploy da stack.
 
+### Limites de upload em runtime
+
+O container web aceita configurar os principais limites de upload do PHP por variáveis de ambiente, sem mudar código da aplicação:
+
+- `PHP_UPLOAD_MAX_FILESIZE`
+- `PHP_POST_MAX_SIZE`
+- `PHP_MAX_FILE_UPLOADS`
+- `PHP_MAX_EXECUTION_TIME`
+- `PHP_MAX_INPUT_TIME`
+
+Para upload em lote, `PHP_MAX_FILE_UPLOADS` controla quantos arquivos o PHP aceita por requisição. Exemplo: `PHP_MAX_FILE_UPLOADS=100`.
+
 ### Cenário recomendado para duas aplicações públicas
 
 Este projeto suporta o cenário em que o GED PHP e o assinador Python ficam em domínios distintos, desde que o navegador use a URL pública do assinador e o backend PHP continue chamando o serviço internamente pela rede Docker.

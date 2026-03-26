@@ -3,6 +3,7 @@ set -eu
 
 PHP_UPLOAD_MAX_FILESIZE="${PHP_UPLOAD_MAX_FILESIZE:-1024M}"
 PHP_POST_MAX_SIZE="${PHP_POST_MAX_SIZE:-1024M}"
+PHP_MAX_FILE_UPLOADS="${PHP_MAX_FILE_UPLOADS:-100}"
 PHP_MEMORY_LIMIT="${PHP_MEMORY_LIMIT:-512M}"
 PHP_MAX_EXECUTION_TIME="${PHP_MAX_EXECUTION_TIME:-1200}"
 PHP_MAX_INPUT_TIME="${PHP_MAX_INPUT_TIME:-1200}"
@@ -14,6 +15,7 @@ PHP_LOG_ERRORS="${PHP_LOG_ERRORS:-On}"
 cat > /usr/local/etc/php/conf.d/zz-runtime-overrides.ini <<EOF
 upload_max_filesize = ${PHP_UPLOAD_MAX_FILESIZE}
 post_max_size = ${PHP_POST_MAX_SIZE}
+max_file_uploads = ${PHP_MAX_FILE_UPLOADS}
 memory_limit = ${PHP_MEMORY_LIMIT}
 max_execution_time = ${PHP_MAX_EXECUTION_TIME}
 max_input_time = ${PHP_MAX_INPUT_TIME}

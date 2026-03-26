@@ -44,7 +44,7 @@ Se sua infraestrutura usar outro nome, ajuste a variavel `PROXY_EXTERNAL_NETWORK
 
 ```env
 IMAGE_TAG=1.0.16
-WEB_IMAGE_TAG=1.0.17
+WEB_IMAGE_TAG=1.0.18
 WORKER_IMAGE_TAG=1.0.16
 SIGNER_IMAGE_TAG=1.0.16
 APP_PORT=8081
@@ -52,6 +52,9 @@ SIGNER_PORT=5000
 APP_BASE_URL=https://gea.seu-dominio.com.br
 PYTHON_SERVICE_PUBLIC_URL=https://assinador.seu-dominio.com.br
 PROXY_EXTERNAL_NETWORK=proxy
+PHP_UPLOAD_MAX_FILESIZE=1024M
+PHP_POST_MAX_SIZE=1024M
+PHP_MAX_FILE_UPLOADS=100
 
 DB_SERVER=seu-host-do-banco
 DB_SERVER_PORT=3306
@@ -80,8 +83,9 @@ TOKEN_EXPIRY=3600
 1. Clique em `Deploy the stack`.
 2. Aguarde o pull das imagens `cbotelho80/infodoc-web`, `cbotelho80/infodoc-assinador-python` e `cbotelho80/infodoc-file-storage-worker` nas tags definidas nas variaveis da stack. Se nenhuma tag especifica for informada, cada servico usa o fallback de `IMAGE_TAG`.
 3. A imagem da aplicação cria automaticamente em runtime as pastas `backups`, `uploads/attachments`, `uploads/attachments_preview`, `uploads/images` e `uploads/users`, inclusive quando os volumes estão vazios.
-4. Confirme se os containers `infodoc-web`, `infodoc-assinador` e `infodoc-file-storage-worker` ficaram em estado `running`.
-5. Valide no Portainer se os tres servicos estao conectados a rede padrao da stack e tambem a rede externa definida em `PROXY_EXTERNAL_NETWORK`.
+4. Se precisar ajustar upload em lote sem alterar código, configure `PHP_MAX_FILE_UPLOADS` nas variaveis da stack. Exemplo: `100` permite receber ate 100 arquivos por requisicao, desde que `PHP_POST_MAX_SIZE` e `PHP_UPLOAD_MAX_FILESIZE` continuem compatíveis com o volume enviado.
+5. Confirme se os containers `infodoc-web`, `infodoc-assinador` e `infodoc-file-storage-worker` ficaram em estado `running`.
+6. Valide no Portainer se os tres servicos estao conectados a rede padrao da stack e tambem a rede externa definida em `PROXY_EXTERNAL_NETWORK`.
 
 ## Checklist final antes do deploy
 
@@ -92,8 +96,9 @@ TOKEN_EXPIRY=3600
 5. Confirme que `SIGNER_SECRET_KEY` nao esta com placeholder e ja usa uma chave forte.
 6. Confirme que o compose path no Portainer aponta para `docker-compose.production.yml`.
 7. Confirme que o repositório e a branch escolhidos no Portainer correspondem a esta versao com suporte a R2.
-8. Confirme que as tags da stack estao corretas para cada servico. Exemplo: `WEB_IMAGE_TAG=1.0.17`, `WORKER_IMAGE_TAG=1.0.16` e `SIGNER_IMAGE_TAG=1.0.16`.
+8. Confirme que as tags da stack estao corretas para cada servico. Exemplo: `WEB_IMAGE_TAG=1.0.18`, `WORKER_IMAGE_TAG=1.0.16` e `SIGNER_IMAGE_TAG=1.0.16`.
 9. Confirme que o servidor consegue acessar `docker.io/cbotelho80` para fazer pull das imagens.
+10. Confirme que `PHP_MAX_FILE_UPLOADS` atende o volume esperado de upload em lote.
 
 ## Validacoes apos o deploy
 
