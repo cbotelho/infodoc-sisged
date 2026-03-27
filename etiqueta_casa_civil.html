@@ -1,0 +1,228 @@
+<html>
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title></title>
+<style type="text/css">html, body {
+            margin: 0;
+            min-height: 100%;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+
+        /* Container Principal */
+        .etiqueta {
+            width: 450px;
+            height: 800px;
+            background-color: rgba(255,255,255,0.96);
+            background-image: url("uploads/images/2026/03/23/400x200?text=LOGO+SEFAZ.");
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: 320px auto;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            position: relative;
+            padding: 0;
+            overflow: hidden;
+            /* box-shadow: 0 4px 8px rgba(0,0,0,0.1); */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Marca d'água central */
+        .watermark {
+            display: none;
+        }
+
+        /* Cabeçalho Verde */
+        .header {
+            background-color: #33577d; /* Verde da imagem */
+            color: white;
+            width: 100%;
+            text-align: center;
+            padding: 15px 0;
+            z-index: 1;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 42px;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-top: 1px solid white;
+            display: inline-block;
+            padding-top: 5px;
+            width: 80%;
+        }
+
+        /* Conteúdo de Texto */
+        .content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            width: 100%;
+            margin-top: 20px;
+            flex: 1 1 auto;
+            padding-bottom: 190px;
+            box-sizing: border-box;
+        }
+
+        .projeto-titulo {
+            font-weight: bold;
+            font-size: 16px;
+            border-top: 2px solid #557d33;
+            border-bottom: 2px solid #557d33;
+            margin: 10px 40px;
+            padding: 10px 0;
+        }
+
+        .periodo-titulo {
+            font-weight: bold;
+            font-size: 16px;
+            margin: 20px 0;
+        }
+
+        .lista-meses {
+            text-align: left;
+            display: inline-block;
+            list-style-type: disc;
+            font-size: 16px;
+            line-height: 1.8;
+            font-weight: bold;
+        }
+
+        .assuntos-box {
+            margin: 14px 24px 0 24px;
+            text-align: left;
+            font-size: 12px;
+            position: relative;
+            z-index: 3;
+            max-height: 330px;
+            overflow: hidden;
+        }
+
+        .assuntos-box strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .assuntos-box table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .assuntos-box td {
+            vertical-align: top;
+        }
+
+        .assuntos-box .export-table td,
+        .assuntos-box .export-table th {
+            border: 1px solid #8fa1b5;
+            font-size: 11px;
+            line-height: 1.1;
+            padding: 2px 4px !important;
+            background: rgba(255,255,255,0.92);
+        }
+
+        .assuntos-box .export-table tr:first-child {
+            display: none;
+        }
+
+        .assuntos-box .export-table tr:nth-child(n+32) {
+            display: none;
+        }
+
+        /* Seção da Marca d'água Visual (Texto cinza ao fundo) */
+        .sefaz-bg-text {
+            position: absolute;
+            left: 50%;
+            top: 58%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            color: #d0d0d0;
+            margin-top: 0;
+            font-weight: bold;
+            z-index: 1;
+            pointer-events: none;
+            text-align: center;
+            opacity: 0.55;
+        }
+        .sefaz-bg-text h2 { margin: 0; font-size: 38px; }
+        .sefaz-bg-text p { margin: 0; font-size: 16px; }
+
+        /* Rodapé */
+        .footer {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 18px;
+            width: 100%;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 20px;
+            margin-bottom: 15px;
+            z-index: 2;
+        }
+
+        .logo-bid { width: 140px; }
+        .logo-ecm { width: 80px; }
+        .qrcode { width: 80px; height: 80px; }
+
+        .linha-verde-fim {
+            height: 3px;
+            background-color: #557d33;
+            margin: 0 20px 10px 20px;
+        }
+
+        .caixa-numero {
+            font-size: 32px;
+            font-weight: bold;
+            padding-left: 20px;
+        }
+</style>
+</head>
+<body>
+<div class="etiqueta">
+<div class="header">
+<h1>CASA C&Iacute;VIL</h1>
+
+<h3>SECRETARIA DE ESTADO DA CASA C&Iacute;VIL</h3>
+</div>
+
+<div class="content">
+<div class="projeto-titulo">PROJETO GEST&Atilde;O INTEGRADA DE DOCUMENTOS<br />
+Setor: {#434:Setor}<br />
+Localiza&ccedil;&atilde;o:&nbsp;{#478:Localiza&ccedil;&atilde;o} -&nbsp;{#477:Lado} -&nbsp;{#504:N&uacute;mero}</div>
+
+<div class="assuntos-box"><strong>Assunto:</strong>{#entity43:0&lt;446,448&gt;}</div>
+
+<div class="sefaz-bg-text">
+<h2>CASA C&Iacute;VIL</h2>
+
+<p>SECRETARIA DE ESTADO DA CASA C&Iacute;VIL</p>
+</div>
+</div>
+
+<div class="footer">
+<div class="logos-container"><img alt="Logo BID" class="logo-bid" src="uploads/images/2026/03/23/app_logo_1774288742.png" /> <img alt="Logo ECM" class="logo-ecm" src="uploads/images/2026/03/23/app_logo_1774263156.png" /> {#502:QRCODE}</div>
+
+<div class="linha-verde-fim">&nbsp;</div>
+
+<div class="caixa-numero">CAIXA N&ordm; {#437:N&uacute;mero}</div>
+</div>
+</div>
+</body>
+</html>

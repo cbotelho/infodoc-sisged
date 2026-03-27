@@ -24,6 +24,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         pdo_mysql \
         zip \
     && a2enmod headers rewrite \
+    && printf '<Directory /var/www/html>\n    AllowOverride All\n    Require all granted\n</Directory>\n' > /etc/apache2/conf-available/infodoc-allowoverride.conf \
+    && a2enconf infodoc-allowoverride \
     && rm -rf /var/lib/apt/lists/*
 
 COPY docker/php/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
