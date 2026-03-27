@@ -88,6 +88,12 @@ O projeto pode ser executado localmente com Docker Compose usando dois serviços
 
 Para deploy na VPS via Portainer, use o arquivo `docker-compose.production.yml` em uma Stack criada pelo modo Repository.
 
+### Release atual recomendada
+
+- `1.0.20`
+- inclui fallback de leitura para documentos em `/upload/...` quando o arquivo temporario local ja foi removido e a copia oficial permanece no R2
+- inclui ajuste de Apache na imagem Docker para respeitar `.htaccess` no deploy de producao
+
 ### Arquivos para produção
 
 - `docker-compose.production.yml`: stack de produção com restart automático, rede externa de proxy e volumes persistentes.

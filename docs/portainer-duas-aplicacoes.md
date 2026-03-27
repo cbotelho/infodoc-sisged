@@ -43,10 +43,10 @@ Se sua infraestrutura usar outro nome, ajuste a variavel `PROXY_EXTERNAL_NETWORK
 ## Variaveis recomendadas
 
 ```env
-IMAGE_TAG=1.0.16
-WEB_IMAGE_TAG=1.0.18
-WORKER_IMAGE_TAG=1.0.16
-SIGNER_IMAGE_TAG=1.0.16
+IMAGE_TAG=1.0.20
+WEB_IMAGE_TAG=1.0.20
+WORKER_IMAGE_TAG=1.0.20
+SIGNER_IMAGE_TAG=1.0.20
 APP_PORT=8081
 SIGNER_PORT=5000
 APP_BASE_URL=https://gea.seu-dominio.com.br
@@ -96,7 +96,7 @@ TOKEN_EXPIRY=3600
 5. Confirme que `SIGNER_SECRET_KEY` nao esta com placeholder e ja usa uma chave forte.
 6. Confirme que o compose path no Portainer aponta para `docker-compose.production.yml`.
 7. Confirme que o repositório e a branch escolhidos no Portainer correspondem a esta versao com suporte a R2.
-8. Confirme que as tags da stack estao corretas para cada servico. Exemplo: `WEB_IMAGE_TAG=1.0.18`, `WORKER_IMAGE_TAG=1.0.16` e `SIGNER_IMAGE_TAG=1.0.16`.
+8. Confirme que as tags da stack estao corretas para cada servico. Exemplo: `WEB_IMAGE_TAG=1.0.20`, `WORKER_IMAGE_TAG=1.0.20` e `SIGNER_IMAGE_TAG=1.0.20`.
 9. Confirme que o servidor consegue acessar `docker.io/cbotelho80` para fazer pull das imagens.
 10. Confirme que `PHP_MAX_FILE_UPLOADS` atende o volume esperado de upload em lote.
 
@@ -106,6 +106,7 @@ TOKEN_EXPIRY=3600
 2. Abra `https://assinador.seu-dominio.com.br/health` e confirme retorno HTTP 200.
 3. Abra `https://assinador.seu-dominio.com.br/standalone/` e confirme o carregamento da interface do assinador.
 4. Valide um fluxo real de assinatura iniciado pelo GED, porque esse fluxo depende de banco, token e arquivo PDF acessivel ao assinador.
+5. Valide a abertura de um PDF ja carregado pelo GED usando a URL publica antiga em `/upload/...`. Na versao 1.0.20, se o arquivo temporario ja tiver sido removido da pasta `upload`, o container web deve servir o documento a partir do R2 sem retornar 404.
 
 ## Validacao guiada do assinador com R2
 
