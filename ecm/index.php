@@ -53,7 +53,7 @@ error_reporting(E_ALL);
                 <form id="uploadForm" action="upload.php" method="post" enctype="multipart/form-data">
                     <input type="hidden" id="id_registro" name="id_registro">
                     <div class="form-row">
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-3">
                             <label for="secretaria">* Secretaria</label>
                             <select class="form-control" id="secretaria" name="secretaria" required>
                                 <option value="">Selecione a Secretaria</option>
@@ -66,14 +66,24 @@ error_reporting(E_ALL);
                                 ?>
                             </select>
                         </div>
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-3">
                             <label for="setor">* Setor</label>
                             <select class="form-control" id="setor" name="setor" required>
                                 <option value="">Selecione o Setor</option>
                                 <!-- Opções serão carregadas via AJAX -->
                             </select>
                         </div>
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-3">
+                            <label for="padrao_renomeio">* Padrão de Renomeio</label>
+                            <select class="form-control" id="padrao_renomeio" name="padrao_renomeio" required>
+                                <option value="">Selecione o padrão</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-3">
                             <label for="tipodoc">* Tipo de Documentos</label>
                             <select class="form-control" id="tipodoc" name="tipodoc" required>
                                 <option value="">Selecione Tipo Documento</option>

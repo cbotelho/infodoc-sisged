@@ -222,7 +222,47 @@ function validate_selected_registro($pdo, $registroId, $numero, $secretaria = nu
     return $registro;
 }
 
-function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $numero) {
+function validate_file_name_pattern($partsCount, $padraoRenomeio) {
+    if ($partsCount <= 0 || $partsCount > 4) {
+        return false;
+    }
+
+    switch ($padraoRenomeio) {
+        case 1:
+            return $partsCount >= 1;
+        case 2:
+            return $partsCount >= 2;
+        case 3:
+            return $partsCount >= 3;
+        case 4:
+            return $partsCount >= 4;
+        default:
+            return false;
+    }
+}
+
+function resolve_document_fields(array $arquivo, $padraoRenomeio) {
+    $field446 = $arquivo['coluna1'] ?? null;
+    $field447 = null;
+    $field448 = null;
+    $field458 = null;
+
+    if ($padraoRenomeio >= 2) {
+        $field447 = $arquivo['coluna2'] ?? null;
+    }
+
+    if ($padraoRenomeio >= 3) {
+        $field448 = $arquivo['coluna3'] ?? null;
+    }
+
+    if ($padraoRenomeio === 4) {
+        $field458 = $arquivo['coluna4'] ?? null;
+    }
+
+    return [$field446, $field447, $field448, $field458];
+}
+
+function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $numero, $padraoRenomeio) {
     // Função para extrair metadados do arquivo
     function extract_metadata($file_path, $original_name) {
         return [
@@ -264,21 +304,7 @@ function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $numero) {
         return $ocr_text;
     }
 
-    function count_pages($pdfname) {
-        $pdftext = file_get_contents($pdfname);
-        $num = preg_match_all("/\/Page\W/", $pdftext, $dummy);
-        return $num;
-    }
-
-    function getFileNameWithoutExtension($fileName) {
-        $parts = explode('.pdf', $fileName);
-        return $parts[0];
-    }
-
     $upload_dir = "../upload/";
-    $ano = date('Y');
-    $mes = date('m');
-    $dia = date('d');
     $target_dir = $upload_dir;
 
     if (!file_exists($target_dir)) {
@@ -294,16 +320,12 @@ function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $numero) {
         $originalFileName = $arquivo['nome'];
         $newFileName = str_replace("#", "_", $originalFileName);
         $target_file = $target_dir . $newFileName;
-        
-        $totalPages = 0;
-        if (strtolower(pathinfo($originalFileName, PATHINFO_EXTENSION)) === 'pdf') {
-            $totalPages = count_pages($arquivo['tmp_name']);
-        }
+        list($field446, $field447, $field448, $field458) = resolve_document_fields($arquivo, $padraoRenomeio);
 
         // Extrair metadados e OCR
         $metadados = extract_metadata($arquivo['tmp_name'], $originalFileName);
         $ocr_text = extract_ocr($arquivo['tmp_name'], $originalFileName);
-
+ 
         // Executar o insert com os parâmetros na ordem correta
         $stmt->execute([
             0, // parent_id
@@ -314,12 +336,12 @@ function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $numero) {
             $arquivo['coluna5'], // created_by
             0, // sort_order
             $newFileName, // field_445
-            $arquivo['coluna1'], // field_446
-            $arquivo['coluna2'], // field_447
-            $arquivo['coluna3'], // field_448
-            $tipodoc, // field_449 - Agora recebe o valor correto do POST
+            $field446, // field_446
+            $field447, // field_447
+            $field448, // field_448
+            $tipodoc, // field_449
             $numero, // field_450
-            $arquivo['coluna4'], // field_458
+            $field458, // field_458
             json_encode($metadados, JSON_UNESCAPED_UNICODE), // field_474
             $ocr_text // field_475
         ]);
@@ -352,15 +374,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        $requiredFields = require_post_fields(['numero', 'tratado_por', 'tipodoc']);
+        $requiredFields = require_post_fields(['numero', 'tratado_por', 'padrao_renomeio', 'tipodoc']);
 
         $registroId = isset($_POST['id_registro']) && trim((string) $_POST['id_registro']) !== '' ? (int) $_POST['id_registro'] : 0;
         $numero = $requiredFields['numero'];
         $tratadoPorId = $requiredFields['tratado_por'];
+        $padraoRenomeio = (int) $requiredFields['padrao_renomeio'];
         $tipodoc = (int) $requiredFields['tipodoc'];
         $secretaria = isset($_POST['secretaria']) ? trim((string) $_POST['secretaria']) : null;
         $setor = isset($_POST['setor']) ? trim((string) $_POST['setor']) : null;
         $tipo = isset($_POST['tipo']) ? trim((string) $_POST['tipo']) : null;
+
+        if ($padraoRenomeio < 1 || $padraoRenomeio > 4) {
+            throw new InvalidArgumentException('O campo Padrao de Renomeio deve estar entre 1 e 4.');
+        }
 
         if ($registroId <= 0) {
             $registroId = resolve_registro_id_by_numero($pdo, $numero, $secretaria, $setor, $tipo);
@@ -385,13 +412,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $partes = explode('#', $nome);
 
-            if (count($partes) >= 3 && count($partes) <= 4) { 
+            if (validate_file_name_pattern(count($partes), $padraoRenomeio)) {
                 $arquivos[] = [
                     'nome' => $nome,
                     'tmp_name' => $_FILES['files']['tmp_name'][$index],
-                    'coluna1' => $partes[0],
-                    'coluna2' => $partes[1],
-                    'coluna3' => $partes[2],
+                    'coluna1' => $partes[0] ?? null,
+                    'coluna2' => $partes[1] ?? null,
+                    'coluna3' => $partes[2] ?? null,
                     'coluna4' => $partes[3] ?? null,
                     'coluna5' => $tratadoPorId
                 ];
@@ -402,12 +429,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!empty($arquivosComErro)) {
             $pdo->rollBack();
-            echo "Erro ao carregar arquivos. Os seguintes arquivos possuem formato inválido. Use nomes com 3 ou 4 partes separadas por #:\n";
+            echo "Erro ao carregar arquivos. Os seguintes arquivos possuem formato inválido para o Padrao de Renomeio selecionado. Use nomes com partes separadas por # conforme o padrao informado:\n";
             foreach ($arquivosComErro as $arquivoErro) {
                 echo "- " . $arquivoErro . "\n";
             }
         } else {
-            saveArquivo($pdo, $registroId, $arquivos, $tipodoc, $numero);
+            saveArquivo($pdo, $registroId, $arquivos, $tipodoc, $numero, $padraoRenomeio);
             $contadorArquivosImportados = count($arquivos);
             $pdo->commit();
             echo "Arquivos carregados com sucesso! Total de arquivos importados: " . $contadorArquivosImportados; 
