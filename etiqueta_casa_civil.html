@@ -2,54 +2,55 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title></title>
+<title>Etiqueta Fixa 12x21 - Ajuste QR Code</title>
 <style type="text/css">
+@page {
+    size: A4 portrait;
+    margin: 0;
+}
+
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
+    box-sizing: border-box; /* Garante que padding e border não aumentem o tamanho fixo */
 }
 
 html, body {
     margin: 0 !important;
     padding: 0 !important;
-    min-height: 100%;
-    background-color: #ffffff;
+    width: 100%;
+    height: 100%;
+    background-color: #f0f0f0; /* Cinza para ver a etiqueta branca no navegador */
 }
 
 body {
     font-family: Arial, sans-serif;
     display: flex;
     justify-content: center;
-    align-items: center;
-    padding: 20px !important;
-    background-color: #ffffff;
+    align-items: flex-start;
+    padding-top: 10mm !important;
 }
 
-/* Container Principal */
+/* Container Principal - RIGIDAMENTE FIXO */
 .etiqueta {
-    width: 450px;
-    height: 800px;
+    width: 12cm !important;
+    min-width: 12cm !important;
+    max-width: 12cm !important;
+    height: 21cm !important;
+    min-height: 21cm !important;
+    max-height: 21cm !important;
+    
     background-color: #ffffff;
-    background-image: url("https://gea.infodocsisged.com.br/uploads/app_logo_1774707478.png");
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: 320px auto;
-    border: 2px solid #ccc;
-    border-radius: 10px;
+    border: 1px solid #ccc;
     position: relative;
-    padding: 0;
-    overflow: hidden;
+    overflow: hidden; /* Impede que o conteúdo estique a caixa */
     display: flex;
     flex-direction: column;
-    align-items: center;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    page-break-inside: avoid;
 }
 
-/* ============================================ */
-/* MARCA D'ÁGUA - MÉTODO MAIS ROBUSTO */
-/* Usando pseudo-elemento ::before */
-/* ============================================ */
+/* Marca d'água */
 .etiqueta::before {
     content: "";
     position: absolute;
@@ -60,20 +61,16 @@ body {
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><text x="50%" y="45%" font-size="40" font-weight="bold" fill="%23c0c0c0" text-anchor="middle" font-family="Arial">CASA CÍVIL</text><text x="50%" y="60%" font-size="18" font-weight="bold" fill="%23c0c0c0" text-anchor="middle" font-family="Arial">SECRETARIA DE ESTADO DA CASA CÍVIL</text></svg>');
     background-repeat: no-repeat;
     background-position: center;
-    background-size: 90% auto;
-    opacity: 0.4;
+    background-size: 85% auto;
+    opacity: 0.22; /* Levemente mais suave */
     pointer-events: none;
     z-index: 1;
 }
 
-/* Garantir que todo conteúdo fique acima da marca d'água */
-.header,
-.content,
-.footer {
+.header, .content, .footer {
     position: relative;
     z-index: 2;
 }
-/* ============================================ */
 
 /* Cabeçalho */
 .header {
@@ -81,124 +78,154 @@ body {
     color: white;
     width: 100%;
     text-align: center;
-    padding: 15px 0;
+    padding: 12px 0 8px; /* Reduzido o padding */
 }
 
 .header h1 {
     margin: 0;
-    font-size: 42px;
-    letter-spacing: 2px;
+    font-size: 20px;
+    letter-spacing: 1px;
 }
 
 .header h3 {
-    margin: 5px 0 0 0;
-    font-size: 18px;
+    margin: 3px 0 0 0;
+    font-size: 8px;
     font-weight: bold;
     text-transform: uppercase;
     border-top: 1px solid white;
     display: inline-block;
-    padding-top: 5px;
-    width: 80%;
+    padding-top: 3px;
+    width: 75%;
 }
 
 /* Conteúdo */
 .content {
     text-align: center;
     width: 100%;
-    margin-top: 20px;
-    flex: 1;
-    padding-bottom: 190px;
+    flex: 1; /* Ocupa o espaço entre header e footer */
+    overflow: hidden;
+    padding-bottom: 5px; /* Pequeno espaçamento antes do rodapé */
 }
 
 .projeto-titulo {
     font-weight: bold;
-    font-size: 16px;
+    font-size: 9px;
     border-top: 2px solid #557d33;
     border-bottom: 2px solid #557d33;
-    margin: 10px 40px;
-    padding: 10px 0;
-    background-color: rgba(255, 255, 255, 0.95);
+    margin: 10px 10px; /* Margens reduzidas */
+    padding: 6px 4px;
+    background-color: rgba(255, 255, 255, 0.85);
+    line-height: 1.3;
 }
 
 .assuntos-box {
-    margin: 14px 24px 0 24px;
+    margin: 0 10px;
     text-align: left;
-    font-size: 12px;
-    max-height: 330px;
-    overflow-y: auto;
-    background-color: rgba(255, 255, 255, 0.95);
-    padding: 8px;
-    border-radius: 5px;
+    font-size: 7.5px;
+    line-height: 1.15;
 }
 
 .assuntos-box strong {
+    font-size: 9px;
     display: block;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 .assuntos-box table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed; /* Ajuda a controlar a largura das colunas */
 }
 
 .assuntos-box td {
+    padding: 2.5px 3px;
+    border: 1px solid #ddd;
+    word-break: break-word;
     vertical-align: top;
-    padding: 4px;
-    border: 1px solid #ccc;
 }
 
-/* Rodapé */
+/* Rodapé - FIXO e ORGANIZADO NA BASE */
 .footer {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 18px;
     width: 100%;
+    height: 85px; /* Tamanho fixo para o rodapé */
+    background-color: #fff;
+    padding-top: 5px;
 }
 
 .logos-container {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 20px;
-    gap: 20px;
+    justify-content: space-around;
+    align-items: center; 
+    padding: 10 10px;
+    margin-bottom: 5px;
+    height: 50px; /* Altura fixa para os logos e QR */
 }
 
-.logo-bid { width: 140px; }
-.logo-ecm { width: 80px; }
-.qrcode { width: 80px; height: 80px; }
+.logo-bid { width: 70px; height: auto; } /* Diminuído */
+.logo-ecm { width: 55px; height: auto; } /* Diminuído */
+
+/* Estilização para o contêiner do QR Code */
+.qrcode-wrapper {
+    width: 45px; /* Tamanho fixo e menor para o QR */
+    height: 45px;
+    background: #eee;
+    display: flex;
+    align-items: right;
+    justify-content: right;
+    font-size: 7px;
+    border: 1px solid #ccc;
+    overflow: hidden;
+}
+
+/* Força o conteúdo gerado por {#502:QRCODE} a obedecer o wrapper */
+.qrcode-wrapper img, .qrcode-wrapper svg {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    display: block;
+}
 
 .linha-verde-fim {
     height: 3px;
     background-color: #557d33;
-    margin: 10px 20px 10px 20px;
+    margin: 5px 10px 5px 10px;
 }
 
 .caixa-numero {
-    font-size: 32px;
+    font-size: 18px;
     font-weight: bold;
-    padding-left: 20px;
-    margin-top: 5px;
+    padding-left: 12px;
+    color: #333;
+    padding-bottom: 10px;
+}
+
+@media print {
+    body { background-color: #ffffff; padding: 0 !important; }
+    .etiqueta { 
+        margin: 0 auto; 
+        box-shadow: none; 
+        border: 1px solid #eee; /* Borda bem fina apenas para corte */
+    }
 }
 </style>
 </head>
 <body>
+
 <div class="etiqueta">
     <div class="header">
         <h1>CASA CÍVIL</h1>
         <h3>SECRETARIA DE ESTADO DA CASA CÍVIL</h3>
     </div>
 
-    <div class="content etiqueta">
+    <div class="content">
         <div class="projeto-titulo">
             PROJETO GESTÃO INTEGRADA DE DOCUMENTOS<br />
             Setor: {#434:Setor}<br />
-            Localização:&nbsp;{#478:Localização} -&nbsp;{#477:Lado} -&nbsp;{#504:Número}
+            Localização: {#478:Localização} - {#477:Lado} - {#504:Número}
         </div>
 
         <div class="assuntos-box">
             <strong>Assunto:</strong>
-            {#entity43:0&lt;446,448&gt;}
+            {#entity43:0<446,448>}
         </div>
     </div>
 
@@ -206,11 +233,15 @@ body {
         <div class="logos-container">
             <img alt="Logo BID" class="logo-bid" src="uploads/images/2026/03/23/app_logo_1774288742.png" />
             <img alt="Logo ECM" class="logo-ecm" src="uploads/images/2026/03/23/app_logo_1774263156.png" />
-            {#502:QRCODE}
+            
+            <div class="qrcode-wrapper">
+                {#502:QRCODE}
+            </div>
         </div>
-        <div class="linha-verde-fim">&nbsp;</div>
+        <div class="linha-verde-fim"></div>
         <div class="caixa-numero">CAIXA Nº {#437:Número}</div>
     </div>
 </div>
+
 </body>
 </html>
