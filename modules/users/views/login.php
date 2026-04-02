@@ -1,15 +1,5 @@
 <?php
-/**
- * Этот файл является частью программы "CRM Руководитель" - конструктор CRM систем для бизнеса
- * https://www.rukovoditel.net.ru/
- * 
- * CRM Руководитель - это свободное программное обеспечение, 
- * распространяемое на условиях GNU GPLv3 https://www.gnu.org/licenses/gpl-3.0.html
- * 
- * Автор и правообладатель программы: Харчишина Ольга Александровна (RU), Харчишин Сергей Васильевич (RU).
- * Государственная регистрация программы для ЭВМ: 2023664624
- * https://fips.ru/EGD/3b18c104-1db7-4f2d-83fb-2d38e1474ca3
- */
+/* CRM - INFODOC-SISGED | 2026 https://ecmsolucoes.com */
 ?>
 
 <h3 class="form-title"><?php echo ((!is_null(CFG_LOGIN_PAGE_HEADING) and strlen(CFG_LOGIN_PAGE_HEADING)) > 0 ? CFG_LOGIN_PAGE_HEADING : TEXT_HEADING_LOGIN) ?></h3>

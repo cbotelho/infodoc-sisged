@@ -1,15 +1,5 @@
 <?php
-/**
- * Этот файл является частью программы "CRM Руководитель" - конструктор CRM систем для бизнеса
- * https://www.rukovoditel.net.ru/
- * 
- * CRM Руководитель - это свободное программное обеспечение, 
- * распространяемое на условиях GNU GPLv3 https://www.gnu.org/licenses/gpl-3.0.html
- * 
- * Автор и правообладатель программы: Харчишина Ольга Александровна (RU), Харчишин Сергей Васильевич (RU).
- * Государственная регистрация программы для ЭВМ: 2023664624
- * https://fips.ru/EGD/3b18c104-1db7-4f2d-83fb-2d38e1474ca3
- */
+/* CRM - INFODOC-SISGED | 2026 https://ecmsolucoes.com */
 
 $email_info_query = db_query("select m.*, ma.name as account_name, if(length(ma.email)>0,ma.email, ma.login) as account_login from app_ext_mail m left join app_ext_mail_accounts ma on ma.id=m.accounts_id  where m.id='" . _get::int('mail_id') . "' and m.accounts_id in (select mau.accounts_id from app_ext_mail_accounts_users mau where mau.users_id='" . $app_user['id'] . "')");
 if (!$email_info = db_fetch_array($email_info_query))
