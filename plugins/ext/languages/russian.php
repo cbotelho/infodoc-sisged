@@ -86,7 +86,7 @@ define('TEXT_EXT_COMMON_REPORTS_HELP','Это общий отчет создан
 define('TEXT_EXT_MENU_FUNCTIONS','Функции');
 define('TEXT_EXT_FUNCTIONS','Функции');
 define('TEXT_EXT_FUNCTION','Функция');
-define('TEXT_EXT_FUNCTIONS_DESCRIPTION','На этой странице вы можете создать дополнительные функции которые можно использовать в полях с типом "MySQL формула". Чтобы вставить функцию в формулу используйте фигурные скобки. Например: {12}+[5] где 12 это ID функции. <a href="https://docs.rukovoditel.net/ru/index.php?p=48" target="_blank"><u>Подробнее</u></a>.');
+define('TEXT_EXT_FUNCTIONS_DESCRIPTION','На этой странице вы можете создать дополнительные функции которые можно использовать в полях с типом "MySQL формула". Чтобы вставить функцию в формулу используйте фигурные скобки. Например: {12}+[5] где 12 это ID функции. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=48" target="_blank"><u>Подробнее</u></a>.');
 define('TEXT_BUTTON_ADD_NEW_FUNCTION','Добавить функцию');
 define('TEXT_HEADING_FUNCTION_IFNO','Информация о функции');
 define('TEXT_EXT_FUNCTION_SUM','SUM -  вычисляет сумму значений');
@@ -233,7 +233,7 @@ define('TEXT_EXT_INTERNAL_CHAT','Внутренний чат');
 define('TEXT_EXT_CHAT_ACCESS', 'Выберите группы пользователей, которые будут иметь доступ к чату');
 define('TEXT_EXT_ENABLE_CHAT','Включить чат');
 define('TEXT_EXT_CHAT_SEND_ALERTS','Отправлять уведомления о непрочитанных сообщениях');
-define('TEXT_EXT_CHAT_SEND_ALERTS_INFO','Перед включением данной возможности необходимо установить задачу по расписанию каждые 15 минут (<a href="https://docs.rukovoditel.net/ru/index.php?p=70" target="_blank"><u>cron</u></a>):');
+define('TEXT_EXT_CHAT_SEND_ALERTS_INFO','Перед включением данной возможности необходимо установить задачу по расписанию каждые 15 минут (<a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=70" target="_blank"><u>cron</u></a>):');
 define('TEXT_EXT_CHAT_ALERTS_TIME_TIP','Уведомление отсылается в том случае, если есть непрочитанные сообщения на протяжении установленного времени (15 минут).');
 define('TEXT_EXT_CHAT_ALERTS_SUBJECT','У Вас есть непрочитанные сообщения в чате (%s)');
 define('TEXT_EXT_CHAT_MESSAGES','Сообщения');
@@ -260,7 +260,7 @@ define('TEXT_EXT_FIELDS_IN_POPUP_TOOLTIP','Поля во всплывающем 
 
 //new defines for ext 1.6
 define('TEXT_EXT_PUBLIC_FORMS','Публичные формы');
-define('TEXT_EXT_PUBLIC_FORMS_DESCRIPTION','Создавая публичную форму, вы разрешаете для выбранной сущности вносить данные в систему без регистрации. <a href="https://docs.rukovoditel.net/ru/index.php?p=30" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_PUBLIC_FORMS_DESCRIPTION','Создавая публичную форму, вы разрешаете для выбранной сущности вносить данные в систему без регистрации. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=30" target="_blank">Подробнее</a>.');
 define('TEXT_EXT_PUBLIC_FORM','Публичная форма');
 define('TEXT_EXT_PAGE_TITLE','Заголовок страницы');
 define('TEXT_EXT_PB_SUCCESSFUL_SENDING_MESSAGE','Текст сообщения об успешной отправке');
@@ -304,7 +304,7 @@ define('TEXT_EXT_FUNCTION_SELECT_INFO','По умолчанию, функция 
 define('TEXT_EXT_FUNCTION_SELECT','SELECT - возвращает значение поля');
 define('TEXT_EXT_PROCESSES','Автоматизация действий');
 define('TEXT_EXT_BUTTON_ADD_PROCESS','Создать процесс');
-define('TEXT_EXT_PROCESSES_DESCRIPTION','У вас есть возможность объединить несколько действий в один процесс. <a href="https://docs.rukovoditel.net/ru/index.php?p=31" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_PROCESSES_DESCRIPTION','У вас есть возможность объединить несколько действий в один процесс. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=31" target="_blank">Подробнее</a>.');
 define('TEXT_EXT_PROCESS_BUTTON_TITLE','Название кнопки');
 define('TEXT_EXT_PROCESS_BUTTON_POSITION','Расположение кнопки');
 define('TEXT_EXT_PROCESS_BUTTON_COLOR','Цвет кнопки');
@@ -342,7 +342,7 @@ define('TEXT_EXT_PROCESS_COMPLETED','Процесс "%s" успешно выпо
 define('TEXT_EXT_IN_MENU_SUBENTITY_REPORT','По умолчанию, отчеты для вложенной сущности отображаются только при выборе родительской записи. Выбрав данную опцию, вы разрешаете отобразить отчет в левом меню, таким образом, будут отображаться все записи из вложенной сущности.');
 define('TEXT_EXT_MODULES','Модули');
 define('TEXT_EXT_PAYMENT_MODULES','Модули оплаты');
-define('TEXT_EXT_PAYMENT_MODULES_DESCRIPTION','На этой странице вы можете установить несколько модулей оплаты. На странице "Автоматизация действий" у вас есть возможность подключить установленные модули к процессу. <a href="https://docs.rukovoditel.net/ru/index.php?p=57" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_PAYMENT_MODULES_DESCRIPTION','На этой странице вы можете установить несколько модулей оплаты. На странице "Автоматизация действий" у вас есть возможность подключить установленные модули к процессу. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=57" target="_blank">Подробнее</a>.');
 define('TEXT_EXT_INSTALL_MODULE','Установить модуль');
 define('TEXT_EXT_BUTTON_INSTALL_MODULE','Установить');
 define('TEXT_EXT_AVAILABLE_MODULES','Доступные модули');
@@ -366,7 +366,7 @@ define('TEXT_EXT_PAYMENT_MODULE','Модуль оплаты');
 define('TEXT_EXT_PAYMENT_NOTIFICATION','Оповещение о платеже');
 define('TEXT_EXT_VERSION','Версия');
 define('TEXT_EXT_SMS_MODULES','Модули СМС');
-define('TEXT_EXT_SMS_MODULES_DESCRIPTION','На этой странице вы можете установить несколько модулей СМС рассылки. Для любой сущности, на странице "' . link_to('Правила отправки СМС',url_for('ext/modules/sms_rules')) . '", у вас есть возможность подключить установленные модули. <a href="https://docs.rukovoditel.net/ru/index.php?p=58" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_SMS_MODULES_DESCRIPTION','На этой странице вы можете установить несколько модулей СМС рассылки. Для любой сущности, на странице "' . link_to('Правила отправки СМС',url_for('ext/modules/sms_rules')) . '", у вас есть возможность подключить установленные модули. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=58" target="_blank">Подробнее</a>.');
 define('TEXT_EXT_SMS_SETTINGS','Настройки CMC');
 define('TEXT_EXT_ENABLE_SMS_NOTIFICATION','Включить оповещение по CMC');
 define('TEXT_EXT_SMS_MODULE','Модуль СМС');
@@ -381,15 +381,15 @@ define('TEXT_EXT_SEND_TO_USER_NUMBER','Отправлять назначенны
 define('TEXT_EXT_SEND_TO_USER_NUMBER_INFO','Выберите поле для номера телефона из сущности "Пользователи"');
 define('TEXT_EXT_SMS_SENDIGN_RULES','Правила отправки СМС');
 define('TEXT_EXT_RULE','Правило');
-define('TEXT_EXT_SMS_SENDIGN_RULES_INFO','Настройте правила отправки СМС для необходимой сущности. <a href="https://docs.rukovoditel.net/ru/index.php?p=58" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_SMS_SENDIGN_RULES_INFO','Настройте правила отправки СМС для необходимой сущности. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=58" target="_blank">Подробнее</a>.');
 define('TEXT_EXT_API','API');
 define('TEXT_EXT_API_ACCESS','Доступ к API');
-define('TEXT_EXT_API_ACCESS_INFO','На этой странице вы можете включить доступ к API. API-ключ позволит управлять данными через API без доступа к личному кабинету. <a href="https://docs.rukovoditel.net/ru/index.php?p=52" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_API_ACCESS_INFO','На этой странице вы можете включить доступ к API. API-ключ позволит управлять данными через API без доступа к личному кабинету. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=52" target="_blank">Подробнее</a>.');
 define('TEXT_EXT_ALLOW_API','Разрешить доступ к API');
 define('TEXT_EXT_API_KEY','API ключ');
 define('TEXT_EXT_GENERATE','Сгенерировать');
 define('TEXT_EXT_CHANGE_HISTORY','История изменений');
-define('TEXT_EXT_CHANGE_HISTORY_REPORT_INFO','Для отслеживания изменений в сущностях, создайте новый отчет. Нажмите на название отчета и настройте сущности и поля для отчета. <a href="https://docs.rukovoditel.net/ru/index.php?p=35" target="_blank">Подробнее</a>');
+define('TEXT_EXT_CHANGE_HISTORY_REPORT_INFO','Для отслеживания изменений в сущностях, создайте новый отчет. Нажмите на название отчета и настройте сущности и поля для отчета. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=35" target="_blank">Подробнее</a>');
 define('TEXT_EXT_BUTTON_ADD_REPORT','Добавить отчет');
 define('TEXT_EXT_REPORT_POSITION','Расположение отчета');
 define('TEXT_EXT_IN_MENU','В основном меню');
@@ -410,16 +410,16 @@ define('TEXT_EXT_TC_REPORT_POSITION_HEADER_NOTE','В верхнем меню о�
 define('TEXT_EXT_FILE_STORAGE_MODULES','Модули хранения файлов');
 define('TEXT_EXT_FILE_STORAGE_RULES','Правила хранения файлов');
 define('TEXT_EXT_MODULE','Модуль');
-define('TEXT_EXT_FILE_STORAGE_MODULES_DESCRIPTION','Вы можете установить несколько модулей для хранения файлов. На странице "' . link_to('Правила хранения файлов',url_for('ext/modules/file_storage_rules')) . '", у вас есть возможность подключить установленные модули. <a href="https://docs.rukovoditel.net/ru/index.php?p=59" target="_blank">Подробнее</a>.');
-define('TEXT_EXT_FILE_STORAGE_RULES_INFO','Если для определенного поля создано правило, то файлы при загрузке файлы помещаются в очередь на отправку в хранилище. Для перемещения файлов в хранилище, запустите <a href="https://docs.rukovoditel.net/ru/index.php?p=70" target="_blank"><u>задачу по расписанию</u></a>, например, каждые 5 минут:');
+define('TEXT_EXT_FILE_STORAGE_MODULES_DESCRIPTION','Вы можете установить несколько модулей для хранения файлов. На странице "' . link_to('Правила хранения файлов',url_for('ext/modules/file_storage_rules')) . '", у вас есть возможность подключить установленные модули. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=59" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_FILE_STORAGE_RULES_INFO','Если для определенного поля создано правило, то файлы при загрузке файлы помещаются в очередь на отправку в хранилище. Для перемещения файлов в хранилище, запустите <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=70" target="_blank"><u>задачу по расписанию</u></a>, например, каждые 5 минут:');
 define('TEXT_EXT_DESIGN_CSS_NOTE','Введите свои CSS стили');
 define('TEXT_EXT_SPACE_TO_RESET','Введите пробел для сброса даты');
 
 //new defines for ext 1.7
 define('TEXT_EXT_CURRENCIES','Валюты');
-define('TEXT_EXT_CURRENCIES_INFO','Валюты применяются для конвертации значений в числовых полях. Установленные валюты доступны в настройках поля. <a href="https://docs.rukovoditel.net/ru/index.php?p=50" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_CURRENCIES_INFO','Валюты применяются для конвертации значений в числовых полях. Установленные валюты доступны в настройках поля. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=50" target="_blank">Подробнее</a>.');
 define('TEXT_EXT_CURRENCIES_INFO_FORMULA','Предусмотрена возможность использовать значения валюты в формуле с помощью переменной [код валюты], например: [USD].');
-define('TEXT_EXT_CURRENCIES_MODULE_INFO','Выберите модуль по умолчанию для обновления валют.<br><br>Для автоматического обновления валют, установите задачу по расписанию (<a href="https://docs.rukovoditel.net/ru/index.php?p=70" target="_blank">cron</a>).');
+define('TEXT_EXT_CURRENCIES_MODULE_INFO','Выберите модуль по умолчанию для обновления валют.<br><br>Для автоматического обновления валют, установите задачу по расписанию (<a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=70" target="_blank">cron</a>).');
 define('TEXT_EXT_CURRENCY','Валюта');
 define('TEXT_EXT_CODE','Код');
 define('TEXT_EXT_SYMBOL','Символ');
@@ -461,7 +461,7 @@ define('TEXT_EXT_TEMPLATES_EXPORT_NUM2STR_NOTES','Используйте фун�
 
 //new defines for ext 2.2
 define('TEXT_EXT_KANBAN','Канбан');
-define('TEXT_EXT_KANBAN_DESCRIPTION','Данный тип отчета предназначен для отображения данных в виде Канбан-доски. <a href="https://docs.rukovoditel.net/ru/index.php?p=41" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_KANBAN_DESCRIPTION','Данный тип отчета предназначен для отображения данных в виде Канбан-доски. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=41" target="_blank">Подробнее</a>.');
 define('TEXT_EXT_COLUMN_WIDTH','Ширина столбца');
 define('TEXT_EXT_PAGE_ORIENTATION','Ориентация страницы');
 define('TEXT_EXT_PAGE_ORIENTATION_PORTRAIT','Книжная');
@@ -475,8 +475,8 @@ define('TEXT_EXT_DISABLE_SUBMIT_PB','Отключить форму отправ�
 define('TEXT_EXT_DISABLE_SUBMIT_PB_INFO','Будет доступна только форма для проверки обращения');
 define('TEXT_EXT_SAMRT_INPUT','Умный ввод');
 define('TEXT_EXT_SAMRT_INPUT_RULES','Правила ввода');
-define('TEXT_EXT_SMART_INTPUT_MODULES_DESCRIPTION','Данные модули предназначены для взаимодействия с сервисами, которые автоматически проверяют введенные данные, корректируют данные, показывают подсказки и т.д. <a href="https://docs.rukovoditel.net/ru/index.php?p=60" target="_blank">Подробнее</a>.');
-define('TEXT_EXT_SAMRT_INPUT_RULES_INFO','Настройте правила работы модулей "Умный ввод". <a href="https://docs.rukovoditel.net/ru/index.php?p=60" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_SMART_INTPUT_MODULES_DESCRIPTION','Данные модули предназначены для взаимодействия с сервисами, которые автоматически проверяют введенные данные, корректируют данные, показывают подсказки и т.д. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=60" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_SAMRT_INPUT_RULES_INFO','Настройте правила работы модулей "Умный ввод". <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=60" target="_blank">Подробнее</a>.');
 define('TEXT_EXT_DEBUG_MODE','Режим отладки');
 
 //new defines for ext 2.3
@@ -493,25 +493,25 @@ define('TEXT_EXT_INTERVAL','Интервал');
 define('TEXT_EXT_EVENT_REPEAT_LIMIT_SHORT','Повторений');
 define('TEXT_EXT_AUTOMATICALLY','Автоматически');
 define('TEXT_EXT_MY_RECURRING_TASKS','Мои повторяющиеся задачи');
-define('TEXT_EXT_RECURRING_TASKS_INFO','На этой странице отображаются все повторяющиеся задачи. <a href="https://docs.rukovoditel.net/ru/index.php?p=46" target="_blank">Подробнее</a>.');
-define('TEXT_EXT_RECURRING_TASKS_INFO_CRON','Перед началом использования данной возможности вам необходимо настроить задачу по расписанию (<a href="https://docs.rukovoditel.net/ru/index.php?p=70" target="_blank">cron</a>) каждый час:');
+define('TEXT_EXT_RECURRING_TASKS_INFO','На этой странице отображаются все повторяющиеся задачи. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=46" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_RECURRING_TASKS_INFO_CRON','Перед началом использования данной возможности вам необходимо настроить задачу по расписанию (<a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=70" target="_blank">cron</a>) каждый час:');
 define('TEXT_EXT_EXCLUDE_CHOICES','Исключить варианты');
 define('TEXT_EXT_IMAGE_MAP','План-схема');
-define('TEXT_EXT_IMAGE_MAP_DESCRIPTION','Данный тип отчета предназначен для отображения данных в виде план-схемы. <a href="https://docs.rukovoditel.net/ru/index.php?p=42" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_IMAGE_MAP_DESCRIPTION','Данный тип отчета предназначен для отображения данных в виде план-схемы. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=42" target="_blank">Подробнее</a>.');
 define('TEXT_EXT_MAP_REPORTS','Карта');
-define('TEXT_EXT_MAP_REPORTS_INFO','Данный отчет выводит на карту все метки которые находятся есть в базе в пределах выбранной сущности. <a href="https://docs.rukovoditel.net/ru/index.php?p=43" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_MAP_REPORTS_INFO','Данный отчет выводит на карту все метки которые находятся есть в базе в пределах выбранной сущности. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=43" target="_blank">Подробнее</a>.');
 define('TEXT_EXT_MAP_REPORTS_BACKGROUND_COLOR_INFO','К маркерам на карте будет применяться фон из значений списка.');
 define('TEXT_EXT_IPAGES_CODE_INFO','Используйте это поле для вставки пользовательского HTML или JavaScript кода в информационную страницу.');
 define('TEXT_EXT_PB_NOTIFY_FIELD_INSERT','Оставьте поле пустым или выберите опции при которых сообщение будет отсылаться.');
 define('TEXT_EXT_MIND_MAP','Диаграмма связей');
-define('TEXT_EXT_MIND_MAP_DESCRIPTION','Данный тип отчета предназначен для отображения записей в виде диаграммы связей. <a href="https://docs.rukovoditel.net/ru/index.php?p=44" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_MIND_MAP_DESCRIPTION','Данный тип отчета предназначен для отображения записей в виде диаграммы связей. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=44" target="_blank">Подробнее</a>.');
 define('TEXT_EXT_COMMON_REPORTS_GROUPS','Общие группы отчетов');
 define('TEXT_EXT_COMMON_REPORTS_GROUPS_INFO','Настройте отчеты и войдите как пользователь для проверки корректности отображения отчетов.');
 
 //new defines for ext 2.4
 define('TEXT_EXT_MAILING_SERVICES','Сервисы рассылок');
 define('TEXT_EXT_SUBSCRIBE_RULES','Правила подписки');
-define('TEXT_EXT_MAILING_SERVICES_DESCRIPTION','Интеграция с сервисом рассылки автоматизирует подписку клиентов. После установки модуля настройте правила подписки. <a href="https://docs.rukovoditel.net/ru/index.php?p=61" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_MAILING_SERVICES_DESCRIPTION','Интеграция с сервисом рассылки автоматизирует подписку клиентов. После установки модуля настройте правила подписки. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=61" target="_blank">Подробнее</a>.');
 define('TEXT_EXT_SUBSCRIBE_RULES_INFO','Настройте правила подписки для необходимой сущности.');
 define('TEXT_EXT_LIST_OF_CONTACTS','Список контактов');
 define('TEXT_EXT_LIST_OF_CONTACTS_INFO','Настраивается в модуле рассылок');
@@ -519,7 +519,7 @@ define('TEXT_EXT_EXTRA_FIELDS','Дополнительные поля');
 define('TEXT_EXT_EXTRA_FIELDS_SUBSCRIBE_INFO','Введите каждое поле в новую строку. Пример:<br>FNAME=[12]<br>LNAME=[13]<br>где 12 и 13 - текстовые поля.');
 define('TEXT_EXT_SELECT_EMAIL_FIELD','Выберите поле в котором хранится Email адрес.');
 define('TEXT_EXT_EMAIL_SENDING_RULES','Правила отправки почты');
-define('TEXT_EXT_EMAIL_SENDING_RULES_INFO','Вы можете настроить дополнительные правила отправки сообщений по почте при добавлении или редактировании записи. <a href="https://docs.rukovoditel.net/ru/index.php?p=75" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_EMAIL_SENDING_RULES_INFO','Вы можете настроить дополнительные правила отправки сообщений по почте при добавлении или редактировании записи. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=75" target="_blank">Подробнее</a>.');
 define('TEXT_EXT_SEND_TO_USERS','Отправить пользователям');
 define('TEXT_EXT_SEND_TO_ASSIGNED_USERS','Отправить назначенным пользователям');
 define('TEXT_EXT_SEND_TO_USERS_INFO','Выберите пользователей из списка');
@@ -546,14 +546,14 @@ define('TEXT_EXT_INCOMING_CALL','Входящий звонок');
 define('TEXT_EXT_SAVE_CALL','Сохранение звонка');
 define('TEXT_EXT_CALL_HISTORY','История звонков');
 define('TEXT_EXT_TELEPHONY_MODULES','Модули телефонии');
-define('TEXT_EXT_TELEPHONY_MODULES_DESCRIPTION','Настройте взаимодействие с сервисами телефонии и получите возможность совершать звонки по клику,  показывать карточку клиента при входящем вызове, сохранять информацию о звонке. <a href="https://docs.rukovoditel.net/ru/index.php?p=62" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_TELEPHONY_MODULES_DESCRIPTION','Настройте взаимодействие с сервисами телефонии и получите возможность совершать звонки по клику,  показывать карточку клиента при входящем вызове, сохранять информацию о звонке. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=62" target="_blank">Подробнее</a>.');
 define('TEXT_EXT_TELEPHONY_MODULE','Модуль телефонии');
 define('TEXT_EXT_FIELDTYPE_PHONE_TELEPHONY_MODULE_INFO','Выберите модуль для звонков по нажатию на номер телефона.');
 define('TEXT_EXT_FIELDTYPE_PHONE_SMS_MODULE_INFO','Выберите модуль для отправки смс. Иконка для отправки СМС будет отображаться возле номера телефона.');
 define('TEXT_EXT_SEND_SMS','Отправить SMS');
 define('TEXT_EXT_MESSAGE_SENT','Сообщение отправлено');
 define('TEXT_EXT_TELEPHONY_SETTINGS','Настройки телефонии');
-define('TEXT_EXT_INCOMING_CALL_INFO','Настройте переход на карточку клиента при входящем звонке. Для этого вам необходимо указать сущность и поле с типом "Телефон". Затем специальный URL необходимо вызывать при событии "Входящий звонок". <a href="https://docs.rukovoditel.net/ru/index.php?p=62" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_INCOMING_CALL_INFO','Настройте переход на карточку клиента при входящем звонке. Для этого вам необходимо указать сущность и поле с типом "Телефон". Затем специальный URL необходимо вызывать при событии "Входящий звонок". <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=62" target="_blank">Подробнее</a>.');
 define('TEXT_EXT_INCOMING_URL_INFO','Используйте данный URL при событии входящий звонок. %NUMBER% замените на номер телефона.');
 define('TEXT_EXT_INCOMING_CALL_PHONE_INFO','Укажите поля с типом "Телефон" по которым будет выполняться поиск в базе при входящем звонке.');
 define('TEXT_EXT_RECORD_WITH_PHONE_NOT_FOUND','Запись с номером <b>%s</b> не найдена.');
@@ -572,14 +572,14 @@ define('TEXT_EXT_HISTORY','История');
 define('TEXT_EXT_SMS','СМС');
 define('TEXT_EXT_OUTGOING_CALL','Исходящий звонок');
 define('TEXT_EXT_TEMPLATES_FOR_IMPORT','Шаблоны для импорта');
-define('TEXT_EXT_TEMPLATES_FOR_IMPORT_INFO','Шаблон представляет собой связь между столбцами по полями, которая будет автоматически устанавливаться при импорте данных. <a href="https://docs.rukovoditel.net/ru/index.php?p=21" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_TEMPLATES_FOR_IMPORT_INFO','Шаблон представляет собой связь между столбцами по полями, которая будет автоматически устанавливаться при импорте данных. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=21" target="_blank">Подробнее</a>.');
 define('TEXT_EXT_TEMPLATE','Шаблон');
 define('TEXT_EXT_TEMPLATES_EXPORT_COMMENTS','Для экспорта комментариев используйте формат {#comments:Комментарии} или {#comments:Комментарии[2]}, где 2 - это количество комментариев.');
 
 //new defines for ext 2.5
 define('TEXT_EXT_MAIL_INTEGRATION','Интеграция с почтой');
 define('TEXT_EXT_MAIL_ACCOUNTS','Почтовые аккаунты');
-define('TEXT_EXT_MAIL_ACCOUNTS_INFO','Добавьте один или несколько почтовых аккаунтов. После, нажмите на название аккаунта и привяжите пользователей к аккаунту. <a href="https://docs.rukovoditel.net/ru/index.php?p=32" target="_blank">Подробнее</a>.');
+define('TEXT_EXT_MAIL_ACCOUNTS_INFO','Добавьте один или несколько почтовых аккаунтов. После, нажмите на название аккаунта и привяжите пользователей к аккаунту. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=32" target="_blank">Подробнее</a>.');
 define('TEXT_EXT_IMAP_SERVER','Почтовый сервер');
 define('TEXT_EXT_IMAP_SERVER_INFO','mail.server.com:143/notls<br>imap.gmail.com:993/imap/ssl<br>imap.yandex.ru:993/imap/ssl');
 define('TEXT_EXT_MAILBOX','Mailbox');
@@ -587,7 +587,7 @@ define('TEXT_EXT_ENTER_EMAIL','Введите адрес электронной 
 define('TEXT_EXT_CHECK_CONNECTION','Проверить соединение');
 define('TEXT_EXT_IMAP_EXTENSION_IS_REQUIRED','Требуется расширение PHP IMAP');
 define('TEXT_EXT_DELETE_EMAILS_FROM_SERVER','Удаление писем с сервера');
-define('TEXT_EXT_MAIL_INTEGRATION_INFO','Перед включением данной возможности, добавьте почтовые аккаунты и установите задачу по расписанию (<a href="https://docs.rukovoditel.net/ru/index.php?p=70" target="_blank"><u>cron</u></a>):');
+define('TEXT_EXT_MAIL_INTEGRATION_INFO','Перед включением данной возможности, добавьте почтовые аккаунты и установите задачу по расписанию (<a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=70" target="_blank"><u>cron</u></a>):');
 define('TEXT_EXT_SEND_MAIL_AS','Отправлять почту как');
 define('TEXT_EXT_SIGNATURE','Подпись');
 define('TEXT_EXT_INBOX','Входящие');
@@ -605,7 +605,7 @@ define('TEXT_EXT_EMAIL_SUBJECT','Тема');
 define('TEXT_EXT_EMAIL_FROM','От');
 define('TEXT_EXT_EMAIL_TO','Кому');
 define('TEXT_EXT_RELATD_ENTITIES','Связанные сущности');
-define('TEXT_EXT_MAIL_RELATD_ENTITIES_INFO','Связав сущность с почтовым аккаунтом, вы сможете создавать связанные записи к письму. <a href="https://docs.rukovoditel.net/ru/index.php?p=32" target="_blank">Подробнее</a>');
+define('TEXT_EXT_MAIL_RELATD_ENTITIES_INFO','Связав сущность с почтовым аккаунтом, вы сможете создавать связанные записи к письму. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=32" target="_blank">Подробнее</a>');
 define('TEXT_EXT_MAIL_ACCOUNT','Почтовый аккаунт');
 define('TEXT_EXT_MAIL_BODY','Письмо');
 define('TEXT_EXT_AUTO_CREATE_RECORD','Автоматически создавать запись');
@@ -646,9 +646,9 @@ define('TEXT_EXT_ENTER_EMAIL_OR_DOMAIN','Введите адрес электр�
 define('TEXT_EXT_AUTO_CREATE_RELATED_RECORD','Автоматически создавать связанную запись');
 define('TEXT_EXT_ENTER_MANUALLY_ONLY','Это поле можно ввести только вручную');
 define('TEXT_EXT_COMMON_FILTERS','Общие фильтры');
-define('TEXT_EXT_COMMON_FILTERS_INFO','На данной странице у вас есть возможность настроить фильтры для указанных пользователей (менеджеров, сотрудников), чтобы они не тратили время на самостоятельное создание "стандартизированных" фильтров, которые уже предусматриваются в учетной системе компании для оперативного вывода нужной информации. <a href="https://docs.rukovoditel.net/ru/index.php?p=92" target="_blank"><u>Подробнее</u></a>');
+define('TEXT_EXT_COMMON_FILTERS_INFO','На данной странице у вас есть возможность настроить фильтры для указанных пользователей (менеджеров, сотрудников), чтобы они не тратили время на самостоятельное создание "стандартизированных" фильтров, которые уже предусматриваются в учетной системе компании для оперативного вывода нужной информации. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=92" target="_blank"><u>Подробнее</u></a>');
 define('TEXT_EXT_PB_URL_PARAMS_INFO','В url адресе можно указать предустановленные значения полей для публичной формы.<br>Например: &fields[13]=value&parent_item_id=50<br>13 - id поля<br>value - значение поля (для списков используйте id опции)<br>parent_item_id - id родительской записи');
-define('TEXT_EXT_EXPORT_TEMPLATES_INFO','Данная страница позволяет создать необходимую форму для печати или экспорта данных. После создания шаблона, нажмите на название и подготовьте данные. <a href="https://docs.rukovoditel.net/ru/index.php?p=55" target="_blank"><u>Подробнее</u></a>');
+define('TEXT_EXT_EXPORT_TEMPLATES_INFO','Данная страница позволяет создать необходимую форму для печати или экспорта данных. После создания шаблона, нажмите на название и подготовьте данные. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=55" target="_blank"><u>Подробнее</u></a>');
 define('TEXT_EXT_PRINT_BUTTON','Кнопка "Печать"');
 define('TEXT_EXT_PRINT_MULTIPLE_RECORDS','Печать нескольких записей');
 define('TEXT_EXT_EACH_RECORD_FROM_NEW_PAGE','Каждая запись с новой страницы');
@@ -668,13 +668,13 @@ define('TEXT_EXT_MAIL_ENTITIES_RULES_INFO','Установите правила,
 define('TEXT_EXT_IPAGES_ACCESS_CONFIGURATION','Настройте пользователей, которые смогут управлять информационными страницами. ');
 define('TEXT_IPAGE_DESCRIPTION_TIP','Чтобы вставить изображение в текст, просто перетащите изображение в описание.<br>Имя прикрепленного файла в описании автоматически преобразуется  в ссылку на файл.');
 define('TEXT_EXT_PIVOT_СALENDAR','Сводный календарь');
-define('TEXT_EXT_PIVOT_СALENDAR_INFO','Данный тип отчета дает возможность объединить несколько сущностей в один календарь. После создания отчета, нажмите на название и добавьте необходимые сущности. <a href="https://docs.rukovoditel.net/ru/index.php?p=91" target="_blank"><u>Подробнее</u></a>');
+define('TEXT_EXT_PIVOT_СALENDAR_INFO','Данный тип отчета дает возможность объединить несколько сущностей в один календарь. После создания отчета, нажмите на название и добавьте необходимые сущности. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=91" target="_blank"><u>Подробнее</u></a>');
 define('TEXT_EXT_DISPLYA_IN_MAIN_MENU','Отображать в основном меню');
 define('TEXT_EXT_DISPLYA_IN_MAIN_MENU_TIP','По умолчанию отчет отображается в разделе "Отчеты".');
 define('TEXT_EXT_PIVOT_СALENDAR_ENTITIES_INFO','Добавьте необходимые сущности. Нажмите на название сущности и установите необходимые фильтры для каждой сущности.');
 define('TEXT_EXT_DISPLAY_ENTITY_NAME','Отображать название сущности');
 define('TEXT_EXT_ITEM_PIVOT_TABLES','Cводные таблицы элементов');
-define('TEXT_EXT_ITEM_PIVOT_TABLES_INFO','Данный тип отчета дает возможность построить сводную таблицу для связанных записей и отобразить ее непосредственно на странице записи элемента. После создания отчета, нажмите на название и добавьте необходимые вычисления. <a href="https://docs.rukovoditel.net/ru/index.php?p=86" target="_blank"><u>Подробнее</u></a>');
+define('TEXT_EXT_ITEM_PIVOT_TABLES_INFO','Данный тип отчета дает возможность построить сводную таблицу для связанных записей и отобразить ее непосредственно на странице записи элемента. После создания отчета, нажмите на название и добавьте необходимые вычисления. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=86" target="_blank"><u>Подробнее</u></a>');
 define('TEXT_EXT_ITEM_PIVOT_TABLES_ENTITY_1_TIP','Выберите сущность, для элементов которой будет отображаться сводный отчет.');
 define('TEXT_EXT_ITEM_PIVOT_TABLES_ENTITY_2_TIP','Выберите сущность, из которой будут выбираться данные.');
 define('TEXT_EXT_ITEM_PIVOT_TABLES_FIELDS_TIP','Выберите поля, по которым будут группироваться данные.');
@@ -697,10 +697,10 @@ define('TEXT_EXT_PROCESS_ACTION_MOVE_ITEM','Cущность "%s" - переме�
 define('TEXT_EXT_GLOBAL_SEARCH','Глобальный поиск');
 define('TEXT_EXT_USE_GLOBAL_SEARCH','Использовать глобальный поиск');
 define('TEXT_EXT_GLOBAL_SEARCH_ACCESS_TIP','Выберите группы пользователей, которые будут иметь доступ к глобальному поиску.');
-define('TEXT_EXT_GLOBAL_SEARCH_INFO','Глобальный поиск возвращает список всех совпадающих результатов в настроенных сущностях. После включения данной опции, настройте сущности, по которым будет происходить поиск. <a href="https://docs.rukovoditel.net/ru/index.php?p=85" target="_blank"><u>Подробнее</u></a>');
+define('TEXT_EXT_GLOBAL_SEARCH_INFO','Глобальный поиск возвращает список всех совпадающих результатов в настроенных сущностях. После включения данной опции, настройте сущности, по которым будет происходить поиск. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=85" target="_blank"><u>Подробнее</u></a>');
 define('TEXT_EXT_GLOBAL_SEARCH_ENTITIES_INFO','Настройте сущности и поля, которые будут использоваться для глобального поиска. Если у пользователя нет доступа к сущности, она будет автоматически исключена из поиска.<br>Обратите внимание: данный функционал увеличивает нагрузку на сервер, добавляйте только необходимые сущности.');
 define('TEXT_EXT_XML_EXPORT','XML экспорт');
-define('TEXT_EXT_XML_EXPORT_INFO','Создайте необходимые вам шаблоны для экспорта данных в формате XML. Вы можете экспортировать данные выбрав записи вручную, или автоматически, используя специальный URL-адрес. <a href="https://docs.rukovoditel.net/ru/index.php?p=87" target="_blank"><u>Подробнее</u></a>');
+define('TEXT_EXT_XML_EXPORT_INFO','Создайте необходимые вам шаблоны для экспорта данных в формате XML. Вы можете экспортировать данные выбрав записи вручную, или автоматически, используя специальный URL-адрес. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=87" target="_blank"><u>Подробнее</u></a>');
 define('TEXT_EXT_EXPORT_BUTTON','Кнопка "Экспорт"');
 define('TEXT_EXT_XML_EXPORT_PUBLIC_ACCESS_TIP','Если включен публичный доступ, экспорт будет доступен по специальной ссылке, которая отображается в списке шаблонов.');
 define('TEXT_EXT_XML_EXPORT_START_TIP','Используйте для вставки корневого элемента.');
@@ -736,14 +736,14 @@ define('TEXT_EXT_CALENDAR_USE_VIEW_INFO','По умолчанию доступн
 define('TEXT_EXT_GRID_WIDTH','Ширина списка');
 define('TEXT_EXT_RELATED_CONTACTS','Связанные контакты');
 define('TEXT_EXT_CALENDAR_REPORT','Календарный отчет');
-define('TEXT_EXT_CALENDAR_REPORT_INFO','Представление данных в виде календаря можно создать для любой сущности, где есть поля: Дата начала и Дата завершения. <a href="https://docs.rukovoditel.net/ru/index.php?p=90" target="_blank"><u>Подробнее</u></a>');
+define('TEXT_EXT_CALENDAR_REPORT_INFO','Представление данных в виде календаря можно создать для любой сущности, где есть поля: Дата начала и Дата завершения. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=90" target="_blank"><u>Подробнее</u></a>');
 
 //new defines for ext 2.7
 define('TEXT_EXT_TRANSLITERATE_FILENAME','Транслитерация имени файла');
 define('TEXT_EXT_PROCESS_ACTION_CLONE_ITEM','Cущность "%s" - клонировать текущую запись');
 define('TEXT_EXT_CLONE_TO_ENTITY','Клонировать в сущность');
 define('TEXT_EXT_XML_IMPORT','XML импорт');
-define('TEXT_EXT_XML_IMPORT_INFO','Вы можете импортировать данные из XML файла любой структуры. <a href="https://docs.rukovoditel.net/ru/index.php?p=96" target="_blank"><u>Подробнее</u></a>');
+define('TEXT_EXT_XML_IMPORT_INFO','Вы можете импортировать данные из XML файла любой структуры. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=96" target="_blank"><u>Подробнее</u></a>');
 define('TEXT_EXT_XML_PATH_TO_DATA_ARRAY','XML-путь к массиву данных');
 define('TEXT_EXT_XML_PATH_TO_VALUE','XML-путь к значению');
 define('TEXT_EXT_XML_IMPORT_PREVIEW','Предварительный просмотр XML импорта');
@@ -751,14 +751,14 @@ define('TEXT_EXT_ERROR_ON_LINE_COLUMN','Ошибка в строке <u>%s</u> �
 define('TEXT_EXT_FILE_CONTAINS_ERRORS','Этот файл содержит следующие ошибки');
 define('TEXT_EXT_IMPORT_BY_URL','Импорт по url-адресу');
 define('TEXT_EXT_FILE_PATH','Путь к файлу');
-define('TEXT_EXT_XML_FILE_PATH_INFO','Для импорта по url-адресу, установите задачу по расписанию (<a href="https://docs.rukovoditel.net/ru/index.php?p=70" target="_blank"><u>cron</u></a>):');
+define('TEXT_EXT_XML_FILE_PATH_INFO','Для импорта по url-адресу, установите задачу по расписанию (<a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=70" target="_blank"><u>cron</u></a>):');
 define('TEXT_EXT_IMPORT_COMPLETED','Импорт завершен');
 define('TEXT_EXT_NEW_RECORDS_ADDED','Добавлено записей');
 define('TEXT_EXT_UPDATED_RECORDS','Обновлено записей');
 define('TEXT_EXT_PROCESS_ACTION_LINK_RECORDS_BY_MYSQL_QUERY','Связанные записи "%s" - cвязать записи по MySQL запросу');
 define('TEXT_EXT_PROCESS_ACTION_LINK_RECORDS_BY_MYSQL_QUERY_INFO','Записи, выбранные по заданному условию, будут автоматически связаны с текущей записью. В условии можно использовать значения полей из текущей записи. Например: field_12 = [126]<br>12 - id поля в связанной записи. 126 - id поля в текущей записи.');
 define('TEXT_EXT_PIVOT_MAP_REPORT','Карта сводный отчет');
-define('TEXT_EXT_PIVOT_MAP_REPORT_INFO','Отчет выводит все метки на карту из подключенных сущностей. После создания, нажмите на название отчета и добавьте необходимые сущности. <a href="https://docs.rukovoditel.net/ru/index.php?p=97" target="_blank"><u>Подробнее</u></a>');
+define('TEXT_EXT_PIVOT_MAP_REPORT_INFO','Отчет выводит все метки на карту из подключенных сущностей. После создания, нажмите на название отчета и добавьте необходимые сущности. <a href=" https://docs.infodocsisged.com.br/m.br/ru/index.php?p=97" target="_blank"><u>Подробнее</u></a>');
 define('TEXT_EXT_MARKER_COLOR','Цвет маркера');
 define('TEXT_EXT_ENTITIES_DISPLAY_LEGEND_TIP','Над отчетом будет отображаться заданный цвет фона для сущностей.');
 define('TEXT_EXT_MARKER_ICON','Иконка маркера');
