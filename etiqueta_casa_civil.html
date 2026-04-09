@@ -1,210 +1,174 @@
+<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Etiqueta Fixa 12x21 - Ajuste QR Code</title>
+<title>Etiqueta Fixa 12x21</title>
 <style type="text/css">
 @page {
-    size: A4 portrait;
+    size: 12cm 22cm;
     margin: 0;
 }
 
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box; /* Garante que padding e border não aumentem o tamanho fixo */
-}
-
-html, body {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100%;
-    height: 100%;
-    background-color: #f0f0f0; /* Cinza para ver a etiqueta branca no navegador */
+    box-sizing: border-box;
 }
 
 body {
+    background: #f0f0f0;
     font-family: Arial, sans-serif;
     display: flex;
     justify-content: center;
-    align-items: flex-start;
-    padding-top: 10mm !important;
+    padding-top: 10px;
 }
 
-/* Container Principal - RIGIDAMENTE FIXO */
+/* CONTAINER PRINCIPAL COM TRAVA RÍGIDA */
 .etiqueta {
-    width: 12cm !important;
-    min-width: 12cm !important;
-    max-width: 12cm !important;
-    height: 21cm !important;
-    min-height: 21cm !important;
-    max-height: 21cm !important;
-    
-    background-color: #ffffff;
-    border: 1px solid #ccc;
-    position: relative;
-    overflow: hidden; /* Impede que o conteúdo estique a caixa */
+    width: 12cm;
+    height: 21cm;
+    background: #43449b;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    page-break-inside: avoid;
-}
-
-/* Marca d'água */
-.etiqueta::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><text x="50%" y="45%" font-size="40" font-weight="bold" fill="%23c0c0c0" text-anchor="middle" font-family="Arial">CASA CÍVIL</text><text x="50%" y="60%" font-size="18" font-weight="bold" fill="%23c0c0c0" text-anchor="middle" font-family="Arial">SECRETARIA DE ESTADO DA CASA CÍVIL</text></svg>');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 85% auto;
-    opacity: 0.22; /* Levemente mais suave */
-    pointer-events: none;
-    z-index: 1;
-}
-
-.header, .content, .footer {
     position: relative;
-    z-index: 2;
 }
 
-/* Cabeçalho */
+/* HEADER - Altura fixa */
 .header {
-    background-color: #33577d;
-    color: white;
-    width: 100%;
+    height: 3.1cm;
+    padding: 0.18cm 0.2cm;
     text-align: center;
-    padding: 12px 0 8px; /* Reduzido o padding */
+    color: #ffffff;
+    flex-shrink: 0;
 }
 
-.header h1 {
-    margin: 0;
-    font-size: 20px;
-    letter-spacing: 1px;
-}
+.header h1 { font-size: 20px; line-height: 1; }
+.header h3 { font-size: 6px; margin: 2px 0; text-transform: uppercase; }
+.header-divider { width: 94%; height: 2px; margin: 4px auto; background: #fff; }
+.project-title { font-size: 6px; text-transform: uppercase; margin-bottom: 5px; }
 
-.header h3 {
-    margin: 3px 0 0 0;
-    font-size: 8px;
-    font-weight: bold;
-    text-transform: uppercase;
-    border-top: 1px solid white;
-    display: inline-block;
-    padding-top: 3px;
-    width: 75%;
-}
+.top-fields { display: grid; grid-template-columns: 1.8fr 1fr; gap: 5px; }
+.field-title { font-size: 6px; font-weight: bold; text-transform: uppercase; text-align: left; }
+.field-box { height: 0.45cm; background: #fff; color: #000; font-size: 7px; font-weight: bold; display: flex; align-items: center; padding: 0 4px; }
+.field-stack { display: flex; flex-direction: column; gap: 3px; }
+.field-stack-row { display: grid; grid-template-columns: 1fr 1.1cm; gap: 4px; align-items: center; }
 
-/* Conteúdo */
+/* ÁREA DE CONTEÚDO BRANCO */
 .content {
-    text-align: center;
-    width: 100%;
-    flex: 1; /* Ocupa o espaço entre header e footer */
+    flex: 1; /* Ocupa o restante do espaço até o footer */
+    padding: 0 0.2cm;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.content-panel {
+    background: #ffffff;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0.1cm;
+    min-height: 0;
     overflow: hidden;
-    padding-bottom: 5px; /* Pequeno espaçamento antes do rodapé */
 }
 
-.projeto-titulo {
-    font-weight: bold;
-    font-size: 9px;
-    border-top: 2px solid #557d33;
-    border-bottom: 2px solid #557d33;
-    margin: 10px 10px; /* Margens reduzidas */
-    padding: 6px 4px;
-    background-color: rgba(255, 255, 255, 0.85);
-    line-height: 1.3;
-}
-
+/* ÁREA DO ASSUNTO COM TRAVA DE 20 LINHAS */
 .assuntos-box {
-    margin: 0 10px;
-    text-align: left;
-    font-size: 7.5px;
-    line-height: 1.15;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 .assuntos-box strong {
-    font-size: 9px;
+    font-size: 7px;
+    text-transform: uppercase;
     display: block;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
-.assuntos-box table {
+.assuntos-content {
+    flex: 1;
+    overflow: hidden;
+    /* Cálculo para 20 linhas: 
+       Se o font-size é 8px e line-height é 1.2, cada linha tem 9.6px.
+       20 linhas = 192px. Ajustei para garantir que caiba no espaço físico disponível. */
+    max-height: 14.5cm; 
+}
+
+.assuntos-content table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: fixed; /* Ajuda a controlar a largura das colunas */
+    table-layout: fixed;
 }
 
-.assuntos-box td {
-    padding: 2.5px 3px;
-    border: 1px solid #ddd;
-    word-break: break-word;
+.assuntos-content th, .assuntos-content td {
+    border: 1px solid #000;
+    font-size: 8px; /* Tamanho ajustado para caber 20 linhas confortavelmente */
+    line-height: 1.2;
+    padding: 2px;
+    text-align: left;
     vertical-align: top;
+    word-wrap: break-word;
 }
 
-/* Rodapé - FIXO e ORGANIZADO NA BASE */
-.footer {
-    width: 100%;
-    height: 85px; /* Tamanho fixo para o rodapé */
-    background-color: #fff;
-    padding-top: 5px;
-}
-
-.logos-container {
+/* ÁREA DAS LOGOS - Sempre acima do footer */
+.logos-strip {
+    height: 2.45cm;
     display: flex;
     justify-content: space-around;
-    align-items: center; 
-    padding: 10 10px;
-    margin-bottom: 5px;
-    height: 50px; /* Altura fixa para os logos e QR */
+    align-items: center;
+    border-top: 1px solid #ccc;
+    flex-shrink: 0;
 }
 
-.logo-bid { width: 70px; height: auto; } /* Diminuído */
-.logo-ecm { width: 55px; height: auto; } /* Diminuído */
+.logo-card img {
+    height: 1.8cm; /* Reduzi levemente para segurança */
+    width: auto;
+}
 
-/* Estilização para o contêiner do QR Code */
-.qrcode-wrapper {
-    width: 45px; /* Tamanho fixo e menor para o QR */
-    height: 45px;
-    background: #eee;
+/* FOOTER - Altura fixa */
+.footer {
+    height: 2.45cm;
+    padding: 0.2cm;
+    flex-shrink: 0;
+}
+
+.footer-fields {
+    display: grid;
+    grid-template-columns: 2cm 1fr;
+    gap: 0.2cm;
+    height: 2.05cm;
+}
+
+.qrcode-panel {
+    background: #fff;
+    width: 2cm;
+    height: 2cm;
     display: flex;
-    align-items: right;
-    justify-content: right;
-    font-size: 7px;
-    border: 1px solid #ccc;
-    overflow: hidden;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Força o conteúdo gerado por {#502:QRCODE} a obedecer o wrapper */
-.qrcode-wrapper img, .qrcode-wrapper svg {
-    max-width: 100% !important;
-    max-height: 100% !important;
-    display: block;
-}
-
-.linha-verde-fim {
-    height: 3px;
-    background-color: #557d33;
-    margin: 5px 10px 5px 10px;
+.caixa-panel {
+    background: #fff;
+    flex: 1;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .caixa-numero {
-    font-size: 18px;
+    font-size: 78px;
     font-weight: bold;
-    padding-left: 12px;
-    color: #333;
-    padding-bottom: 10px;
+    text-align: right;
 }
 
 @media print {
-    body { background-color: #ffffff; padding: 0 !important; }
-    .etiqueta { 
-        margin: 0 auto; 
-        box-shadow: none; 
-        border: 1px solid #eee; /* Borda bem fina apenas para corte */
-    }
+    body { padding: 0; background: none; }
+    .etiqueta { border: none; box-shadow: none; }
 }
 </style>
 </head>
@@ -214,32 +178,60 @@ body {
     <div class="header">
         <h1>CASA CÍVIL</h1>
         <h3>SECRETARIA DE ESTADO DA CASA CÍVIL</h3>
+        <div class="header-divider"></div>
+        <div class="project-title">PROJETO GESTÃO INTEGRADA DE DOCUMENTOS</div>
+
+        <div class="top-fields">
+            <div>
+                <div class="field-title">Setor</div>
+                <div class="field-box">{#434:Setor}</div>
+            </div>
+            <div class="field-stack">
+                <div class="field-stack-row">
+                    <span class="field-title">Estante</span>
+                    <div class="field-box">{#478:Loc}</div>
+                </div>
+                <div class="field-stack-row">
+                    <span class="field-title">Lado</span>
+                    <div class="field-box">{#477:Lado}</div>
+                </div>
+                <div class="field-stack-row">
+                    <span class="field-title">Prat.</span>
+                    <div class="field-box">{#504:Num}</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="content">
-        <div class="projeto-titulo">
-            PROJETO GESTÃO INTEGRADA DE DOCUMENTOS<br />
-            Setor: {#434:Setor}<br />
-            Localização: {#478:Localização} - {#477:Lado} - {#504:Número}
-        </div>
+        <div class="content-panel">
+            <div class="assuntos-box">
+                <strong>Assunto</strong>
+                <div class="assuntos-content">
+                    {#entity43:0<446,448>}
+                </div>
+            </div>
 
-        <div class="assuntos-box">
-            <strong>Assunto:</strong>
-            {#entity43:0<446,448>}
+            <div class="logos-strip">
+                <div class="logo-card">
+                    <img src="uploads/app_logo_1775613339.png" alt="BID">
+                </div>
+                <div class="logo-card">
+                    <img src="uploads/app_logo_1775613366.png" alt="ECM">
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="footer">
-        <div class="logos-container">
-            <img alt="Logo BID" class="logo-bid" src="uploads/images/2026/03/23/app_logo_1774288742.png" />
-            <img alt="Logo ECM" class="logo-ecm" src="uploads/images/2026/03/23/app_logo_1774263156.png" />
-            
-            <div class="qrcode-wrapper">
+        <div class="footer-fields">
+            <div class="qrcode-panel">
                 {#502:QRCODE}
             </div>
+            <div class="caixa-panel">
+                <div class="caixa-numero">{#437:Número}</div>
+            </div>
         </div>
-        <div class="linha-verde-fim"></div>
-        <div class="caixa-numero">CAIXA Nº {#437:Número}</div>
     </div>
 </div>
 
