@@ -32,6 +32,30 @@ FILE_STORAGE_R2_OBJECT_PREFIX=ged
 
 Na stack de producao deste repositório, o servico file-storage-worker ja executa essa fila continuamente.
 
+## Limpeza automatica de log, tmp e cache
+
+Para ambientes com alto volume, a stack de producao pode executar o script `cron/runtime_cleanup.php` por meio do servico `runtime-cleanup-worker`.
+
+O comportamento foi desenhado para ser conservador:
+
+1. Em `log/`, arquivos antigos sao truncados, nao removidos.
+2. Em `tmp/` e `cache/`, itens antigos sao removidos por idade.
+3. Arquivos sentinela como `.gitkeep`, `index.html`, `index.php` e `.htaccess` sao preservados.
+4. A rotina usa lock para evitar execucao concorrente.
+
+Variaveis de ambiente suportadas no Portainer:
+
+```env
+RUNTIME_CLEANUP_ENABLED=true
+RUNTIME_CLEANUP_INTERVAL=21600
+RUNTIME_CLEANUP_LOG_RETENTION_DAYS=7
+RUNTIME_CLEANUP_TMP_RETENTION_DAYS=7
+RUNTIME_CLEANUP_CACHE_RETENTION_DAYS=7
+RUNTIME_CLEANUP_DRY_RUN=false
+```
+
+Recomendacao operacional: execute a rotina a cada poucas horas e controle a retencao por idade. Em ambiente de alto volume, isso e mais seguro do que apagar tudo em uma janela fixa de 7 dias.
+
 ### Ambiente local com Docker
 
 No compose local, a pasta vendor do provider R2 fica preservada em um volume dedicado para nao ser sobrescrita pelo bind mount do projeto.
@@ -40,6 +64,6 @@ Se voce executar o GED fora do Docker, rode o Composer manualmente em plugins/ex
 
 ### Observacao importante
 
-Com a arquitetura atual do GED, o upload ainda passa localmente pela area de uploads e depois e sincronizado para o storage externo pelo mecanismo de fila. Para eliminar completamente a persistencia local desde o primeiro byte, seria necessario refatorar o fluxo de upload do core.
+Com a arquitetura atual do GED web, o upload de anexos ainda passa primeiro pela area local de uploads e depois e sincronizado para o storage externo pelo mecanismo de fila do modulo file storage. Para eliminar completamente a persistencia local desde o primeiro byte, seria necessario refatorar o fluxo de upload do core.
 
-No assinador Python, apenas o diretorio /uploads foi adaptado para uso direto do R2 quando as variaveis FILE_STORAGE_R2_* estiverem definidas. Os certificados em /certs continuam exclusivamente locais.
+No assinador Python, o comportamento e diferente: apenas o diretorio /uploads foi adaptado para uso direto do R2 quando as variaveis FILE_STORAGE_R2_* estiverem definidas. Ou seja, o assinador pode enviar uploads diretamente ao bucket, enquanto o GED web continua usando o fluxo local + fila. Os certificados em /certs continuam exclusivamente locais.
