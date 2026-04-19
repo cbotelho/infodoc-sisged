@@ -1,5 +1,5 @@
 <?php
-
+ 
 // Em producao, registre erros sem expor warnings diretamente na resposta.
 $debugMode = filter_var(getenv('APP_DEBUG') ?: '0', FILTER_VALIDATE_BOOLEAN);
 
@@ -70,6 +70,31 @@ function fail_request($message, $statusCode = 400) {
     http_response_code($statusCode);
     echo $message;
     exit;
+}
+
+function normalize_cpf($value) {
+    return preg_replace('/\D+/', '', (string) $value);
+}
+
+function count_pdf_pages($filePath) {
+    if (!is_file($filePath)) {
+        throw new RuntimeException('Arquivo PDF nao encontrado para contagem de paginas.');
+    }
+
+    $autoload = __DIR__ . '/vendor/autoload.php';
+
+    if (!is_file($autoload)) {
+        throw new RuntimeException('Autoload do vendor nao encontrado para contar paginas do PDF.');
+    }
+
+    require_once $autoload;
+
+    if (!class_exists('setasign\\Fpdi\\Fpdi')) {
+        throw new RuntimeException('Biblioteca FPDI nao encontrada para contar paginas do PDF.');
+    }
+
+    $pdf = new setasign\Fpdi\Fpdi();
+    return (int) $pdf->setSourceFile($filePath);
 }
 
 function require_post_fields(array $fieldNames) {
@@ -154,67 +179,48 @@ function upload_file_to_r2($localPath, $fileName) {
     return $objectKey;
 }
 
-function count_pdf_pages($filePath) {
-    if (!is_file($filePath)) {
-        throw new RuntimeException('Arquivo PDF nao encontrado para contagem de paginas.');
-    }
-
-    $autoload = __DIR__ . '/vendor/autoload.php';
-
-    if (!is_file($autoload)) {
-        throw new RuntimeException('Autoload do vendor nao encontrado para contar paginas do PDF.');
-    }
-
-    require_once $autoload;
-
-    if (!class_exists('setasign\\Fpdi\\Fpdi')) {
-        throw new RuntimeException('Biblioteca FPDI nao encontrada para contar paginas do PDF.');
-    }
-
-    $pdf = new setasign\Fpdi\Fpdi();
-    return (int) $pdf->setSourceFile($filePath);
-}
-
 function get_registro_by_id($pdo, $registroId) {
-    $stmt = $pdo->prepare("SELECT id, field_433, field_434, field_436, field_437 FROM app_entity_41 WHERE id = ? LIMIT 1");
+    $stmt = $pdo->prepare("SELECT id, field_524, field_525, field_526, field_527 FROM app_entity_48 WHERE id = ? LIMIT 1");
     $stmt->execute([$registroId]);
 
     return $stmt->fetch();
 }
 
 function resolve_registro_id_by_numero($pdo, $numero, $secretaria = null, $setor = null, $tipo = null) {
-    $conditions = ['field_437 = ?'];
-    $params = [trim((string) $numero)];
+    $numero = trim((string) $numero);
+
+    if ($numero === '') {
+        throw new InvalidArgumentException('Informe o numero da Caixa/Pasta.');
+    }
+
+    $conditions = ['TRIM(field_527) = ?'];
+    $params = [$numero];
 
     if ($secretaria !== null && $secretaria !== '') {
-        $conditions[] = 'field_433 = ?';
-        $params[] = $secretaria;
+        $conditions[] = 'field_524 = ?';
+        $params[] = trim((string) $secretaria);
     }
 
     if ($setor !== null && $setor !== '') {
-        $conditions[] = 'field_434 = ?';
-        $params[] = $setor;
+        $conditions[] = 'field_525 = ?';
+        $params[] = trim((string) $setor);
     }
 
     if ($tipo !== null && $tipo !== '') {
-        $conditions[] = 'field_436 = ?';
-        $params[] = $tipo;
+        $conditions[] = 'field_526 = ?';
+        $params[] = trim((string) $tipo);
     }
 
-    $sql = 'SELECT id FROM app_entity_41 WHERE ' . implode(' AND ', $conditions) . ' ORDER BY id DESC LIMIT 2';
+    $sql = 'SELECT id FROM app_entity_48 WHERE ' . implode(' AND ', $conditions) . ' ORDER BY id DESC LIMIT 1';
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
-    $registros = $stmt->fetchAll();
+    $registro = $stmt->fetch();
 
-    if (count($registros) === 0) {
-        throw new InvalidArgumentException('Nenhum registro pai foi localizado para o numero informado com os filtros atuais.');
+    if (!$registro) {
+        throw new InvalidArgumentException('Nenhuma Caixa/Pasta foi encontrada na entidade 48 com os filtros informados.');
     }
 
-    if (count($registros) > 1) {
-        throw new InvalidArgumentException('Mais de um registro pai foi localizado para o numero informado. Selecione o item desejado no autocomplete.');
-    }
-
-    return (int) $registros[0]['id'];
+    return (int) $registro['id'];
 }
 
 function validate_selected_registro($pdo, $registroId, $numero, $secretaria = null, $setor = null, $tipo = null) {
@@ -224,20 +230,20 @@ function validate_selected_registro($pdo, $registroId, $numero, $secretaria = nu
         throw new InvalidArgumentException('O registro selecionado para a Caixa/Pasta e invalido ou nao existe.');
     }
 
-    if (trim((string) $registro['field_437']) !== trim((string) $numero)) {
-        throw new InvalidArgumentException('O numero informado nao corresponde ao registro selecionado.');
+    if ($numero !== null && trim((string) $numero) !== '' && trim((string) ($registro['field_527'] ?? '')) !== trim((string) $numero)) {
+        throw new InvalidArgumentException('O numero informado nao corresponde ao registro pai selecionado na entidade 48.');
     }
 
-    if ($secretaria !== null && $secretaria !== '' && (string) $registro['field_433'] !== (string) $secretaria) {
-        throw new InvalidArgumentException('A secretaria informada nao corresponde ao registro selecionado.');
+    if ($secretaria !== null && $secretaria !== '' && trim((string) ($registro['field_524'] ?? '')) !== trim((string) $secretaria)) {
+        throw new InvalidArgumentException('A secretaria informada nao corresponde ao registro pai selecionado na entidade 48.');
     }
 
-    if ($setor !== null && $setor !== '' && (string) $registro['field_434'] !== (string) $setor) {
-        throw new InvalidArgumentException('O setor informado nao corresponde ao registro selecionado.');
+    if ($setor !== null && $setor !== '' && trim((string) ($registro['field_525'] ?? '')) !== trim((string) $setor)) {
+        throw new InvalidArgumentException('O setor informado nao corresponde ao registro pai selecionado na entidade 48.');
     }
 
-    if ($tipo !== null && $tipo !== '' && (string) $registro['field_436'] !== (string) $tipo) {
-        throw new InvalidArgumentException('O tipo informado nao corresponde ao registro selecionado.');
+    if ($tipo !== null && $tipo !== '' && trim((string) ($registro['field_526'] ?? '')) !== trim((string) $tipo)) {
+        throw new InvalidArgumentException('O tipo informado nao corresponde ao registro pai selecionado na entidade 48.');
     }
 
     return $registro;
@@ -261,29 +267,16 @@ function validate_file_name_pattern($partsCount, $padraoRenomeio) {
             return false;
     }
 }
+ 
+function resolve_document_fields(array $arquivo) {
+    $matricula = trim((string) ($arquivo['coluna1'] ?? ''));
+    $interessado = trim((string) ($arquivo['coluna2'] ?? ''));
+    $cpf = normalize_cpf($arquivo['coluna3'] ?? '');
 
-function resolve_document_fields(array $arquivo, $padraoRenomeio) {
-    $field446 = $arquivo['coluna1'] ?? null;
-    $field447 = null;
-    $field448 = null;
-    $field458 = null;
-
-    if ($padraoRenomeio >= 2) {
-        $field447 = $arquivo['coluna2'] ?? null;
-    }
-
-    if ($padraoRenomeio >= 3) {
-        $field448 = $arquivo['coluna3'] ?? null;
-    }
-
-    if ($padraoRenomeio === 4) {
-        $field458 = $arquivo['coluna4'] ?? null;
-    }
-
-    return [$field446, $field447, $field448, $field458];
+    return [$matricula, $interessado, $cpf];
 }
 
-function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $numero, $padraoRenomeio) {
+function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $numero, $assunto) {
     // Função para extrair metadados do arquivo
     function extract_metadata($file_path, $original_name) {
         return [
@@ -325,42 +318,34 @@ function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $numero, $padra
         return $ocr_text;
     }
 
-    // Preparar a statement fora do loop para melhor performance
-    $stmt = $pdo->prepare("INSERT INTO app_entity_43 (parent_id, parent_item_id, linked_id, date_added, date_updated, created_by, sort_order, field_445, field_446, field_447, field_448, field_449, field_450, field_458, field_474, field_475, field_554) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO app_entity_49 (parent_id, parent_item_id, linked_id, date_added, date_updated, created_by, sort_order, field_542, field_543, field_544, field_545, field_546, field_548, field_552, field_553) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     
     foreach ($arquivos as $arquivo) {
         $originalFileName = $arquivo['nome'];
         $newFileName = str_replace("#", "_", $originalFileName);
-        $totalPaginas = 0;
-        list($field446, $field447, $field448, $field458) = resolve_document_fields($arquivo, $padraoRenomeio);
+        list($matricula, $interessado, $cpf) = resolve_document_fields($arquivo);
 
+        $totalPaginas = 0;
         if (strtolower(pathinfo($originalFileName, PATHINFO_EXTENSION)) === 'pdf') {
             $totalPaginas = count_pdf_pages($arquivo['tmp_name']);
         }
-
-        // Extrair metadados e OCR
-        $metadados = extract_metadata($arquivo['tmp_name'], $originalFileName);
-        $ocr_text = extract_ocr($arquivo['tmp_name'], $originalFileName);
  
-        // Executar o insert com os parâmetros na ordem correta
         $stmt->execute([
-            0, // parent_id
-            $parent_item_id, // parent_item_id
-            0, // linked_id
-            time(), // date_added
-            null, // date_updated
-            $arquivo['coluna5'], // created_by
-            0, // sort_order
-            $newFileName, // field_445
-            $field446, // field_446
-            $field447, // field_447
-            $field448, // field_448
-            $tipodoc, // field_449
-            $numero, // field_450
-            $field458, // field_458
-            json_encode($metadados, JSON_UNESCAPED_UNICODE), // field_474
-            $ocr_text, // field_475
-            $totalPaginas // field_554
+            0,
+            $parent_item_id,
+            0,
+            time(),
+            null,
+            $arquivo['coluna5'],
+            0,
+            $newFileName,
+            $matricula,
+            $interessado,
+            $cpf,
+            $tipodoc,
+            $assunto,
+            $totalPaginas,
+            $numero,
         ]);
 
         try {
@@ -385,13 +370,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        $requiredFields = require_post_fields(['numero', 'tratado_por', 'padrao_renomeio', 'tipodoc']);
+        $requiredFields = require_post_fields(['numero', 'tratado_por', 'padrao_renomeio', 'tipodoc', 'assunto']);
 
         $registroId = isset($_POST['id_registro']) && trim((string) $_POST['id_registro']) !== '' ? (int) $_POST['id_registro'] : 0;
         $numero = $requiredFields['numero'];
         $tratadoPorId = $requiredFields['tratado_por'];
         $padraoRenomeio = (int) $requiredFields['padrao_renomeio'];
         $tipodoc = (int) $requiredFields['tipodoc'];
+        $assunto = $requiredFields['assunto'];
         $secretaria = isset($_POST['secretaria']) ? trim((string) $_POST['secretaria']) : null;
         $setor = isset($_POST['setor']) ? trim((string) $_POST['setor']) : null;
         $tipo = isset($_POST['tipo']) ? trim((string) $_POST['tipo']) : null;
@@ -445,7 +431,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo "- " . $arquivoErro . "\n";
             }
         } else {
-            saveArquivo($pdo, $registroId, $arquivos, $tipodoc, $numero, $padraoRenomeio);
+            saveArquivo($pdo, $registroId, $arquivos, $tipodoc, $numero, $assunto);
             $contadorArquivosImportados = count($arquivos);
             $pdo->commit();
             echo "Arquivos carregados com sucesso! Total de arquivos importados: " . $contadorArquivosImportados; 

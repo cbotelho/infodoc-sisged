@@ -8,6 +8,8 @@ PHP_MEMORY_LIMIT="${PHP_MEMORY_LIMIT:-512M}"
 PHP_MAX_EXECUTION_TIME="${PHP_MAX_EXECUTION_TIME:-1200}"
 PHP_MAX_INPUT_TIME="${PHP_MAX_INPUT_TIME:-1200}"
 PHP_MAX_INPUT_VARS="${PHP_MAX_INPUT_VARS:-5000}"
+PHP_UPLOAD_TMP_DIR="${PHP_UPLOAD_TMP_DIR:-/var/www/html/tmp}"
+PHP_SYS_TEMP_DIR="${PHP_SYS_TEMP_DIR:-/var/www/html/tmp}"
 PHP_DATE_TIMEZONE="${PHP_DATE_TIMEZONE:-America/Sao_Paulo}"
 PHP_DISPLAY_ERRORS="${PHP_DISPLAY_ERRORS:-Off}"
 PHP_LOG_ERRORS="${PHP_LOG_ERRORS:-On}"
@@ -20,6 +22,8 @@ memory_limit = ${PHP_MEMORY_LIMIT}
 max_execution_time = ${PHP_MAX_EXECUTION_TIME}
 max_input_time = ${PHP_MAX_INPUT_TIME}
 max_input_vars = ${PHP_MAX_INPUT_VARS}
+upload_tmp_dir = ${PHP_UPLOAD_TMP_DIR}
+sys_temp_dir = ${PHP_SYS_TEMP_DIR}
 date.timezone = ${PHP_DATE_TIMEZONE}
 display_errors = ${PHP_DISPLAY_ERRORS}
 log_errors = ${PHP_LOG_ERRORS}
@@ -30,6 +34,8 @@ mkdir -p \
   /var/www/html/cache \
   /var/www/html/log \
   /var/www/html/tmp \
+  "${PHP_UPLOAD_TMP_DIR}" \
+  "${PHP_SYS_TEMP_DIR}" \
   /var/www/html/uploads \
   /var/www/html/uploads/attachments \
   /var/www/html/uploads/attachments_preview \
@@ -41,6 +47,8 @@ chown -R www-data:www-data \
   /var/www/html/cache \
   /var/www/html/log \
   /var/www/html/tmp \
+  "${PHP_UPLOAD_TMP_DIR}" \
+  "${PHP_SYS_TEMP_DIR}" \
   /var/www/html/uploads
 
 exec "$@"

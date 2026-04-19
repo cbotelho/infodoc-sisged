@@ -1,5 +1,5 @@
 <?php
-
+ 
 // Habilitar a exibição de erros
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -50,7 +50,7 @@ error_reporting(E_ALL);
         <div class="row align-items-start">
             <div class="col-12">
                 <!-- Formulário de Upload -->
-                <form id="uploadForm" action="upload.php" method="post" enctype="multipart/form-data">
+                <form id="uploadForm" action="upload_sefaz_rh.php" method="post" enctype="multipart/form-data">
                     <input type="hidden" id="id_registro" name="id_registro">
                     <div class="form-row">
                         <div class="form-group col-md-3">
@@ -76,19 +76,15 @@ error_reporting(E_ALL);
                         <div class="form-group col-md-3">
                             <label for="padrao_renomeio">* Padrão de Renomeio</label>
                             <select class="form-control" id="padrao_renomeio" name="padrao_renomeio" required>
-                                <option value="">Selecione o padrão</option>
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3">3</option>
-                                <option value="4">4</option>
+                                <option value="3" selected>3</option>
                             </select>
                         </div>
                         <div class="form-group col-md-3">
                             <label for="tipodoc">* Tipo de Documentos</label>
                             <select class="form-control" id="tipodoc" name="tipodoc" required>
                                 <option value="">Selecione Tipo Documento</option>
-                                <option value="152">Público</option>
-                                <option value="153">Privado</option>
+                                <option value="173">Público</option>
+                                <option value="174">Privado</option>
                             </select>
                         </div>
                     </div>
@@ -104,6 +100,12 @@ error_reporting(E_ALL);
                             <label for="numero">* Nº da Caixa/Pasta</label>
                             <input type="text" class="form-control" id="numero" name="numero" placeholder="Pesquise e selecione um número existente" autocomplete="off" required>
                         </div>
+                        <div class="form-group col-md-4">
+                            <label for="assunto">* Assunto</label>
+                            <input type="text" class="form-control" id="assunto" name="assunto" placeholder="Informe o assunto do documento" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group col-md-4">
                             <label for="tratado_por">* Enviado Por:</label>
                             <select class="form-control" id="tratado_por" name="tratado_por" required>
@@ -156,11 +158,10 @@ error_reporting(E_ALL);
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Processo</th>
+                                <th>Matricula</th>
                                 <th>Interessado</th>
-                                <th>Assunto</th>
+                                <th>CPF</th>
                                 <th>Tipo</th>
-                                <th>Documento</th>
                                 <th>Páginas</th>
                             </tr>
                         </thead>
@@ -189,7 +190,7 @@ error_reporting(E_ALL);
             delay: 250,
             source: function(request, response) {
                 $.ajax({
-                    url: 'get_numeros.php',
+                    url: 'get_numeros_sefaz_rh.php',
                     type: 'GET',
                     dataType: 'json',
                     data: {
@@ -257,7 +258,7 @@ error_reporting(E_ALL);
             var formData = new FormData($(this)[0]);
 
             $.ajax({
-                url: 'upload.php',
+                url: 'upload_sefaz_rh.php',
                 type: 'POST',
                 data: formData,
                 async: true,
@@ -299,7 +300,7 @@ error_reporting(E_ALL);
         // Carregar registros com paginação
         function loadRegistros(page) {
             $.ajax({
-                url: 'load_registros.php',
+                url: 'load_registros_sefaz_rh.php',
                 type: 'GET',
                 data: { page: page },
                 dataType: 'json',
