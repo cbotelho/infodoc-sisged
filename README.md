@@ -90,9 +90,10 @@ Para deploy na VPS via Portainer, use o arquivo `docker-compose.production.yml` 
 
 ### Release atual recomendada
 
-- `1.0.20`
-- inclui fallback de leitura para documentos em `/upload/...` quando o arquivo temporario local ja foi removido e a copia oficial permanece no R2
-- inclui ajuste de Apache na imagem Docker para respeitar `.htaccess` no deploy de producao
+- `1.0.22`
+- inclui upload do ECM gravando direto no R2, sem persistencia local em `upload/`
+- inclui contagem de paginas no upload principal com gravacao em `field_554`
+- inclui ajuste do temporario do PHP para `/var/www/html/tmp` no deploy de producao
 
 ### Arquivos para produção
 

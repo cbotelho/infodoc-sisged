@@ -1,6 +1,6 @@
 services:
   web:
-    image: cbotelho80/infodoc-web:${WEB_IMAGE_TAG:-${IMAGE_TAG:-1.0.20}}
+    image: cbotelho80/infodoc-web:${WEB_IMAGE_TAG:-${IMAGE_TAG:-1.0.22}}
     command: ["apache2-foreground"]
     container_name: infodoc-web
     restart: unless-stopped
@@ -51,7 +51,7 @@ services:
       - proxy
 
   file-storage-worker:
-    image: cbotelho80/infodoc-file-storage-worker:${WORKER_IMAGE_TAG:-${IMAGE_TAG:-1.0.20}}
+    image: cbotelho80/infodoc-file-storage-worker:${WORKER_IMAGE_TAG:-${IMAGE_TAG:-1.0.22}}
     container_name: infodoc-file-storage-worker
     restart: unless-stopped
     depends_on:
@@ -87,7 +87,7 @@ services:
       - proxy
 
   runtime-cleanup-worker:
-    image: cbotelho80/infodoc-web:${WEB_IMAGE_TAG:-${IMAGE_TAG:-1.0.20}}
+    image: cbotelho80/infodoc-web:${WEB_IMAGE_TAG:-${IMAGE_TAG:-1.0.22}}
     container_name: infodoc-runtime-cleanup-worker
     restart: unless-stopped
     depends_on:
@@ -112,7 +112,7 @@ services:
       - proxy
 
   assinador-python:
-    image: cbotelho80/infodoc-assinador-python:${SIGNER_IMAGE_TAG:-${IMAGE_TAG:-1.0.20}}
+    image: cbotelho80/infodoc-assinador-python:${SIGNER_IMAGE_TAG:-${IMAGE_TAG:-1.0.22}}
     container_name: infodoc-assinador
     restart: unless-stopped
     environment:

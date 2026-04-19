@@ -92,8 +92,14 @@ error_reporting(E_ALL);
                         <div class="form-group col-md-4">
                             <label for="tipo">* Tipo de Arquivo</label>
                             <select class="form-control" id="tipo" name="tipo" required>
-                                <option value="118">Caixa</option>
-                                <option value="117">Pasta</option>
+                                <option value="">Selecione o Tipo</option>
+                                <?php
+                                include '../includes/db.php';
+                                $stmt = $pdo->query("SELECT id, name FROM app_fields_choices WHERE fields_id = 526 AND name IN ('Caixa', 'Pasta') ORDER BY FIELD(name, 'Caixa', 'Pasta')");
+                                while ($row = $stmt->fetch()) {
+                                    echo '<option value="' . htmlspecialchars($row['id']) . '">' . htmlspecialchars($row['name']) . '</option>';
+                                }
+                                ?>
                             </select>
                         </div>
                         <div class="form-group col-md-4">
