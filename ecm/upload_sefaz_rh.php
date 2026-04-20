@@ -15,18 +15,16 @@ define('DB_SERVER_PASSWORD', '8rekXBff');
 define('DB_SERVER_PORT', '');		
 define('DB_DATABASE', 'sisged_gea');
 
-$dsn = "mysql:host=" . DB_SERVER . ";dbname=" . DB_DATABASE . ";charset=utf8mb4";
+function create_pdo_connection() {
+    $dsn = "mysql:host=" . DB_SERVER . ";dbname=" . DB_DATABASE . ";charset=utf8mb4";
 
-$options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES   => false,
-];
+    $options = [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES   => false,
+    ];
 
-try {
-    $pdo = new PDO($dsn, DB_SERVER_USERNAME, DB_SERVER_PASSWORD, $options);
-} catch (\PDOException $e) {
-    throw new \PDOException($e->getMessage(), (int)$e->getCode());
+    return new PDO($dsn, DB_SERVER_USERNAME, DB_SERVER_PASSWORD, $options);
 }
 
 function parse_ini_size_to_bytes($value) {
@@ -370,6 +368,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
+        $pdo = create_pdo_connection();
         $requiredFields = require_post_fields(['numero', 'tratado_por', 'padrao_renomeio', 'tipodoc', 'assunto']);
 
         $registroId = isset($_POST['id_registro']) && trim((string) $_POST['id_registro']) !== '' ? (int) $_POST['id_registro'] : 0;
@@ -437,11 +436,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo "Arquivos carregados com sucesso! Total de arquivos importados: " . $contadorArquivosImportados; 
         }
 
-    } catch (Exception $e) {
-        if ($pdo->inTransaction()) {
+    } catch (Throwable $e) {
+        if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
             $pdo->rollBack();
         }
 
+        http_response_code(400);
         echo 'Erro ao carregar arquivos. Detalhes: ' . $e->getMessage();
     }
 }

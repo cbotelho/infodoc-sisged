@@ -144,7 +144,7 @@ error_reporting(E_ALL);
                         </div>
                         <div class="form-group col-md-3">
                             <!-- Mensagens de Status ao lado -->
-                            <div id="status" class="ml-2"></div>
+                            <div id="statusInline" class="ml-2"></div>
                         </div>
                     </div>
                     <!-- Mensagens abaixo -->
@@ -190,6 +190,14 @@ error_reporting(E_ALL);
     $(document).ready(function() {
         // Carregar registros ao abrir a página
         loadRegistros(1);
+
+        function closeNumeroAutocomplete() {
+            var autocompleteInstance = $('#numero').data('ui-autocomplete') || $('#numero').data('autocomplete');
+
+            if (autocompleteInstance) {
+                $('#numero').autocomplete('close');
+            }
+        }
 
         $('#numero').autocomplete({
             minLength: 2,
@@ -242,19 +250,19 @@ error_reporting(E_ALL);
                     data: { secretaria_id: secretariaId },
                     success: function(data) {
                         $('#setor').html(data);
-                        $('#numero').autocomplete('close');
+                        closeNumeroAutocomplete();
                     }
                 });
             } else {
                 $('#setor').html('<option value="">Selecione o Setor</option>');
-                $('#numero').autocomplete('close');
+                closeNumeroAutocomplete();
             }
         });
 
         $('#setor, #tipo').change(function() {
             $('#numero').val('');
             $('#id_registro').val('');
-            $('#numero').autocomplete('close');
+            closeNumeroAutocomplete();
         });
 
         // Atualizar a barra de progresso durante o upload
@@ -282,11 +290,14 @@ error_reporting(E_ALL);
                     return xhr;
                 },
                 beforeSend: function() {
+                    $('#status').empty();
+                    $('#statusInline').empty();
                     $('#progressBar').css('width', '0%').attr('aria-valuenow', '0').text('0%');
                     $('.progress').show();
                 },
                 success: function(response) {
                     $('#status').html(response);
+                    $('#statusInline').html(response);
                     $('#progressBar').css('width', '100%').attr('aria-valuenow', '100').text('100%');
                     setTimeout(function() {
                         $('.progress').hide();
@@ -295,7 +306,9 @@ error_reporting(E_ALL);
                     }, 1000);
                 },
                 error: function(xhr) {
-                    $('#status').html('Erro ao carregar arquivos. Detalhes: ' + xhr.status + ': ' + xhr.responseText);
+                    var errorMessage = 'Erro ao carregar arquivos. Detalhes: ' + xhr.status + ': ' + xhr.responseText;
+                    $('#status').html(errorMessage);
+                    $('#statusInline').html(errorMessage);
                 },
                 complete: function() {
                     $('#files').val('');
