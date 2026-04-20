@@ -19,8 +19,7 @@ error_reporting(E_ALL);
     <!-- Common CSS -->
 		<link rel="stylesheet" href="css/bootstrap.min.css" />
 		<link rel="stylesheet" href="fonts/icomoon/icomoon.css" />
-		<link rel="stylesheet" href="css/main.min.css" />
-        <link rel="stylesheet" href="css/jquery-ui.css" />
+        <link rel="stylesheet" href="css/main.min.css" />
 
 		<!-- Other CSS includes plugins - Cleanedup unnecessary CSS -->
 		<!-- Chartist css -->
@@ -31,12 +30,6 @@ error_reporting(E_ALL);
         }
         .container{
             max-width:100%;
-        }
-        .ui-autocomplete {
-            max-height: 260px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            z-index: 2000;
         }
     </style>
 </head>
@@ -102,7 +95,8 @@ error_reporting(E_ALL);
                         </div>
                         <div class="form-group col-md-4">
                             <label for="numero">* Nº da Caixa/Pasta</label>
-                            <input type="text" class="form-control" id="numero" name="numero" placeholder="Pesquise e selecione um número existente" autocomplete="off" required>
+                            <input type="text" class="form-control" id="numero" name="numero" list="numeroSugestoes" placeholder="Pesquise e selecione um número existente" autocomplete="off" required>
+                            <datalist id="numeroSugestoes"></datalist>
                         </div>
                         <div class="form-group col-md-4">
                             <label for="tratado_por">* Enviado Por:</label>
@@ -136,7 +130,7 @@ error_reporting(E_ALL);
                         </div>
                         <div class="form-group col-md-3">
                             <!-- Mensagens de Status ao lado -->
-                            <div id="status" class="ml-2"></div>
+                            <div id="statusInline" class="ml-2"></div>
                         </div>
                     </div>
                     <!-- Mensagens abaixo -->
@@ -176,7 +170,6 @@ error_reporting(E_ALL);
 
     <!-- jQuery e Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="../js/ui/jquery-ui-1.10.3.custom.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
     <script>
@@ -184,42 +177,51 @@ error_reporting(E_ALL);
         // Carregar registros ao abrir a página
         loadRegistros(1);
 
-        $('#numero').autocomplete({
-            minLength: 2,
-            delay: 250,
-            source: function(request, response) {
-                $.ajax({
-                    url: 'get_numeros.php',
-                    type: 'GET',
-                    dataType: 'json',
-                    data: {
-                        term: request.term,
-                        format: 'json',
-                        secretaria_id: $('#secretaria').val(),
-                        setor_id: $('#setor').val(),
-                        tipo_id: $('#tipo').val()
-                    },
-                    success: function(data) {
-                        response(data);
-                    },
-                    error: function() {
-                        response([]);
-                    }
-                });
-            },
-            select: function(event, ui) {
-                $('#numero').val(ui.item.value);
-                $('#id_registro').val(ui.item.id || '');
-                return false;
-            },
-            focus: function(event, ui) {
-                $('#numero').val(ui.item.value);
-                return false;
+        var numeroRequest = null;
+
+        function clearNumeroSuggestions() {
+            $('#numeroSugestoes').empty();
+        }
+
+        function loadNumeroSuggestions() {
+            var term = $('#numero').val().trim();
+            var secretariaId = $('#secretaria').val();
+            var setorId = $('#setor').val();
+            var tipoId = $('#tipo').val();
+
+            if (!secretariaId || !setorId || !tipoId || term.length < 2) {
+                clearNumeroSuggestions();
+                return;
             }
-        });
+
+            if (numeroRequest) {
+                numeroRequest.abort();
+            }
+
+            numeroRequest = $.ajax({
+                url: 'get_numeros.php',
+                type: 'GET',
+                data: {
+                    term: term,
+                    format: 'datalist',
+                    secretaria_id: secretariaId,
+                    setor_id: setorId,
+                    tipo_id: tipoId
+                }
+            }).done(function(data) {
+                $('#numeroSugestoes').html(data);
+            }).fail(function() {
+                clearNumeroSuggestions();
+            }).always(function() {
+                numeroRequest = null;
+            });
+        }
 
         $('#numero').on('input', function() {
             $('#id_registro').val('');
+            loadNumeroSuggestions();
+        }).on('focus', function() {
+            loadNumeroSuggestions();
         });
 
         // Carregar opções de setor quando a secretaria é selecionada
@@ -235,19 +237,19 @@ error_reporting(E_ALL);
                     data: { secretaria_id: secretariaId },
                     success: function(data) {
                         $('#setor').html(data);
-                        $('#numero').autocomplete('close');
+                        clearNumeroSuggestions();
                     }
                 });
             } else {
                 $('#setor').html('<option value="">Selecione o Setor</option>');
-                $('#numero').autocomplete('close');
+                clearNumeroSuggestions();
             }
         });
 
         $('#setor, #tipo').change(function() {
             $('#numero').val('');
             $('#id_registro').val('');
-            $('#numero').autocomplete('close');
+            clearNumeroSuggestions();
         });
 
         // Atualizar a barra de progresso durante o upload
@@ -275,11 +277,14 @@ error_reporting(E_ALL);
                     return xhr;
                 },
                 beforeSend: function() {
+                    $('#status').empty();
+                    $('#statusInline').empty();
                     $('#progressBar').css('width', '0%').attr('aria-valuenow', '0').text('0%');
                     $('.progress').show();
                 },
                 success: function(response) {
                     $('#status').html(response);
+                    $('#statusInline').html(response);
                     $('#progressBar').css('width', '100%').attr('aria-valuenow', '100').text('100%');
                     setTimeout(function() {
                         $('.progress').hide();
@@ -288,7 +293,9 @@ error_reporting(E_ALL);
                     }, 1000);
                 },
                 error: function(xhr) {
-                    $('#status').html('Erro ao carregar arquivos. Detalhes: ' + xhr.status + ': ' + xhr.responseText);
+                    var errorMessage = 'Erro ao carregar arquivos. Detalhes: ' + xhr.status + ': ' + xhr.responseText;
+                    $('#status').html(errorMessage);
+                    $('#statusInline').html(errorMessage);
                 },
                 complete: function() {
                     $('#files').val('');

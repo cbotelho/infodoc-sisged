@@ -8,6 +8,8 @@ ini_set('display_startup_errors', $debugMode ? '1' : '0');
 ini_set('log_errors', '1');
 error_reporting(E_ALL);
 
+require_once __DIR__ . '/object_storage_helper.php';
+
 // Definir conexão com o banco de dados
 define('DB_SERVER', '195.200.4.41');
 define('DB_SERVER_USERNAME', 'admin');
@@ -115,66 +117,6 @@ function require_post_fields(array $fieldNames) {
     }
 
     return $values;
-}
-
-function load_r2_sdk() {
-    static $loaded = false;
-
-    if ($loaded) {
-        return;
-    }
-
-    $autoload = dirname(__DIR__) . '/plugins/ext/file_storage_modules/r2/vendor/autoload.php';
-
-    if (!is_file($autoload)) {
-        throw new RuntimeException('AWS SDK nao encontrada para envio ao R2.');
-    }
-
-    require_once $autoload;
-    $loaded = true;
-}
-
-function build_r2_client() {
-    load_r2_sdk();
-
-    $endpoint = getenv('FILE_STORAGE_R2_ENDPOINT') ?: '';
-    $region = getenv('FILE_STORAGE_R2_REGION') ?: 'auto';
-    $accessKeyId = getenv('FILE_STORAGE_R2_ACCESS_KEY_ID') ?: '';
-    $secretAccessKey = getenv('FILE_STORAGE_R2_SECRET_ACCESS_KEY') ?: '';
-    $bucket = getenv('FILE_STORAGE_R2_BUCKET') ?: '';
-
-    if ($endpoint === '' || $accessKeyId === '' || $secretAccessKey === '' || $bucket === '') {
-        throw new RuntimeException('Configuracao R2 incompleta no ambiente.');
-    }
-
-    return new Aws\S3\S3Client([
-        'version' => 'latest',
-        'region' => $region,
-        'endpoint' => $endpoint,
-        'credentials' => [
-            'key' => $accessKeyId,
-            'secret' => $secretAccessKey,
-        ],
-        'signature_version' => 'v4',
-    ]);
-}
-
-function upload_file_to_r2($localPath, $fileName) {
-    $bucket = getenv('FILE_STORAGE_R2_BUCKET') ?: '';
-    $prefix = trim((string)(getenv('FILE_STORAGE_R2_OBJECT_PREFIX') ?: 'ged'), '/');
-    $parts = array_filter([$prefix, 'upload', $fileName], 'strlen');
-    $objectKey = implode('/', $parts);
-
-    $client = build_r2_client();
-
-    $client->putObject([
-        'Bucket' => $bucket,
-        'Key' => $objectKey,
-        'SourceFile' => $localPath,
-        'ContentType' => mime_content_type($localPath) ?: 'application/octet-stream',
-    ]);
-
-    return $objectKey;
 }
 
 function get_registro_by_id($pdo, $registroId) {
@@ -347,8 +289,8 @@ function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $numero, $assun
         ]);
 
         try {
-            upload_file_to_r2($arquivo['tmp_name'], $newFileName);
-        } catch (Exception $e) {
+            ged_upload_file($arquivo['tmp_name'], $newFileName, 'upload');
+        } catch (Throwable $e) {
             throw new RuntimeException("Erro ao enviar o arquivo {$arquivo['nome']} para o R2. Detalhes: {$e->getMessage()}", 0, $e);
         }
     }
