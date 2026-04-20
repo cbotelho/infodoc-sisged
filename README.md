@@ -90,9 +90,10 @@ Para deploy na VPS via Portainer, use o arquivo `docker-compose.production.yml` 
 
 ### Release atual recomendada
 
-- `web`: `1.0.24`
+- `web`: `1.0.25`
 - `file-storage-worker`: `1.0.23`
 - `assinador-python`: `1.0.23`
+- o hotfix `1.0.25` do web substitui o autocomplete legado do sefaz_RH por `datalist` nativo para eliminar o erro `getClientRects` no navegador
 - o hotfix `1.0.24` do web inclui ajuste no fluxo sefaz_RH para evitar erro 500 opaco no upload e endurecer o autocomplete da tela
 - inclui correcao do fluxo sefaz_RH para usar os ids reais do campo Tipo da entidade pai 48
 - inclui upload do ECM gravando direto no R2, sem persistencia local em `upload/`

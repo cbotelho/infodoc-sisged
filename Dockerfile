@@ -37,14 +37,6 @@ WORKDIR /var/www/html
 
 COPY . /var/www/html
 
-RUN if [ -f /var/www/html/plugins/ext/file_storage_modules/r2/composer.json ]; then \
-        composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader --working-dir=/var/www/html/plugins/ext/file_storage_modules/r2; \
-    fi
-
-RUN if [ -f /var/www/html/assinatura/composer.json ]; then \
-        composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader --working-dir=/var/www/html/assinatura; \
-    fi
-
 RUN mkdir -p /var/www/html/backups \
     /var/www/html/cache \
     /var/www/html/log \
@@ -54,8 +46,17 @@ RUN mkdir -p /var/www/html/backups \
     /var/www/html/uploads/attachments \
     /var/www/html/uploads/attachments_preview \
     /var/www/html/uploads/images \
-    /var/www/html/uploads/users \
-    && chown -R www-data:www-data /var/www/html
+    /var/www/html/uploads/users
+
+RUN if [ -f /var/www/html/plugins/ext/file_storage_modules/r2/composer.json ]; then \
+        COMPOSER_PROCESS_TIMEOUT=1200 composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader --working-dir=/var/www/html/plugins/ext/file_storage_modules/r2; \
+    fi
+
+RUN if [ -f /var/www/html/assinatura/composer.json ]; then \
+        COMPOSER_PROCESS_TIMEOUT=1200 composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader --working-dir=/var/www/html/assinatura; \
+    fi
+
+RUN chown -R www-data:www-data /var/www/html
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["apache2-foreground"]
