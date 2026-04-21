@@ -107,12 +107,18 @@ function count_pdf_pages($filePath) {
 
     require_once $autoload;
 
-    if (!class_exists('setasign\\Fpdi\\Fpdi')) {
-        throw new RuntimeException('Biblioteca FPDI nao encontrada para contar paginas do PDF.');
+    if (!class_exists('Smalot\\PdfParser\\Parser')) {
+        throw new RuntimeException('Biblioteca PdfParser nao encontrada para contar paginas do PDF.');
     }
 
-    $pdf = new setasign\Fpdi\Fpdi();
-    return (int) $pdf->setSourceFile($filePath);
+    try {
+        $parser = new Smalot\PdfParser\Parser();
+        $document = $parser->parseFile($filePath);
+
+        return count($document->getPages());
+    } catch (Throwable $e) {
+        throw new RuntimeException('Falha ao contar paginas do PDF: ' . $e->getMessage(), 0, $e);
+    }
 }
 
 function get_registro_by_id($pdo, $registroId) {
