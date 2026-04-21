@@ -10,12 +10,15 @@ curl -X POST http://localhost/infodoc-sisged/api/rest.php -d 'token=SEU_TOKEN&ac
 
 ## Cloudflare R2 como storage de anexos
 
-O GED ja possui uma camada de file storage em plugins/ext/file_storage_modules. A melhor forma de integrar Cloudflare R2 e habilitar o provider Cloudflare R2 no painel de modulos, em vez de alterar diretamente o fluxo do core.
+O projeto possui dois caminhos complementares para trabalhar com anexos no R2:
+
+1. o fluxo legado de fila do modulo de file storage;
+2. o upload direto dos fluxos GED principal e SEFAZ RH, que agora resolvem a configuracao do R2 por helper compartilhado.
 
 ### Como configurar
 
 1. Gere a imagem web atualizada para que a AWS SDK seja instalada durante o build.
-2. No Portainer, defina as variaveis abaixo no container web:
+2. No Portainer, defina as variaveis abaixo no container web e no worker:
 
 ```env
 FILE_STORAGE_R2_ENDPOINT=https://SEU_ACCOUNT_ID.r2.cloudflarestorage.com
@@ -26,8 +29,8 @@ FILE_STORAGE_R2_SECRET_ACCESS_KEY=sua-secret-access-key
 FILE_STORAGE_R2_OBJECT_PREFIX=ged
 ```
 
-3. No GED, instale e ative o modulo de file storage Cloudflare R2.
-4. Crie a regra de file storage para os campos de anexo desejados.
+3. No GED, instale e ative o modulo de file storage Cloudflare R2 se quiser manter a sincronizacao por fila para outros campos do sistema.
+4. Crie a regra de file storage para os campos de anexo desejados quando o caso de uso continuar dependendo da fila.
 5. Agende a execucao de cron/file_storage.php para processar a fila de sincronizacao.
 
 Na stack de producao deste repositório, o servico file-storage-worker ja executa essa fila continuamente.
@@ -64,6 +67,10 @@ Se voce executar o GED fora do Docker, rode o Composer manualmente em plugins/ex
 
 ### Observacao importante
 
-Com a arquitetura atual do GED web, o upload de anexos ainda passa primeiro pela area local de uploads e depois e sincronizado para o storage externo pelo mecanismo de fila do modulo file storage. Para eliminar completamente a persistencia local desde o primeiro byte, seria necessario refatorar o fluxo de upload do core.
+Nos fluxos GED principal e SEFAZ RH deste repositório, o upload ja pode seguir direto para o R2 quando as variaveis `FILE_STORAGE_R2_*` estiverem definidas. Quando nao estiverem, o sistema faz fallback controlado para a pasta local `upload/`.
 
-No assinador Python, o comportamento e diferente: apenas o diretorio /uploads foi adaptado para uso direto do R2 quando as variaveis FILE_STORAGE_R2_* estiverem definidas. Ou seja, o assinador pode enviar uploads diretamente ao bucket, enquanto o GED web continua usando o fluxo local + fila. Os certificados em /certs continuam exclusivamente locais.
+O modulo legado de file storage continua existindo para os cenarios em que a aplicacao depende de sincronizacao por fila.
+
+No assinador Python, o diretorio `/uploads` tambem usa envio direto ao R2 quando as variaveis `FILE_STORAGE_R2_*` estiverem definidas. Os certificados em `/certs` continuam exclusivamente locais.
+
+Nos campos de arquivo do GED, a base continua armazenando apenas o nome do arquivo. Por isso, a visualizacao depende de o campo possuir o caminho base configurado corretamente, por exemplo `/upload/` ou a URL publica equivalente.

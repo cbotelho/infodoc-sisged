@@ -35,9 +35,10 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 WORKDIR /var/www/html
 
-COPY . /var/www/html
+COPY --chown=www-data:www-data . /var/www/html
 
-RUN mkdir -p /var/www/html/backups \
+RUN install -d -o www-data -g www-data \
+    /var/www/html/backups \
     /var/www/html/cache \
     /var/www/html/log \
     /var/www/html/tmp \
@@ -55,8 +56,6 @@ RUN if [ -f /var/www/html/plugins/ext/file_storage_modules/r2/composer.json ]; t
 RUN if [ -f /var/www/html/assinatura/composer.json ]; then \
         COMPOSER_PROCESS_TIMEOUT=1200 composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader --working-dir=/var/www/html/assinatura; \
     fi
-
-RUN chown -R www-data:www-data /var/www/html
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["apache2-foreground"]

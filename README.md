@@ -90,15 +90,13 @@ Para deploy na VPS via Portainer, use o arquivo `docker-compose.production.yml` 
 
 ### Release atual recomendada
 
-- `web`: `1.0.25`
-- `file-storage-worker`: `1.0.23`
-- `assinador-python`: `1.0.23`
-- o hotfix `1.0.25` do web substitui o autocomplete legado do sefaz_RH por `datalist` nativo para eliminar o erro `getClientRects` no navegador
-- o hotfix `1.0.24` do web inclui ajuste no fluxo sefaz_RH para evitar erro 500 opaco no upload e endurecer o autocomplete da tela
-- inclui correcao do fluxo sefaz_RH para usar os ids reais do campo Tipo da entidade pai 48
-- inclui upload do ECM gravando direto no R2, sem persistencia local em `upload/`
-- inclui contagem de paginas no upload principal com gravacao em `field_554`
-- inclui ajuste do temporario do PHP para `/var/www/html/tmp` no deploy de producao
+- `web`: `1.0.27`
+- `file-storage-worker`: `1.0.27`
+- `assinador-python`: `1.0.26`
+- a release `1.0.27` corrige a contagem de paginas de PDF no GED e no SEFAZ RH sem depender da classe global `FPDF`
+- a release `1.0.27` reduz o tempo de build da imagem PHP ao remover o `chown -R` global do `Dockerfile`
+- a release `1.0.26` consolidou o upload de GED e SEFAZ RH com helper compartilhado de R2 e fallback local controlado
+- a visualizacao dos campos de arquivo continua dependente do caminho base configurado no proprio campo, pois a base armazena apenas o nome do arquivo
 
 ### Arquivos para produção
 
