@@ -1,40 +1,166 @@
-IMAGE_TAG=1.0.26
-WEB_IMAGE_TAG=1.0.27
-WORKER_IMAGE_TAG=1.0.27
-SIGNER_IMAGE_TAG=1.0.26
-APP_PORT=18081
-SIGNER_PORT=15000
-APP_BASE_URL=https://gea.infodocsisged.com.br
-PYTHON_SERVICE_PUBLIC_URL=https://assinador.infodocsisged.com.br
-PROXY_EXTERNAL_NETWORK=proxy_net
-PHP_UPLOAD_MAX_FILESIZE=1024M
-PHP_POST_MAX_SIZE=2048M
-PHP_MAX_FILE_UPLOADS=1000
-PHP_MEMORY_LIMIT=1024M
-PHP_MAX_EXECUTION_TIME=3600
-PHP_MAX_INPUT_TIME=3600
-PHP_MAX_INPUT_VARS=10000
-PHP_UPLOAD_TMP_DIR=/var/www/html/tmp
-PHP_SYS_TEMP_DIR=/var/www/html/tmp
-PHP_DATE_TIMEZONE=America/Sao_Paulo
-PHP_DISPLAY_ERRORS=Off
-PHP_LOG_ERRORS=On
-DB_SERVER=195.200.4.41
-DB_SERVER_PORT=3306
-DB_SERVER_USERNAME=******
-DB_SERVER_PASSWORD=********
-DB_DATABASE=sisged_gea
-DB_HOST=195.200.4.41
-DB_PORT=3306
-DB_USER=*********
-DB_PASSWORD=************
-DB_NAME=sisged_gea
-SIGNER_SECRET_KEY=****************************
-TOKEN_EXPIRY=3600
-FILE_STORAGE_R2_ENDPOINT=https://6fdc099e1b64589559c93618fdec06f9.r2.cloudflarestorage.com
-FILE_STORAGE_R2_REGION=auto
-FILE_STORAGE_R2_BUCKET=gea
-FILE_STORAGE_R2_ACCESS_KEY_ID=*********************
-FILE_STORAGE_R2_SECRET_ACCESS_KEY=****************************************
-FILE_STORAGE_R2_OBJECT_PREFIX=ged
-FILE_STORAGE_CRON_INTERVAL=60
+services:
+  web:
+    image: cbotelho80/infodoc-web:${WEB_IMAGE_TAG:-${IMAGE_TAG:-1.0.34}}
+    command: ["apache2-foreground"]
+    container_name: infodoc-web
+    restart: unless-stopped
+    depends_on:
+      - assinador-python
+    environment:
+      DB_SERVER: ${DB_SERVER}
+      DB_SERVER_PORT: ${DB_SERVER_PORT}
+      DB_SERVER_USERNAME: ${DB_SERVER_USERNAME}
+      DB_SERVER_PASSWORD: ${DB_SERVER_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      PYTHON_SERVICE_INTERNAL_URL: http://assinador-python:5000
+      PYTHON_SERVICE_PUBLIC_URL: ${PYTHON_SERVICE_PUBLIC_URL}
+      APP_BASE_URL: ${APP_BASE_URL}
+      FILE_STORAGE_R2_ENDPOINT: ${FILE_STORAGE_R2_ENDPOINT}
+      FILE_STORAGE_R2_REGION: ${FILE_STORAGE_R2_REGION}
+      FILE_STORAGE_R2_BUCKET: ${FILE_STORAGE_R2_BUCKET}
+      FILE_STORAGE_R2_ACCESS_KEY_ID: ${FILE_STORAGE_R2_ACCESS_KEY_ID}
+      FILE_STORAGE_R2_SECRET_ACCESS_KEY: ${FILE_STORAGE_R2_SECRET_ACCESS_KEY}
+      FILE_STORAGE_R2_OBJECT_PREFIX: ${FILE_STORAGE_R2_OBJECT_PREFIX}
+      GED_ENABLE_INLINE_OCR: ${GED_ENABLE_INLINE_OCR:-0}
+      GED_ENABLE_SYNC_R2_UPLOAD: ${GED_ENABLE_SYNC_R2_UPLOAD:-1}
+      PHP_UPLOAD_MAX_FILESIZE: ${PHP_UPLOAD_MAX_FILESIZE:-1024M}
+      PHP_POST_MAX_SIZE: ${PHP_POST_MAX_SIZE:-2048M}
+      PHP_MAX_FILE_UPLOADS: ${PHP_MAX_FILE_UPLOADS:-1000}
+      PHP_MEMORY_LIMIT: ${PHP_MEMORY_LIMIT:-1024M}
+      PHP_MAX_EXECUTION_TIME: ${PHP_MAX_EXECUTION_TIME:-3600}
+      PHP_MAX_INPUT_TIME: ${PHP_MAX_INPUT_TIME:-3600}
+      PHP_MAX_INPUT_VARS: ${PHP_MAX_INPUT_VARS:-10000}
+      PHP_UPLOAD_TMP_DIR: ${PHP_UPLOAD_TMP_DIR:-/var/www/html/tmp}
+      PHP_SYS_TEMP_DIR: ${PHP_SYS_TEMP_DIR:-/var/www/html/tmp}
+      PHP_DATE_TIMEZONE: ${PHP_DATE_TIMEZONE:-America/Sao_Paulo}
+      PHP_DISPLAY_ERRORS: ${PHP_DISPLAY_ERRORS:-Off}
+      PHP_LOG_ERRORS: ${PHP_LOG_ERRORS:-On}
+    ports:
+      - "${APP_PORT:-18081}:80"
+    volumes:
+      - infodoc_backups:/var/www/html/backups
+      - infodoc_uploads:/var/www/html/uploads
+      - infodoc_cache:/var/www/html/cache
+      - infodoc_tmp:/var/www/html/tmp
+      - infodoc_log:/var/www/html/log
+    networks:
+      - default
+      - proxy
+
+  file-storage-worker:
+    image: cbotelho80/infodoc-file-storage-worker:${WORKER_IMAGE_TAG:-${IMAGE_TAG:-1.0.34}}
+    container_name: infodoc-file-storage-worker
+    restart: unless-stopped
+    depends_on:
+      - web
+    environment:
+      DB_SERVER: ${DB_SERVER}
+      DB_SERVER_PORT: ${DB_SERVER_PORT}
+      DB_SERVER_USERNAME: ${DB_SERVER_USERNAME}
+      DB_SERVER_PASSWORD: ${DB_SERVER_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      FILE_STORAGE_R2_ENDPOINT: ${FILE_STORAGE_R2_ENDPOINT}
+      FILE_STORAGE_R2_REGION: ${FILE_STORAGE_R2_REGION}
+      FILE_STORAGE_R2_BUCKET: ${FILE_STORAGE_R2_BUCKET}
+      FILE_STORAGE_R2_ACCESS_KEY_ID: ${FILE_STORAGE_R2_ACCESS_KEY_ID}
+      FILE_STORAGE_R2_SECRET_ACCESS_KEY: ${FILE_STORAGE_R2_SECRET_ACCESS_KEY}
+      FILE_STORAGE_R2_OBJECT_PREFIX: ${FILE_STORAGE_R2_OBJECT_PREFIX}
+      FILE_STORAGE_CRON_INTERVAL: ${FILE_STORAGE_CRON_INTERVAL:-60}
+    command: >-
+      sh -c "while true; do php /var/www/html/cron/file_storage.php; sleep \"$${FILE_STORAGE_CRON_INTERVAL}\"; done"
+    volumes:
+      - infodoc_backups:/var/www/html/backups
+      - infodoc_uploads:/var/www/html/uploads
+      - infodoc_cache:/var/www/html/cache
+      - infodoc_tmp:/var/www/html/tmp
+      - infodoc_log:/var/www/html/log
+    networks:
+      - default
+      - proxy
+
+  runtime-cleanup-worker:
+    image: cbotelho80/infodoc-web:${WEB_IMAGE_TAG:-${IMAGE_TAG:-1.0.34}}
+    container_name: infodoc-runtime-cleanup-worker
+    restart: unless-stopped
+    depends_on:
+      - web
+    environment:
+      RUNTIME_CLEANUP_ENABLED: ${RUNTIME_CLEANUP_ENABLED:-true}
+      RUNTIME_CLEANUP_INTERVAL: ${RUNTIME_CLEANUP_INTERVAL:-21600}
+      RUNTIME_CLEANUP_LOG_RETENTION_DAYS: ${RUNTIME_CLEANUP_LOG_RETENTION_DAYS:-7}
+      RUNTIME_CLEANUP_TMP_RETENTION_DAYS: ${RUNTIME_CLEANUP_TMP_RETENTION_DAYS:-7}
+      RUNTIME_CLEANUP_CACHE_RETENTION_DAYS: ${RUNTIME_CLEANUP_CACHE_RETENTION_DAYS:-7}
+      RUNTIME_CLEANUP_DRY_RUN: ${RUNTIME_CLEANUP_DRY_RUN:-false}
+    command: >-
+      sh -c "while true; do php /var/www/html/cron/runtime_cleanup.php; sleep \"$${RUNTIME_CLEANUP_INTERVAL}\"; done"
+    volumes:
+      - infodoc_backups:/var/www/html/backups
+      - infodoc_uploads:/var/www/html/uploads
+      - infodoc_cache:/var/www/html/cache
+      - infodoc_tmp:/var/www/html/tmp
+      - infodoc_log:/var/www/html/log
+    networks:
+      - default
+      - proxy
+
+  assinador-python:
+    image: cbotelho80/infodoc-assinador-python:${SIGNER_IMAGE_TAG:-${IMAGE_TAG:-1.0.34}}
+    container_name: infodoc-assinador
+    restart: unless-stopped
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SECRET_KEY: ${SIGNER_SECRET_KEY}
+      TOKEN_EXPIRY: ${TOKEN_EXPIRY}
+      UPLOAD_DIR: /app/uploads
+      CERT_DIR: /app/certs
+      TEMP_DIR: /app/temp
+      FILE_STORAGE_R2_ENDPOINT: ${FILE_STORAGE_R2_ENDPOINT}
+      FILE_STORAGE_R2_REGION: ${FILE_STORAGE_R2_REGION}
+      FILE_STORAGE_R2_BUCKET: ${FILE_STORAGE_R2_BUCKET}
+      FILE_STORAGE_R2_ACCESS_KEY_ID: ${FILE_STORAGE_R2_ACCESS_KEY_ID}
+      FILE_STORAGE_R2_SECRET_ACCESS_KEY: ${FILE_STORAGE_R2_SECRET_ACCESS_KEY}
+      FILE_STORAGE_R2_OBJECT_PREFIX: ${FILE_STORAGE_R2_OBJECT_PREFIX}
+      HOST: 0.0.0.0
+      PORT: 5000
+      DEBUG: false
+      PYTHON_SERVICE_INTERNAL_URL: http://assinador-python:5000
+      PYTHON_SERVICE_PUBLIC_URL: ${PYTHON_SERVICE_PUBLIC_URL}
+      APP_BASE_URL: ${APP_BASE_URL}
+    ports:
+      - "${SIGNER_PORT:-15000}:5000"
+    volumes:
+      - signer_certs:/app/certs
+      - signer_temp:/app/temp
+      - signer_logs:/app/logs
+    networks:
+      - default
+      - proxy
+
+networks:
+  proxy:
+    external: true
+    name: ${PROXY_EXTERNAL_NETWORK:-proxy_net}
+
+volumes:
+  infodoc_backups:
+  infodoc_uploads:
+  infodoc_cache:
+  infodoc_tmp:
+  infodoc_log:
+  signer_certs:
+  signer_temp:
+  signer_logs:

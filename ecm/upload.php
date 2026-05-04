@@ -229,6 +229,25 @@ function resolve_document_fields(array $arquivo, $padraoRenomeio) {
     return [$field446, $field447, $field448, $field458];
 }
 
+function ged_inline_ocr_enabled() {
+    static $enabled = null;
+
+    if ($enabled !== null) {
+        return $enabled;
+    }
+
+    $value = getenv('GED_ENABLE_INLINE_OCR');
+
+    if ($value === false || trim((string) $value) === '') {
+        $enabled = false;
+        return $enabled;
+    }
+
+    $enabled = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+
+    return $enabled;
+}
+
 function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $numero, $padraoRenomeio) {
     // Função para extrair metadados do arquivo
     function extract_metadata($file_path, $original_name) {
@@ -286,7 +305,11 @@ function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $numero, $padra
 
         // Extrair metadados e OCR
         $metadados = extract_metadata($arquivo['tmp_name'], $originalFileName);
-        $ocr_text = extract_ocr($arquivo['tmp_name'], $originalFileName);
+        $ocr_text = '';
+
+        if (ged_inline_ocr_enabled()) {
+            $ocr_text = extract_ocr($arquivo['tmp_name'], $originalFileName);
+        }
  
         // Executar o insert com os parâmetros na ordem correta
         $stmt->execute([

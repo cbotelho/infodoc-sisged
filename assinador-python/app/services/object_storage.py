@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import os
+import time
 from typing import BinaryIO
 
 import boto3
@@ -59,6 +60,24 @@ class ObjectStorage:
         parts = [self.prefix, 'assinador-python', 'uploads', os.path.basename(filename)]
         return '/'.join([part for part in parts if part])
 
+    def _run_with_retry(self, operation, stream=None):
+        last_exception = None
+
+        for attempt in range(1, 4):
+            try:
+                if stream is not None:
+                    stream.seek(0)
+                return operation()
+            except (OSError, BotoCoreError, ClientError) as exc:
+                last_exception = exc
+
+                if attempt >= 3:
+                    break
+
+                time.sleep(attempt)
+
+        raise last_exception
+
     def save_upload(self, upload, filename: str, content_type: str = 'application/pdf') -> None:
         safe_name = os.path.basename(filename)
 
@@ -69,7 +88,15 @@ class ObjectStorage:
         try:
             upload.stream.seek(0)
             extra_args = {'ContentType': content_type}
-            self._get_client().upload_fileobj(upload.stream, self.bucket, self.build_key(safe_name), ExtraArgs=extra_args)
+            self._run_with_retry(
+                lambda: self._get_client().upload_fileobj(
+                    upload.stream,
+                    self.bucket,
+                    self.build_key(safe_name),
+                    ExtraArgs=extra_args,
+                ),
+                stream=upload.stream,
+            )
         except (OSError, BotoCoreError, ClientError) as exc:
             raise ObjectStorageError(f'Falha ao enviar arquivo para o R2: {exc}') from exc
 
@@ -84,14 +111,30 @@ class ObjectStorage:
             return
 
         try:
-            self._get_client().upload_file(
-                local_path,
-                self.bucket,
-                self.build_key(safe_name),
-                ExtraArgs={'ContentType': content_type},
+            self._run_with_retry(
+                lambda: self._get_client().upload_file(
+                    local_path,
+                    self.bucket,
+                    self.build_key(safe_name),
+                    ExtraArgs={'ContentType': content_type},
+                )
             )
         except (OSError, BotoCoreError, ClientError) as exc:
             raise ObjectStorageError(f'Falha ao enviar arquivo assinado para o R2: {exc}') from exc
+
+    def delete(self, filename: str) -> None:
+        safe_name = os.path.basename(filename)
+
+        if not self.enabled:
+            local_path = os.path.join(self.upload_dir, safe_name)
+            if os.path.exists(local_path):
+                os.unlink(local_path)
+            return
+
+        try:
+            self._get_client().delete_object(Bucket=self.bucket, Key=self.build_key(safe_name))
+        except (OSError, BotoCoreError, ClientError) as exc:
+            raise ObjectStorageError(f'Falha ao remover arquivo do R2: {exc}') from exc
 
     def exists(self, filename: str) -> bool:
         safe_name = os.path.basename(filename)

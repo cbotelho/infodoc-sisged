@@ -2,7 +2,7 @@
  
 // Em producao, registre erros sem expor warnings diretamente na resposta.
 $debugMode = filter_var(getenv('APP_DEBUG') ?: '0', FILTER_VALIDATE_BOOLEAN);
-
+ 
 ini_set('display_errors', $debugMode ? '1' : '0');
 ini_set('display_startup_errors', $debugMode ? '1' : '0');
 ini_set('log_errors', '1');
@@ -103,6 +103,15 @@ function count_pdf_pages($filePath) {
     }
 }
 
+function count_pdf_pages_safe($filePath) {
+    try {
+        return count_pdf_pages($filePath);
+    } catch (Throwable $e) {
+        error_log('SEFAZ RH: falha ao contar paginas do PDF "' . $filePath . '": ' . $e->getMessage());
+        return 0;
+    }
+}
+
 function require_post_fields(array $fieldNames) {
     $values = [];
     $missingFields = [];
@@ -123,6 +132,47 @@ function require_post_fields(array $fieldNames) {
     }
 
     return $values;
+}
+
+function describe_upload_error($errorCode) {
+    switch ((int) $errorCode) {
+        case UPLOAD_ERR_OK:
+            return null;
+        case UPLOAD_ERR_INI_SIZE:
+        case UPLOAD_ERR_FORM_SIZE:
+            return 'o arquivo excede o limite de tamanho permitido';
+        case UPLOAD_ERR_PARTIAL:
+            return 'o upload foi enviado apenas parcialmente';
+        case UPLOAD_ERR_NO_FILE:
+            return 'nenhum arquivo foi recebido';
+        case UPLOAD_ERR_NO_TMP_DIR:
+            return 'o servidor esta sem diretorio temporario para upload';
+        case UPLOAD_ERR_CANT_WRITE:
+            return 'o servidor nao conseguiu gravar o arquivo temporario';
+        case UPLOAD_ERR_EXTENSION:
+            return 'uma extensao do PHP interrompeu o upload';
+        default:
+            return 'ocorreu um erro desconhecido no upload';
+    }
+}
+
+function table_has_column(PDO $pdo, $tableName, $columnName) {
+    static $cache = [];
+
+    $cacheKey = $tableName . '.' . $columnName;
+
+    if (array_key_exists($cacheKey, $cache)) {
+        return $cache[$cacheKey];
+    }
+
+    $stmt = $pdo->prepare(
+        'SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+    );
+    $stmt->execute([$tableName, $columnName]);
+
+    $cache[$cacheKey] = ((int) $stmt->fetchColumn()) > 0;
+
+    return $cache[$cacheKey];
 }
 
 function get_registro_by_id($pdo, $registroId) {
@@ -213,6 +263,16 @@ function validate_file_name_pattern($partsCount, $padraoRenomeio) {
             return false;
     }
 }
+
+function get_file_name_parts($fileName) {
+    $nameWithoutExtension = pathinfo((string) $fileName, PATHINFO_FILENAME);
+
+    if ($nameWithoutExtension === '') {
+        return [];
+    }
+
+    return explode('#', $nameWithoutExtension);
+}
  
 function resolve_document_fields(array $arquivo) {
     $matricula = trim((string) ($arquivo['coluna1'] ?? ''));
@@ -222,7 +282,22 @@ function resolve_document_fields(array $arquivo) {
     return [$matricula, $interessado, $cpf];
 }
 
-function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $numero, $assunto) {
+function prepare_upload_entries(array $arquivos) {
+    foreach ($arquivos as &$arquivo) {
+        $arquivo['stored_name'] = str_replace('#', '_', $arquivo['nome']);
+        $arquivo['total_paginas'] = 0;
+
+        if (strtolower(pathinfo($arquivo['nome'], PATHINFO_EXTENSION)) === 'pdf') {
+            $arquivo['total_paginas'] = count_pdf_pages_safe($arquivo['tmp_name']);
+        }
+    }
+
+    unset($arquivo);
+
+    return $arquivos;
+}
+
+function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $doctipo, $numero, $assunto) {
     // Função para extrair metadados do arquivo
     function extract_metadata($file_path, $original_name) {
         return [
@@ -264,19 +339,19 @@ function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $numero, $assun
         return $ocr_text;
     }
 
-    $stmt = $pdo->prepare("INSERT INTO app_entity_49 (parent_id, parent_item_id, linked_id, date_added, date_updated, created_by, sort_order, field_542, field_543, field_544, field_545, field_546, field_548, field_552, field_553) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $hasField563 = table_has_column($pdo, 'app_entity_49', 'field_563');
+
+    if ($hasField563) {
+        $stmt = $pdo->prepare("INSERT INTO app_entity_49 (parent_id, parent_item_id, linked_id, date_added, date_updated, created_by, sort_order, field_542, field_543, field_544, field_545, field_546, field_548, field_552, field_553, field_563) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    } else {
+        $stmt = $pdo->prepare("INSERT INTO app_entity_49 (parent_id, parent_item_id, linked_id, date_added, date_updated, created_by, sort_order, field_542, field_543, field_544, field_545, field_546, field_548, field_552, field_553) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    }
     
     foreach ($arquivos as $arquivo) {
-        $originalFileName = $arquivo['nome'];
-        $newFileName = str_replace("#", "_", $originalFileName);
+        $newFileName = $arquivo['stored_name'];
         list($matricula, $interessado, $cpf) = resolve_document_fields($arquivo);
-
-        $totalPaginas = 0;
-        if (strtolower(pathinfo($originalFileName, PATHINFO_EXTENSION)) === 'pdf') {
-            $totalPaginas = count_pdf_pages($arquivo['tmp_name']);
-        }
  
-        $stmt->execute([
+        $params = [
             0,
             $parent_item_id,
             0,
@@ -290,9 +365,15 @@ function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $numero, $assun
             $cpf,
             $tipodoc,
             $assunto,
-            $totalPaginas,
+            $arquivo['total_paginas'],
             $numero,
-        ]);
+        ];
+
+        if ($hasField563) {
+            $params[] = $doctipo;
+        }
+
+        $stmt->execute($params);
 
         try {
             ged_upload_file($arquivo['tmp_name'], $newFileName, 'upload');
@@ -316,14 +397,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
+        $requiredFields = require_post_fields(['numero', 'tratado_por', 'padrao_renomeio', 'tipodoc', 'doctipo', 'assunto']);
+
         $pdo = create_pdo_connection();
-        $requiredFields = require_post_fields(['numero', 'tratado_por', 'padrao_renomeio', 'tipodoc', 'assunto']);
 
         $registroId = isset($_POST['id_registro']) && trim((string) $_POST['id_registro']) !== '' ? (int) $_POST['id_registro'] : 0;
         $numero = $requiredFields['numero'];
         $tratadoPorId = $requiredFields['tratado_por'];
         $padraoRenomeio = (int) $requiredFields['padrao_renomeio'];
         $tipodoc = (int) $requiredFields['tipodoc'];
+        $doctipo = (int) $requiredFields['doctipo'];
         $assunto = $requiredFields['assunto'];
         $secretaria = isset($_POST['secretaria']) ? trim((string) $_POST['secretaria']) : null;
         $setor = isset($_POST['setor']) ? trim((string) $_POST['setor']) : null;
@@ -339,22 +422,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         validate_selected_registro($pdo, $registroId, $numero, $secretaria, $setor, $tipo);
 
+        // Evita deixar a conexao aberta e ociosa durante o preprocessamento de PDFs grandes.
+        $pdo = null;
+
         if (!isset($_FILES['files']['name']) || !is_array($_FILES['files']['name']) || count($_FILES['files']['name']) === 0) {
             throw new InvalidArgumentException('Nenhum arquivo foi recebido na requisicao.');
         }
 
-        $pdo->beginTransaction();
-        
         $arquivos = [];
-        $arquivosComErro = []; 
+        $arquivosComErro = [];
+        $arquivosComErroUpload = [];
 
         foreach ($_FILES['files']['name'] as $index => $nome) {
-            if (!isset($_FILES['files']['tmp_name'][$index]) || $_FILES['files']['tmp_name'][$index] === '') {
-                $arquivosComErro[] = $nome;
+            $uploadError = $_FILES['files']['error'][$index] ?? UPLOAD_ERR_OK;
+
+            if ($uploadError !== UPLOAD_ERR_OK) {
+                $arquivosComErroUpload[] = [
+                    'nome' => $nome,
+                    'motivo' => describe_upload_error($uploadError),
+                ];
                 continue;
             }
 
-            $partes = explode('#', $nome);
+            if (!isset($_FILES['files']['tmp_name'][$index]) || $_FILES['files']['tmp_name'][$index] === '') {
+                $arquivosComErroUpload[] = [
+                    'nome' => $nome,
+                    'motivo' => 'o servidor nao disponibilizou arquivo temporario para processamento',
+                ];
+                continue;
+            }
+
+            $partes = get_file_name_parts($nome);
 
             if (validate_file_name_pattern(count($partes), $padraoRenomeio)) {
                 $arquivos[] = [
@@ -371,14 +469,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        if (!empty($arquivosComErro)) {
-            $pdo->rollBack();
-            echo "Erro ao carregar arquivos. Os seguintes arquivos possuem formato inválido para o Padrao de Renomeio selecionado. Use nomes com partes separadas por # conforme o padrao informado:\n";
-            foreach ($arquivosComErro as $arquivoErro) {
-                echo "- " . $arquivoErro . "\n";
+        if (!empty($arquivosComErroUpload) || !empty($arquivosComErro)) {
+            $mensagens = [];
+
+            if (!empty($arquivosComErroUpload)) {
+                $mensagens[] = "Erro ao carregar arquivos. Os seguintes arquivos falharam no upload antes da validacao do nome:";
+                foreach ($arquivosComErroUpload as $arquivoErro) {
+                    $mensagens[] = '- ' . $arquivoErro['nome'] . ' (' . $arquivoErro['motivo'] . ')';
+                }
             }
+
+            if (!empty($arquivosComErro)) {
+                $mensagens[] = "Os seguintes arquivos possuem formato inválido para o Padrao de Renomeio selecionado. Use nomes com partes separadas por # conforme o padrao informado:";
+                foreach ($arquivosComErro as $arquivoErro) {
+                    $mensagens[] = '- ' . $arquivoErro;
+                }
+            }
+
+            echo implode("\n", $mensagens);
         } else {
-            saveArquivo($pdo, $registroId, $arquivos, $tipodoc, $numero, $assunto);
+            $arquivos = prepare_upload_entries($arquivos);
+            $pdo = create_pdo_connection();
+            $pdo->beginTransaction();
+            saveArquivo($pdo, $registroId, $arquivos, $tipodoc, $doctipo, $numero, $assunto);
             $contadorArquivosImportados = count($arquivos);
             $pdo->commit();
             echo "Arquivos carregados com sucesso! Total de arquivos importados: " . $contadorArquivosImportados; 

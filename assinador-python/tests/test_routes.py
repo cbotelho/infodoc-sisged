@@ -62,6 +62,13 @@ class TestRoutes(unittest.TestCase):
 
         self.assertEqual(result.stdout.strip(), 'https://assinador.infodocsisged.com.br')
 
+    def test_sefaz_rh_upload_requires_form_fields(self):
+        response = self.client.post('/api/sefaz-rh/upload', data={})
+        body = response.get_data(as_text=True)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Campos obrigatorios ausentes', body)
+
 
 if __name__ == '__main__':
     unittest.main()

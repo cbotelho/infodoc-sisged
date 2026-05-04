@@ -90,11 +90,18 @@ Para deploy na VPS via Portainer, use o arquivo `docker-compose.production.yml` 
 
 ### Release atual recomendada
 
-- `web`: `1.0.27`
-- `file-storage-worker`: `1.0.27`
-- `assinador-python`: `1.0.26`
+- `web`: `1.0.34`
+- `file-storage-worker`: `1.0.34`
+- `assinador-python`: `1.0.34`
+- a release `1.0.34` reabilita por padrão o upload síncrono direto para o R2 quando o bucket está configurado, evitando persistência final no disco local da VPS
+- a release `1.0.34` também adiciona um endpoint Python de upload SEFAZ RH e passa a tela PHP a enviar os arquivos para esse backend do assinador
+- a release `1.0.33` reduz o risco de erro 500 no SEFAZ RH com PDFs grandes ao reconectar ao banco somente antes da transacao e tratar falhas na contagem de paginas sem abortar o upload
+- o upload sincronizado para o R2 volta a ficar habilitado por padrão quando as credenciais do bucket estão configuradas, evitando persistência final em disco local da VPS
+- a release `1.0.32` libera a escolha do padrão de renomeio de 1 a 4 colunas no SEFAZ RH e passa a validar os nomes usando o arquivo sem a extensão
+- a release `1.0.31` reduz o risco de timeout e desconexao do banco no SEFAZ RH ao preprocessar PDFs antes de abrir a transacao e mantem compatibilidade caso `field_563` nao exista no schema do ambiente
+- a release `1.0.30` adiciona o campo obrigatorio de tipo de documento no fluxo SEFAZ RH e grava esse valor em `app_entity_49.field_563`
+- a release `1.0.29` desabilita por padrao o OCR inline e o upload sincronizado ao R2 no GED para reduzir timeout de upload
 - a release `1.0.27` corrige a contagem de paginas de PDF no GED e no SEFAZ RH sem depender da classe global `FPDF`
-- a release `1.0.27` reduz o tempo de build da imagem PHP ao remover o `chown -R` global do `Dockerfile`
 - a release `1.0.26` consolidou o upload de GED e SEFAZ RH com helper compartilhado de R2 e fallback local controlado
 - a visualizacao dos campos de arquivo continua dependente do caminho base configurado no proprio campo, pois a base armazena apenas o nome do arquivo
 

@@ -85,6 +85,19 @@ function ged_get_r2_config() {
     ];
 }
 
+function ged_sync_r2_upload_enabled() {
+    static $enabled = null;
+
+    if ($enabled !== null) {
+        return $enabled;
+    }
+
+    $value = ged_get_runtime_setting('GED_ENABLE_SYNC_R2_UPLOAD', '1');
+    $enabled = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+
+    return $enabled;
+}
+
 function ged_r2_is_enabled() {
     $config = ged_get_r2_config();
 
@@ -180,7 +193,7 @@ function ged_upload_file($localPath, $fileName, $folder = 'upload') {
 
     $safeName = basename($fileName);
 
-    if (!ged_r2_is_enabled()) {
+    if (!ged_r2_is_enabled() || !ged_sync_r2_upload_enabled()) {
         $uploadDir = ged_ensure_local_upload_dir();
         $destination = $uploadDir . DIRECTORY_SEPARATOR . $safeName;
 
@@ -189,7 +202,7 @@ function ged_upload_file($localPath, $fileName, $folder = 'upload') {
         }
 
         return [
-            'mode' => 'local',
+            'mode' => ged_r2_is_enabled() ? 'local-buffer' : 'local',
             'path' => $destination,
         ];
     }

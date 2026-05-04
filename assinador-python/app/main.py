@@ -6,7 +6,7 @@ import logging
 from datetime import datetime
 
 from app.config import Config
-from app.routes import auth, sign, certificates, standalone
+from app.routes import auth, sign, certificates, standalone, sefaz_rh
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 LOG_DIR = os.path.join(BASE_DIR, 'logs')
@@ -32,6 +32,7 @@ app.register_blueprint(auth.bp)
 app.register_blueprint(sign.bp)
 app.register_blueprint(certificates.bp)
 app.register_blueprint(standalone.bp)
+app.register_blueprint(sefaz_rh.bp)
 
 @app.route('/')
 def index():

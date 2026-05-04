@@ -4,6 +4,13 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+
+$pythonServicePublicUrl = getenv('PYTHON_SERVICE_PUBLIC_URL');
+$sefazRhUploadUrl = 'upload_sefaz_rh.php';
+
+if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) !== '') {
+    $sefazRhUploadUrl = rtrim((string) $pythonServicePublicUrl, '/') . '/api/sefaz-rh/upload';
+}
  
 // require_once 'fpdi260/autoload.php';
 // use setasign\Fpdi\Fpdi;
@@ -43,10 +50,10 @@ error_reporting(E_ALL);
         <div class="row align-items-start">
             <div class="col-12">
                 <!-- Formulário de Upload -->
-                <form id="uploadForm" action="upload_sefaz_rh.php" method="post" enctype="multipart/form-data">
+                <form id="uploadForm" action="<?php echo htmlspecialchars($sefazRhUploadUrl, ENT_QUOTES, 'UTF-8'); ?>" method="post" enctype="multipart/form-data">
                     <input type="hidden" id="id_registro" name="id_registro">
                     <div class="form-row">
-                        <div class="form-group col-md-3">
+                        <div class="form-group col-md-2">
                             <label for="secretaria">* Secretaria</label>
                             <select class="form-control" id="secretaria" name="secretaria" required>
                                 <option value="">Selecione a Secretaria</option>
@@ -59,25 +66,38 @@ error_reporting(E_ALL);
                                 ?>
                             </select>
                         </div>
-                        <div class="form-group col-md-3">
+                        <div class="form-group col-md-2">
                             <label for="setor">* Setor</label>
                             <select class="form-control" id="setor" name="setor" required>
                                 <option value="">Selecione o Setor</option>
                                 <!-- Opções serão carregadas via AJAX -->
                             </select>
                         </div>
-                        <div class="form-group col-md-3">
+                        <div class="form-group col-md-2">
                             <label for="padrao_renomeio">* Padrão de Renomeio</label>
                             <select class="form-control" id="padrao_renomeio" name="padrao_renomeio" required>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
                                 <option value="3" selected>3</option>
+                                <option value="4">4</option>
                             </select>
                         </div>
                         <div class="form-group col-md-3">
-                            <label for="tipodoc">* Tipo de Documentos</label>
+                            <label for="tipodoc">* Tipo de Acesso</label>
                             <select class="form-control" id="tipodoc" name="tipodoc" required>
-                                <option value="">Selecione Tipo Documento</option>
+                                <option value="">Selecione Tipo de Acesso</option>
                                 <option value="173">Público</option>
                                 <option value="174">Privado</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label for="doctipo">* Tipo de Documento</label>
+                            <select class="form-control" id="doctipo" name="doctipo" required>
+                                <option value="">Selecione o Tipo de Documento</option>
+                                <option value="2">Matrícula</option>
+                                <option value="3">Folha de Ponto</option>
+                                <option value="4">Pasta Funcional</option>
+                                <option value="5">Diário Oficial</option>
                             </select>
                         </div>
                     </div>
@@ -181,6 +201,8 @@ error_reporting(E_ALL);
 
     <script>
     $(document).ready(function() {
+        var sefazRhUploadUrl = <?php echo json_encode($sefazRhUploadUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+
         // Carregar registros ao abrir a página
         loadRegistros(1);
 
@@ -266,7 +288,7 @@ error_reporting(E_ALL);
             var formData = new FormData($(this)[0]);
 
             $.ajax({
-                url: 'upload_sefaz_rh.php',
+                url: sefazRhUploadUrl,
                 type: 'POST',
                 data: formData,
                 async: true,
