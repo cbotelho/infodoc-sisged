@@ -132,28 +132,37 @@ def resolve_registro_id_by_numero(connection, numero, secretaria=None, setor=Non
     if numero == '':
         raise ValueError('Informe o numero da Caixa/Pasta.')
 
-    conditions = ['TRIM(field_527) = %s']
-    params = [numero]
+    base_conditions = ['TRIM(field_527) = %s']
+    base_params = [numero]
 
     if secretaria:
-        conditions.append('field_524 = %s')
-        params.append(str(secretaria).strip())
+        base_conditions.append('field_524 = %s')
+        base_params.append(str(secretaria).strip())
 
     if setor:
-        conditions.append('field_525 = %s')
-        params.append(str(setor).strip())
+        base_conditions.append('field_525 = %s')
+        base_params.append(str(setor).strip())
 
-    if tipo:
-        conditions.append('field_526 = %s')
-        params.append(str(tipo).strip())
+    def fetch_registro(use_tipo_filter):
+        conditions = list(base_conditions)
+        params = list(base_params)
 
-    query = (
-        'SELECT id FROM app_entity_48 WHERE ' + ' AND '.join(conditions) + ' ORDER BY id DESC LIMIT 1'
-    )
+        if use_tipo_filter and tipo:
+            conditions.append('field_526 = %s')
+            params.append(str(tipo).strip())
 
-    with connection.cursor() as cursor:
-        cursor.execute(query, params)
-        registro = cursor.fetchone()
+        query = (
+            'SELECT id FROM app_entity_48 WHERE ' + ' AND '.join(conditions) + ' ORDER BY id DESC LIMIT 1'
+        )
+
+        with connection.cursor() as cursor:
+            cursor.execute(query, params)
+            return cursor.fetchone()
+
+    registro = fetch_registro(True)
+
+    if not registro and tipo:
+        registro = fetch_registro(False)
 
     if not registro:
         raise ValueError('Nenhuma Caixa/Pasta foi encontrada na entidade 48 com os filtros informados.')
@@ -175,9 +184,6 @@ def validate_selected_registro(connection, registro_id, numero, secretaria=None,
 
     if setor and str(registro.get('field_525') or '').strip() != str(setor).strip():
         raise ValueError('O setor informado nao corresponde ao registro pai selecionado na entidade 48.')
-
-    if tipo and str(registro.get('field_526') or '').strip() != str(tipo).strip():
-        raise ValueError('O tipo informado nao corresponde ao registro pai selecionado na entidade 48.')
 
     return registro
 

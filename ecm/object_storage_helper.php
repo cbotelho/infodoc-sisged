@@ -240,3 +240,43 @@ function ged_upload_file($localPath, $fileName, $folder = 'upload') {
         'path' => $objectKey,
     ];
 }
+
+function ged_download_file_to_path($fileName, $destinationPath, $folder = 'upload') {
+    $safeName = basename($fileName);
+
+    if (!ged_r2_is_enabled() || !ged_sync_r2_upload_enabled()) {
+        $sourcePath = ged_get_local_upload_dir() . DIRECTORY_SEPARATOR . $safeName;
+
+        if (!is_file($sourcePath)) {
+            throw new RuntimeException('Arquivo nao encontrado no armazenamento local de fallback.');
+        }
+
+        if (!@copy($sourcePath, $destinationPath)) {
+            throw new RuntimeException('Falha ao copiar arquivo do armazenamento local.');
+        }
+
+        return [
+            'mode' => ged_r2_is_enabled() ? 'local-buffer' : 'local',
+            'path' => $destinationPath,
+        ];
+    }
+
+    $client = ged_get_r2_client();
+    $config = ged_get_r2_config();
+    $objectKey = ged_build_object_key($safeName, $folder);
+
+    try {
+        $client->getObject([
+            'Bucket' => $config['bucket'],
+            'Key' => $objectKey,
+            'SaveAs' => $destinationPath,
+        ]);
+    } catch (Throwable $e) {
+        throw new RuntimeException('Falha ao baixar arquivo do R2: ' . $e->getMessage(), 0, $e);
+    }
+
+    return [
+        'mode' => 'r2',
+        'path' => $destinationPath,
+    ];
+}

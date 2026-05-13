@@ -52,6 +52,7 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                 <!-- Formulário de Upload -->
                 <form id="uploadForm" action="<?php echo htmlspecialchars($sefazRhUploadUrl, ENT_QUOTES, 'UTF-8'); ?>" method="post" enctype="multipart/form-data">
                     <input type="hidden" id="id_registro" name="id_registro">
+                    <input type="hidden" id="numero_hidden" name="numero">
                     <div class="form-row">
                         <div class="form-group col-md-2">
                             <label for="secretaria">* Secretaria</label>
@@ -116,9 +117,10 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                             </select>
                         </div>
                         <div class="form-group col-md-4">
-                            <label for="numero">* Nº da Caixa/Pasta</label>
-                            <input type="text" class="form-control" id="numero" name="numero" list="numeroSugestoes" placeholder="Pesquise e selecione um número existente" autocomplete="off" required>
-                            <datalist id="numeroSugestoes"></datalist>
+                            <label for="numero_select">* Nº da Caixa/Pasta</label>
+                            <select class="form-control" id="numero_select" required>
+                                <option value="">Selecione o Nº da Caixa/Pasta</option>
+                            </select>
                         </div>
                         <div class="form-group col-md-4">
                             <label for="assunto">* Assunto</label>
@@ -206,58 +208,56 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
         // Carregar registros ao abrir a página
         loadRegistros(1);
 
-        var numeroRequest = null;
-
-        function clearNumeroSuggestions() {
-            $('#numeroSugestoes').empty();
+        function resetNumeroSelect() {
+            $('#numero_select').html('<option value="">Selecione o Nº da Caixa/Pasta</option>');
+            $('#numero_hidden').val('');
+            $('#id_registro').val('');
         }
 
-        function loadNumeroSuggestions() {
-            var term = $('#numero').val().trim();
+        function syncNumeroSelection() {
+            var selectedOption = $('#numero_select option:selected');
+            var numero = $('#numero_select').val();
+            var registroId = selectedOption.data('id') || '';
+
+            $('#numero_hidden').val(numero);
+            $('#id_registro').val(registroId);
+        }
+
+        function loadNumeroOptions() {
             var secretariaId = $('#secretaria').val();
             var setorId = $('#setor').val();
             var tipoId = $('#tipo').val();
 
-            if (!secretariaId || !setorId || !tipoId || term.length < 2) {
-                clearNumeroSuggestions();
+            resetNumeroSelect();
+
+            if (!secretariaId || !setorId || !tipoId) {
                 return;
             }
 
-            if (numeroRequest) {
-                numeroRequest.abort();
-            }
-
-            numeroRequest = $.ajax({
+            $.ajax({
                 url: 'get_numeros_sefaz_rh.php',
                 type: 'GET',
                 data: {
-                    term: term,
-                    format: 'datalist',
+                    format: 'select',
                     secretaria_id: secretariaId,
                     setor_id: setorId,
                     tipo_id: tipoId
                 }
             }).done(function(data) {
-                $('#numeroSugestoes').html(data);
+                $('#numero_select').html(data);
             }).fail(function() {
-                clearNumeroSuggestions();
-            }).always(function() {
-                numeroRequest = null;
+                resetNumeroSelect();
             });
         }
 
-        $('#numero').on('input', function() {
-            $('#id_registro').val('');
-            loadNumeroSuggestions();
-        }).on('focus', function() {
-            loadNumeroSuggestions();
+        $('#numero_select').on('change', function() {
+            syncNumeroSelection();
         });
 
         // Carregar opções de setor quando a secretaria é selecionada
         $('#secretaria').change(function() {
             var secretariaId = $(this).val();
-            $('#numero').val('');
-            $('#id_registro').val('');
+            resetNumeroSelect();
 
             if (secretariaId) {
                 $.ajax({
@@ -266,26 +266,33 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                     data: { secretaria_id: secretariaId },
                     success: function(data) {
                         $('#setor').html(data);
-                        clearNumeroSuggestions();
+                        resetNumeroSelect();
                     }
                 });
             } else {
                 $('#setor').html('<option value="">Selecione o Setor</option>');
-                clearNumeroSuggestions();
+                resetNumeroSelect();
             }
         });
 
         $('#setor, #tipo').change(function() {
-            $('#numero').val('');
-            $('#id_registro').val('');
-            clearNumeroSuggestions();
+            loadNumeroOptions();
         });
 
         // Atualizar a barra de progresso durante o upload
         $('#uploadForm').submit(function(event) {
             event.preventDefault();
 
-            var formData = new FormData($(this)[0]);
+            syncNumeroSelection();
+
+            if (!$('#numero_hidden').val() || !$('#id_registro').val()) {
+                var errorMessage = 'Erro ao carregar arquivos. Detalhes: selecione uma Caixa/Pasta valida da lista antes de enviar.';
+                $('#status').html(errorMessage);
+                $('#statusInline').html(errorMessage);
+                return;
+            }
+
+            var formData = new FormData($('#uploadForm')[0]);
 
             $.ajax({
                 url: sefazRhUploadUrl,
@@ -318,6 +325,7 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                     setTimeout(function() {
                         $('.progress').hide();
                         $('#uploadForm')[0].reset();
+                        resetNumeroSelect();
                         loadRegistros(1);
                     }, 1000);
                 },

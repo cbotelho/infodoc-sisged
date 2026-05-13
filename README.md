@@ -90,9 +90,14 @@ Para deploy na VPS via Portainer, use o arquivo `docker-compose.production.yml` 
 
 ### Release atual recomendada
 
-- `web`: `1.0.34`
+ `web`: `1.0.39`
 - `file-storage-worker`: `1.0.34`
-- `assinador-python`: `1.0.34`
+ `assinador-python`: `1.0.35`
+- a release `1.0.39` melhora o feedback visual do download em massa em `/ecm/download_lote.php`, exibindo a barra imediatamente em estado de preparacao, atualizando percentual quando o navegador informa progresso e mantendo a mensagem visivel por mais tempo
+- a release `1.0.38` adiciona uma pagina web em `/ecm/download_lote.php` para download em massa com filtros por secretaria, setor, tipo e caixa/pasta, grade de selecao e download ZIP dos PDFs marcados direto do R2
+- a release `1.0.37` corrige o filtro de Caixa/Pasta do SEFAZ RH para cair de volta em secretaria+setor quando `field_526` nao casar, tanto no carregamento do select quanto na validacao do upload
+- a release `1.0.36` substitui o campo de numero da Caixa/Pasta do SEFAZ RH por um select carregado diretamente da entidade 48, enviando o `id_registro` real junto com o upload
+- a release `1.0.35` corrige a tela PHP do SEFAZ RH para resolver e enviar o `id_registro` da Caixa/Pasta antes do submit, evitando falhas de localizacao da entidade 48 no backend Python
 - a release `1.0.34` reabilita por padrão o upload síncrono direto para o R2 quando o bucket está configurado, evitando persistência final no disco local da VPS
 - a release `1.0.34` também adiciona um endpoint Python de upload SEFAZ RH e passa a tela PHP a enviar os arquivos para esse backend do assinador
 - a release `1.0.33` reduz o risco de erro 500 no SEFAZ RH com PDFs grandes ao reconectar ao banco somente antes da transacao e tratar falhas na contagem de paginas sem abortar o upload
