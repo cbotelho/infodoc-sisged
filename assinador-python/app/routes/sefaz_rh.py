@@ -5,7 +5,7 @@ import logging
 import os
 import time
 
-from flask import Blueprint, Response, request
+from flask import Blueprint, Response, jsonify, request
 from PyPDF2 import PdfReader
 
 from app.config import Config
@@ -91,6 +91,16 @@ def count_pdf_pages_safe(upload):
         return 0
     finally:
         upload.stream.seek(0)
+
+
+def count_pdf_pages_safe_from_storage(stored_name):
+    try:
+        stream = storage.open_stream(stored_name)
+        reader = PdfReader(stream)
+        return len(reader.pages)
+    except Exception as exc:
+        logger.warning('SEFAZ RH: falha ao contar paginas do PDF remoto %s: %s', stored_name, exc)
+        return 0
 
 
 def resolve_document_fields(entry):
@@ -218,6 +228,72 @@ def prepare_entries(uploads, padrao_renomeio, tratado_por_id):
         })
 
     return valid_entries, invalid_entries
+
+
+def prepare_entries_from_direct_upload(files, padrao_renomeio, tratado_por_id):
+    valid_entries = []
+    invalid_entries = []
+
+    for item in files:
+        original_name = os.path.basename(str(item.get('original_name') or '').strip())
+        stored_name = os.path.basename(str(item.get('stored_name') or '').strip())
+        content_type = str(item.get('content_type') or 'application/octet-stream').strip() or 'application/octet-stream'
+
+        if original_name == '' or stored_name == '':
+            invalid_entries.append(original_name or stored_name or 'arquivo_sem_nome')
+            continue
+
+        parts = get_file_name_parts(original_name)
+
+        if not validate_file_name_pattern(len(parts), padrao_renomeio):
+            invalid_entries.append(original_name)
+            continue
+
+        total_paginas = 0
+        if original_name.lower().endswith('.pdf'):
+            total_paginas = count_pdf_pages_safe_from_storage(stored_name)
+
+        valid_entries.append({
+            'nome': original_name,
+            'stored_name': stored_name,
+            'coluna1': parts[0] if len(parts) > 0 else None,
+            'coluna2': parts[1] if len(parts) > 1 else None,
+            'coluna3': parts[2] if len(parts) > 2 else None,
+            'coluna4': parts[3] if len(parts) > 3 else None,
+            'coluna5': tratado_por_id,
+            'content_type': content_type,
+            'total_paginas': total_paginas,
+        })
+
+    return valid_entries, invalid_entries
+
+
+def require_json_payload():
+    payload = request.get_json(silent=True)
+
+    if not isinstance(payload, dict):
+        raise ValueError('Payload JSON invalido.')
+
+    return payload
+
+
+def require_json_fields(payload, field_names):
+    values = {}
+    missing = []
+
+    for field_name in field_names:
+        value = payload.get(field_name)
+
+        if value is None or str(value).strip() == '':
+            missing.append(field_name)
+            continue
+
+        values[field_name] = str(value).strip()
+
+    if missing:
+        raise ValueError('Campos obrigatorios ausentes: ' + ', '.join(missing))
+
+    return values
 
 
 def upload_entries_to_storage(entries):
@@ -362,4 +438,86 @@ def upload_sefaz_rh():
                 logger.warning('SEFAZ RH: falha ao remover objeto apos erro no fluxo %s: %s', uploaded_name, cleanup_exc)
         if connection is not None:
             connection.close()
+        return text_response('Erro ao carregar arquivos. Detalhes: ' + str(exc), 400)
+
+
+@bp.route('/api/sefaz-rh/upload/direct', methods=['POST'])
+def upload_sefaz_rh_direct():
+    connection = None
+    validated_entries = []
+
+    try:
+        payload = require_json_payload()
+        fields = require_json_fields(payload, ['numero', 'tratado_por', 'padrao_renomeio', 'tipodoc', 'doctipo', 'assunto'])
+
+        numero = fields['numero']
+        tratado_por_id = fields['tratado_por']
+        padrao_renomeio = int(fields['padrao_renomeio'])
+        tipodoc = int(fields['tipodoc'])
+        doctipo = int(fields['doctipo'])
+        assunto = fields['assunto']
+        secretaria = str(payload.get('secretaria') or '').strip() or None
+        setor = str(payload.get('setor') or '').strip() or None
+        tipo = str(payload.get('tipo') or '').strip() or None
+        registro_id = int(str(payload.get('id_registro') or '0').strip() or 0)
+        files = payload.get('files')
+
+        if padrao_renomeio < 1 or padrao_renomeio > 4:
+            raise ValueError('O campo Padrao de Renomeio deve estar entre 1 e 4.')
+
+        if not isinstance(files, list) or not files:
+            raise ValueError('Nenhum arquivo confirmado foi informado para finalizacao.')
+
+        validated_entries, invalid_entries = prepare_entries_from_direct_upload(files, padrao_renomeio, tratado_por_id)
+
+        if invalid_entries:
+            message_lines = [
+                'Os seguintes arquivos possuem formato inválido para o Padrao de Renomeio selecionado. Use nomes com partes separadas por # conforme o padrao informado:'
+            ]
+            for invalid_name in invalid_entries:
+                message_lines.append('- ' + invalid_name)
+            return text_response('\n'.join(message_lines), 400)
+
+        missing_files = []
+        for entry in validated_entries:
+            if not storage.exists(entry['stored_name']):
+                missing_files.append(entry['nome'])
+
+        if missing_files:
+            message_lines = ['Os seguintes arquivos ainda nao foram encontrados no storage:']
+            for file_name in missing_files:
+                message_lines.append('- ' + file_name)
+            return text_response('\n'.join(message_lines), 409)
+
+        connection = get_db()
+
+        try:
+            if registro_id <= 0:
+                registro_id = resolve_registro_id_by_numero(connection, numero, secretaria, setor, tipo)
+
+            validate_selected_registro(connection, registro_id, numero, secretaria, setor, tipo)
+            insert_entries(connection, registro_id, validated_entries, tipodoc, doctipo, numero, assunto)
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+            connection = None
+
+        return jsonify({
+            'success': True,
+            'message': 'Arquivos carregados com sucesso! Total de arquivos importados: ' + str(len(validated_entries)),
+            'total_importados': len(validated_entries),
+        })
+    except Exception as exc:
+        if connection is not None:
+            connection.close()
+
+        for entry in validated_entries:
+            try:
+                storage.delete(entry['stored_name'])
+            except Exception as cleanup_exc:
+                logger.warning('SEFAZ RH: falha ao remover objeto apos erro na finalizacao %s: %s', entry['stored_name'], cleanup_exc)
+
         return text_response('Erro ao carregar arquivos. Detalhes: ' + str(exc), 400)

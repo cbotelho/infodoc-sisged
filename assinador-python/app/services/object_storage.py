@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import io
 import os
+import re
 import time
+import unicodedata
+import uuid
 from typing import BinaryIO
 
 import boto3
@@ -26,6 +29,7 @@ class ObjectStorage:
         self.access_key_id = app_config.FILE_STORAGE_R2_ACCESS_KEY_ID
         self.secret_access_key = app_config.FILE_STORAGE_R2_SECRET_ACCESS_KEY
         self.prefix = (app_config.FILE_STORAGE_R2_OBJECT_PREFIX or '').strip('/')
+        self.presigned_upload_expiry = int(getattr(app_config, 'PRESIGNED_UPLOAD_EXPIRY', 900) or 900)
 
         self.enabled = all([
             self.endpoint,
@@ -59,6 +63,34 @@ class ObjectStorage:
     def build_key(self, filename: str) -> str:
         parts = [self.prefix, 'assinador-python', 'uploads', os.path.basename(filename)]
         return '/'.join([part for part in parts if part])
+
+    def sanitize_filename(self, filename: str) -> str:
+        safe_name = os.path.basename(str(filename or '')).strip()
+
+        if safe_name == '':
+            raise ObjectStorageError('Nome de arquivo invalido para o storage.')
+
+        normalized_ascii = unicodedata.normalize('NFKD', safe_name)
+        normalized_ascii = normalized_ascii.encode('ascii', 'ignore').decode('ascii')
+        normalized_ascii = re.sub(r'[^A-Za-z0-9._-]+', '_', normalized_ascii)
+        normalized_ascii = re.sub(r'_+', '_', normalized_ascii)
+
+        collapsed = normalized_ascii.strip('._')
+
+        if collapsed == '':
+            raise ObjectStorageError('Nome de arquivo invalido para o storage.')
+
+        return collapsed
+
+    def build_upload_name(self, original_name: str, source: str = 'upload') -> str:
+        safe_name = self.sanitize_filename(original_name)
+        source_name = self.sanitize_filename(source).lower()
+        name_root, extension = os.path.splitext(safe_name)
+
+        if name_root == '':
+            name_root = 'arquivo'
+
+        return f'{source_name}_{uuid.uuid4().hex}_{name_root}{extension}'
 
     def _run_with_retry(self, operation, stream=None):
         last_exception = None
@@ -121,6 +153,84 @@ class ObjectStorage:
             )
         except (OSError, BotoCoreError, ClientError) as exc:
             raise ObjectStorageError(f'Falha ao enviar arquivo assinado para o R2: {exc}') from exc
+
+    def generate_presigned_upload(self, filename: str, content_type: str = 'application/octet-stream', expires_in: int | None = None) -> dict:
+        if not self.enabled:
+            raise ObjectStorageError('Upload direto com URL assinada requer storage R2/S3 configurado.')
+
+        safe_name = self.sanitize_filename(filename)
+        ttl = int(expires_in or self.presigned_upload_expiry or 900)
+
+        if ttl <= 0:
+            ttl = 900
+
+        object_key = self.build_key(safe_name)
+
+        try:
+            url = self._get_client().generate_presigned_url(
+                'put_object',
+                Params={
+                    'Bucket': self.bucket,
+                    'Key': object_key,
+                    'ContentType': content_type,
+                }, 
+                ExpiresIn=ttl,
+                HttpMethod='PUT',
+            )
+        except (BotoCoreError, ClientError) as exc:
+            raise ObjectStorageError(f'Falha ao gerar URL assinada para upload: {exc}') from exc
+
+        return {
+            'url': url,
+            'method': 'PUT',
+            'headers': {
+                'Content-Type': content_type,
+            },
+            'object_key': object_key,
+            'filename': safe_name,
+            'expires_in': ttl,
+        }
+
+    def get_object_info(self, filename: str) -> dict:
+        safe_name = self.sanitize_filename(filename)
+
+        if not self.enabled:
+            local_path = os.path.join(self.upload_dir, safe_name)
+
+            if not os.path.exists(local_path):
+                raise FileNotFoundError(safe_name)
+
+            return {
+                'filename': safe_name,
+                'object_key': local_path,
+                'content_length': os.path.getsize(local_path),
+                'content_type': 'application/octet-stream',
+                'etag': None,
+                'last_modified': int(os.path.getmtime(local_path)),
+                'storage_mode': 'local',
+            }
+
+        try:
+            response = self._get_client().head_object(Bucket=self.bucket, Key=self.build_key(safe_name))
+        except ClientError as exc:
+            error_code = exc.response.get('Error', {}).get('Code', '')
+            if error_code in {'404', 'NoSuchKey', 'NotFound'}:
+                raise FileNotFoundError(safe_name) from exc
+            raise ObjectStorageError(f'Falha ao consultar objeto no R2: {exc}') from exc
+        except BotoCoreError as exc:
+            raise ObjectStorageError(f'Falha ao consultar objeto no R2: {exc}') from exc
+
+        last_modified = response.get('LastModified')
+
+        return {
+            'filename': safe_name,
+            'object_key': self.build_key(safe_name),
+            'content_length': int(response.get('ContentLength') or 0),
+            'content_type': response.get('ContentType') or 'application/octet-stream',
+            'etag': str(response.get('ETag') or '').strip('"') or None,
+            'last_modified': last_modified.isoformat() if hasattr(last_modified, 'isoformat') else None,
+            'storage_mode': 'r2',
+        }
 
     def delete(self, filename: str) -> None:
         safe_name = os.path.basename(filename)

@@ -6,7 +6,7 @@ import logging
 from datetime import datetime
 
 from app.config import Config
-from app.routes import auth, sign, certificates, standalone, sefaz_rh
+from app.routes import auth, sign, certificates, standalone, sefaz_rh, direct_upload, ged
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 LOG_DIR = os.path.join(BASE_DIR, 'logs')
@@ -33,6 +33,8 @@ app.register_blueprint(sign.bp)
 app.register_blueprint(certificates.bp)
 app.register_blueprint(standalone.bp)
 app.register_blueprint(sefaz_rh.bp)
+app.register_blueprint(direct_upload.bp)
+app.register_blueprint(ged.bp)
 
 @app.route('/')
 def index():
@@ -52,6 +54,9 @@ def info():
             'health': '/health',
             'assinador': '/assinador[?token=<token>&doc=<caminho>]',
             'api_sign': '/api/sign',
+            'api_uploads_presign': '/api/uploads/presign',
+            'api_uploads_complete': '/api/uploads/complete',
+            'api_ged_upload_direct': '/api/ged/upload/direct',
             'standalone': '/standalone/'
         }
     })

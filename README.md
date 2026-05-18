@@ -90,9 +90,11 @@ Para deploy na VPS via Portainer, use o arquivo `docker-compose.production.yml` 
 
 ### Release atual recomendada
 
- `web`: `1.0.39`
+ `web`: `1.0.41`
 - `file-storage-worker`: `1.0.34`
- `assinador-python`: `1.0.35`
+- `assinador-python`: `1.0.37`
+- a release `1.0.41` no web e `1.0.37` no assinador iniciam o fluxo de upload direto com Presigned URL para o SEFAZ RH e para o GED principal, usando presign no Python, PUT direto do navegador para o storage, confirmacao dos objetos e finalizacao dos registros no banco
+- a release `1.0.40` no web e `1.0.36` no assinador iniciam a primeira etapa do fluxo de upload direto do SEFAZ RH com Presigned URL
 - a release `1.0.39` melhora o feedback visual do download em massa em `/ecm/download_lote.php`, exibindo a barra imediatamente em estado de preparacao, atualizando percentual quando o navegador informa progresso e mantendo a mensagem visivel por mais tempo
 - a release `1.0.38` adiciona uma pagina web em `/ecm/download_lote.php` para download em massa com filtros por secretaria, setor, tipo e caixa/pasta, grade de selecao e download ZIP dos PDFs marcados direto do R2
 - a release `1.0.37` corrige o filtro de Caixa/Pasta do SEFAZ RH para cair de volta em secretaria+setor quando `field_526` nao casar, tanto no carregamento do select quanto na validacao do upload

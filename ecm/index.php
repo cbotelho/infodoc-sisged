@@ -4,6 +4,20 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+
+$pythonServicePublicUrl = getenv('PYTHON_SERVICE_PUBLIC_URL');
+$gedUploadUrl = 'upload.php';
+$presignUploadUrl = '';
+$completeUploadUrl = '';
+$gedDirectFinalizeUrl = '';
+
+if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) !== '') {
+    $pythonBaseUrl = rtrim((string) $pythonServicePublicUrl, '/');
+    $gedUploadUrl = $pythonBaseUrl . '/api/ged/upload';
+    $presignUploadUrl = $pythonBaseUrl . '/api/uploads/presign';
+    $completeUploadUrl = $pythonBaseUrl . '/api/uploads/complete';
+    $gedDirectFinalizeUrl = $pythonBaseUrl . '/api/ged/upload/direct';
+}
  
 // require_once 'fpdi260/autoload.php';
 // use setasign\Fpdi\Fpdi;
@@ -174,6 +188,12 @@ error_reporting(E_ALL);
 
     <script>
     $(document).ready(function() {
+        var gedUploadUrl = <?php echo json_encode($gedUploadUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+        var presignUploadUrl = <?php echo json_encode($presignUploadUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+        var completeUploadUrl = <?php echo json_encode($completeUploadUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+        var gedDirectFinalizeUrl = <?php echo json_encode($gedDirectFinalizeUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+        var directUploadEnabled = !!(presignUploadUrl && completeUploadUrl && gedDirectFinalizeUrl);
+
         // Carregar registros ao abrir a página
         loadRegistros(1);
 
@@ -217,6 +237,238 @@ error_reporting(E_ALL);
             });
         }
 
+        function setProgressState(label, percent, animated) {
+            var safePercent = Math.max(0, Math.min(100, percent));
+            $('#progressBar')
+                .toggleClass('progress-bar-animated', animated !== false)
+                .css('width', safePercent + '%')
+                .attr('aria-valuenow', safePercent)
+                .text(label || (safePercent + '%'));
+        }
+
+        function getSelectedFiles() {
+            return Array.prototype.slice.call($('#files')[0].files || []);
+        }
+
+        function buildDirectUploadPayload() {
+            return {
+                numero: $('#numero').val(),
+                id_registro: $('#id_registro').val(),
+                secretaria: $('#secretaria').val(),
+                setor: $('#setor').val(),
+                tipo: $('#tipo').val(),
+                padrao_renomeio: $('#padrao_renomeio').val(),
+                tipodoc: $('#tipodoc').val(),
+                tratado_por: $('#tratado_por').val()
+            };
+        }
+
+        function requestPresignedUploads(files) {
+            return $.ajax({
+                url: presignUploadUrl,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    source: 'ged',
+                    files: files.map(function(file) {
+                        return {
+                            filename: file.name,
+                            content_type: file.type || 'application/octet-stream',
+                            size: file.size || 0
+                        };
+                    })
+                })
+            });
+        }
+
+        function uploadFileToStorage(uploadInfo, file, updateOverallProgress, offsetBytes, totalBytes) {
+            return new Promise(function(resolve, reject) {
+                var xhr = new window.XMLHttpRequest();
+                var settled = false;
+
+                function finishWithError(message) {
+                    if (settled) {
+                        return;
+                    }
+
+                    settled = true;
+                    reject(new Error(message));
+                }
+
+                function finishWithSuccess(payload) {
+                    if (settled) {
+                        return;
+                    }
+
+                    settled = true;
+                    resolve(payload);
+                }
+
+                xhr.open(uploadInfo.method || 'PUT', uploadInfo.upload_url, true);
+                xhr.timeout = 15000;
+
+                Object.keys(uploadInfo.headers || {}).forEach(function(headerName) {
+                    xhr.setRequestHeader(headerName, uploadInfo.headers[headerName]);
+                });
+
+                xhr.upload.addEventListener('progress', function(e) {
+                    if (e.lengthComputable) {
+                        updateOverallProgress(offsetBytes + e.loaded, totalBytes);
+                    }
+                });
+
+                xhr.onload = function() {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        updateOverallProgress(offsetBytes + file.size, totalBytes);
+                        finishWithSuccess({
+                            original_name: uploadInfo.original_name,
+                            stored_name: uploadInfo.stored_name,
+                            content_type: uploadInfo.content_type,
+                            size: file.size
+                        });
+                        return;
+                    }
+
+                    finishWithError('Falha ao enviar o arquivo ' + uploadInfo.original_name + ' para o storage. HTTP ' + xhr.status + '.');
+                };
+
+                xhr.onerror = function() {
+                    finishWithError('Falha de rede ao enviar o arquivo ' + uploadInfo.original_name + ' para o storage.');
+                };
+
+                xhr.onabort = function() {
+                    finishWithError('Upload cancelado ao enviar o arquivo ' + uploadInfo.original_name + ' para o storage.');
+                };
+
+                xhr.ontimeout = function() {
+                    finishWithError('Tempo esgotado ao enviar o arquivo ' + uploadInfo.original_name + ' para o storage.');
+                };
+
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4 && xhr.status === 0) {
+                        finishWithError('Falha de rede ao enviar o arquivo ' + uploadInfo.original_name + ' para o storage.');
+                    }
+                };
+
+                xhr.send(file);
+            });
+        }
+
+        function confirmDirectUploads(uploadedFiles) {
+            return $.ajax({
+                url: completeUploadUrl,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    source: 'ged',
+                    files: uploadedFiles
+                })
+            });
+        }
+
+        function finalizeDirectUpload(payload) {
+            return $.ajax({
+                url: gedDirectFinalizeUrl,
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                data: JSON.stringify(payload)
+            });
+        }
+
+        async function handleDirectUpload() {
+            var files = getSelectedFiles();
+
+            if (!files.length) {
+                throw new Error('Selecione ao menos um arquivo para upload.');
+            }
+
+            var payload = buildDirectUploadPayload();
+            var totalBytes = files.reduce(function(sum, file) {
+                return sum + (file.size || 0);
+            }, 0);
+            var uploadedBytes = 0;
+
+            function updateOverallProgress(loadedBytes, bytesTotal) {
+                if (bytesTotal <= 0) {
+                    setProgressState('Enviando ao storage...', 10, true);
+                    return;
+                }
+
+                var percent = Math.round((loadedBytes / bytesTotal) * 85);
+                setProgressState(percent + '%', percent, false);
+            }
+
+            setProgressState('Solicitando URLs assinadas...', 5, true);
+            var presignResponse = await requestPresignedUploads(files);
+
+            if (!presignResponse || !presignResponse.success || !Array.isArray(presignResponse.uploads)) {
+                throw new Error('Resposta invalida ao solicitar URLs assinadas.');
+            }
+
+            if (presignResponse.uploads.length !== files.length) {
+                throw new Error('Quantidade de URLs assinadas diferente da quantidade de arquivos selecionados.');
+            }
+
+            var uploadedFiles = [];
+            for (var index = 0; index < presignResponse.uploads.length; index += 1) {
+                var currentFile = files[index];
+                var currentUpload = presignResponse.uploads[index];
+                setProgressState('Enviando ' + (index + 1) + '/' + files.length + '...', Math.round((uploadedBytes / Math.max(totalBytes, 1)) * 85), true);
+                var result = await uploadFileToStorage(currentUpload, currentFile, updateOverallProgress, uploadedBytes, Math.max(totalBytes, 1));
+                uploadedBytes += currentFile.size || 0;
+                uploadedFiles.push(result);
+            }
+
+            setProgressState('Confirmando uploads no storage...', 90, true);
+            var completeResponse = await confirmDirectUploads(uploadedFiles);
+
+            if (!completeResponse || !completeResponse.success || !Array.isArray(completeResponse.confirmed)) {
+                throw new Error((completeResponse && completeResponse.error) || 'Falha ao confirmar os uploads no storage.');
+            }
+
+            payload.files = completeResponse.confirmed.map(function(item, fileIndex) {
+                return {
+                    original_name: uploadedFiles[fileIndex] ? uploadedFiles[fileIndex].original_name : item.filename,
+                    stored_name: item.stored_name || item.filename,
+                    content_type: item.content_type || 'application/octet-stream',
+                    size: item.content_length || null,
+                    content_length: item.content_length || null
+                };
+            });
+
+            setProgressState('Finalizando registros no sistema...', 95, true);
+            return finalizeDirectUpload(payload);
+        }
+
+        function submitFallbackUpload() {
+            var formData = new FormData($('#uploadForm')[0]);
+
+            return $.ajax({
+                url: gedUploadUrl,
+                type: 'POST',
+                data: formData,
+                async: true,
+                cache: false,
+                contentType: false,
+                processData: false,
+                xhr: function() {
+                    var xhr = new window.XMLHttpRequest();
+                    xhr.upload.addEventListener('progress', function(e) {
+                        if (e.lengthComputable) {
+                            var percent = Math.round((e.loaded / e.total) * 100);
+                            $('#progressBar').css('width', percent + '%').attr('aria-valuenow', percent).text(percent + '%');
+                        }
+                    });
+                    return xhr;
+                },
+                beforeSend: function() {
+                    setProgressState('Enviando pelo assinador...', 0, true);
+                    $('.progress').show();
+                }
+            });
+        }
+
         $('#numero').on('input', function() {
             $('#id_registro').val('');
             loadNumeroSuggestions();
@@ -256,50 +508,67 @@ error_reporting(E_ALL);
         $('#uploadForm').submit(function(event) {
             event.preventDefault();
 
-            var formData = new FormData($(this)[0]);
+            $('#status').empty();
+            $('#statusInline').empty();
+            setProgressState('Preparando...', 0, true);
+            $('.progress').show();
 
-            $.ajax({
-                url: 'upload.php',
-                type: 'POST',
-                data: formData,
-                async: true,
-                cache: false,
-                contentType: false,
-                processData: false,
-                xhr: function() {
-                    var xhr = new window.XMLHttpRequest();
-                    xhr.upload.addEventListener('progress', function(e) {
-                        if (e.lengthComputable) {
-                            var percent = Math.round((e.loaded / e.total) * 100);
-                            $('#progressBar').css('width', percent + '%').attr('aria-valuenow', percent).text(percent + '%');
-                        }
-                    });
-                    return xhr;
-                },
-                beforeSend: function() {
-                    $('#status').empty();
-                    $('#statusInline').empty();
-                    $('#progressBar').css('width', '0%').attr('aria-valuenow', '0').text('0%');
-                    $('.progress').show();
-                },
-                success: function(response) {
-                    $('#status').html(response);
-                    $('#statusInline').html(response);
-                    $('#progressBar').css('width', '100%').attr('aria-valuenow', '100').text('100%');
+            if (directUploadEnabled) {
+                $('#uploadForm button[type="submit"]').prop('disabled', true);
+
+                handleDirectUpload().then(function(response) {
+                    var successMessage = response && response.message ? response.message : 'Arquivos carregados com sucesso!';
+                    $('#status').html(successMessage);
+                    $('#statusInline').html(successMessage);
+                    setProgressState('100%', 100, false);
                     setTimeout(function() {
                         $('.progress').hide();
                         $('#uploadForm')[0].reset();
                         loadRegistros(1);
                     }, 1000);
-                },
-                error: function(xhr) {
-                    var errorMessage = 'Erro ao carregar arquivos. Detalhes: ' + xhr.status + ': ' + xhr.responseText;
-                    $('#status').html(errorMessage);
-                    $('#statusInline').html(errorMessage);
-                },
-                complete: function() {
+                }).catch(function(error) {
+                    var directErrorMessage = 'Falha no upload direto. Tentando envio pelo assinador...';
+                    $('#status').html(directErrorMessage);
+                    $('#statusInline').html(directErrorMessage);
+                    setProgressState('Alternando para o assinador...', 5, true);
+
+                    submitFallbackUpload().done(function(response) {
+                        $('#status').html(response);
+                        $('#statusInline').html(response);
+                        setProgressState('100%', 100, false);
+                        setTimeout(function() {
+                            $('.progress').hide();
+                            $('#uploadForm')[0].reset();
+                            loadRegistros(1);
+                        }, 1000);
+                    }).fail(function(xhr) {
+                        var fallbackErrorMessage = 'Erro ao carregar arquivos. Detalhes: ' + (error && error.message ? error.message : 'falha no fluxo de upload direto.') + ' Fallback no assinador: ' + xhr.status + ': ' + xhr.responseText;
+                        $('#status').html(fallbackErrorMessage);
+                        $('#statusInline').html(fallbackErrorMessage);
+                    });
+                }).finally(function() {
+                    $('#uploadForm button[type="submit"]').prop('disabled', false);
                     $('#files').val('');
-                }
+                });
+
+                return;
+            }
+
+            submitFallbackUpload().done(function(response) {
+                $('#status').html(response);
+                $('#statusInline').html(response);
+                setProgressState('100%', 100, false);
+                setTimeout(function() {
+                    $('.progress').hide();
+                    $('#uploadForm')[0].reset();
+                    loadRegistros(1);
+                }, 1000);
+            }).fail(function(xhr) {
+                var errorMessage = 'Erro ao carregar arquivos. Detalhes: ' + xhr.status + ': ' + xhr.responseText;
+                $('#status').html(errorMessage);
+                $('#statusInline').html(errorMessage);
+            }).always(function() {
+                $('#files').val('');
             });
         });
 
