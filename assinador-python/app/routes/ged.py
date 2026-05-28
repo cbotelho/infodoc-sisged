@@ -92,34 +92,47 @@ def get_registro_by_id(connection, registro_id):
 
 
 def resolve_registro_id_by_numero(connection, numero, secretaria=None, setor=None, tipo=None):
-    conditions = ['field_437 = %s']
-    params = [str(numero or '').strip()]
+    numero = str(numero or '').strip()
+
+    if numero == '':
+        raise ValueError('Informe o numero da Caixa/Pasta.')
+
+    base_conditions = ['TRIM(field_437) = %s']
+    base_params = [numero]
 
     if secretaria:
-        conditions.append('field_433 = %s')
-        params.append(str(secretaria).strip())
+        base_conditions.append('field_433 = %s')
+        base_params.append(str(secretaria).strip())
 
     if setor:
-        conditions.append('field_434 = %s')
-        params.append(str(setor).strip())
+        base_conditions.append('field_434 = %s')
+        base_params.append(str(setor).strip())
 
-    if tipo:
-        conditions.append('field_436 = %s')
-        params.append(str(tipo).strip())
+    def fetch_registro(use_tipo_filter):
+        conditions = list(base_conditions)
+        params = list(base_params)
 
-    query = 'SELECT id FROM app_entity_41 WHERE ' + ' AND '.join(conditions) + ' ORDER BY id DESC LIMIT 2'
+        if use_tipo_filter and tipo:
+            conditions.append('field_436 = %s')
+            params.append(str(tipo).strip())
 
-    with connection.cursor() as cursor:
-        cursor.execute(query, params)
-        registros = cursor.fetchall()
+        query = (
+            'SELECT id FROM app_entity_41 WHERE ' + ' AND '.join(conditions) + ' ORDER BY id DESC LIMIT 1'
+        )
 
-    if len(registros) == 0:
-        raise ValueError('Nenhum registro pai foi localizado para o numero informado com os filtros atuais.')
+        with connection.cursor() as cursor:
+            cursor.execute(query, params)
+            return cursor.fetchone()
 
-    if len(registros) > 1:
-        raise ValueError('Mais de um registro pai foi localizado para o numero informado. Selecione o item desejado no autocomplete.')
+    registro = fetch_registro(True)
 
-    return int(registros[0]['id'])
+    if not registro and tipo:
+        registro = fetch_registro(False)
+
+    if not registro:
+        raise ValueError('Nenhuma Caixa/Pasta foi encontrada na entidade 41 com os filtros informados.')
+
+    return int(registro['id'])
 
 
 def validate_selected_registro(connection, registro_id, numero, secretaria=None, setor=None, tipo=None):
@@ -136,9 +149,6 @@ def validate_selected_registro(connection, registro_id, numero, secretaria=None,
 
     if setor and str(registro.get('field_434') or '').strip() != str(setor).strip():
         raise ValueError('O setor informado nao corresponde ao registro selecionado.')
-
-    if tipo and str(registro.get('field_436') or '').strip() != str(tipo).strip():
-        raise ValueError('O tipo informado nao corresponde ao registro selecionado.')
 
     return registro
 
@@ -157,6 +167,15 @@ def validate_file_name_pattern(parts_count, padrao_renomeio):
         return parts_count >= 4
 
     return False
+
+
+def get_file_name_parts(file_name):
+    name_without_extension = os.path.splitext(str(file_name or ''))[0]
+
+    if name_without_extension == '':
+        return []
+
+    return name_without_extension.split('#')
 
 
 def resolve_document_fields(entry, padrao_renomeio):
@@ -211,7 +230,7 @@ def prepare_entries_from_direct_upload(files, padrao_renomeio, tratado_por_id):
             invalid_entries.append(original_name or stored_name or 'arquivo_sem_nome')
             continue
 
-        parts = os.path.splitext(original_name)[0].split('#') if os.path.splitext(original_name)[0] else []
+        parts = get_file_name_parts(original_name)
 
         if not validate_file_name_pattern(len(parts), padrao_renomeio):
             invalid_entries.append(original_name)
@@ -247,7 +266,7 @@ def prepare_entries(uploads, padrao_renomeio, tratado_por_id):
         if original_name == '':
             continue
 
-        parts = os.path.splitext(original_name)[0].split('#') if os.path.splitext(original_name)[0] else []
+        parts = get_file_name_parts(original_name)
 
         if not validate_file_name_pattern(len(parts), padrao_renomeio):
             invalid_entries.append(original_name)
@@ -256,7 +275,7 @@ def prepare_entries(uploads, padrao_renomeio, tratado_por_id):
         valid_entries.append({
             'upload': upload,
             'nome': original_name,
-            'stored_name': storage.build_upload_name(original_name, 'ged_fallback'),
+            'stored_name': original_name.replace('#', '_'),
             'coluna1': parts[0] if len(parts) > 0 else None,
             'coluna2': parts[1] if len(parts) > 1 else None,
             'coluna3': parts[2] if len(parts) > 2 else None,
@@ -275,7 +294,7 @@ def upload_entries_to_storage(entries):
 
     try:
         for entry in entries:
-            storage.save_upload(entry['upload'], entry['stored_name'], entry['content_type'])
+            storage.save_upload(entry['upload'], entry['stored_name'], entry['content_type'], 'ged')
             uploaded_names.append(entry['stored_name'])
     except Exception:
         for uploaded_name in uploaded_names:
@@ -288,12 +307,12 @@ def upload_entries_to_storage(entries):
     return uploaded_names
 
 
-def insert_entries(connection, parent_item_id, entries, tipodoc, numero, padrao_renomeio):
+def insert_entries(connection, parent_item_id, entries, tipodoc, numero, padrao_renomeio, setor_value):
     query = (
         'INSERT INTO app_entity_43 '
         '(parent_id, parent_item_id, linked_id, date_added, date_updated, created_by, sort_order, '
-        'field_445, field_446, field_447, field_448, field_449, field_450, field_458, field_474, field_475, field_554) '
-        'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+        'field_445, field_446, field_447, field_448, field_449, field_450, field_458, field_474, field_475, field_554, field_565) '
+        'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
     )
 
     with connection.cursor() as cursor:
@@ -318,6 +337,7 @@ def insert_entries(connection, parent_item_id, entries, tipodoc, numero, padrao_
                 json.dumps(metadata, ensure_ascii=False),
                 '',
                 entry['total_paginas'],
+                setor_value,
             ))
 
 
@@ -360,7 +380,8 @@ def upload_ged():
             if registro_id <= 0:
                 registro_id = resolve_registro_id_by_numero(connection, numero, secretaria, setor, tipo)
 
-            validate_selected_registro(connection, registro_id, numero, secretaria, setor, tipo)
+            registro = validate_selected_registro(connection, registro_id, numero, secretaria, setor, tipo)
+            setor_value = str(registro.get('field_434') or '').strip() or None
         finally:
             connection.close()
             connection = None
@@ -369,7 +390,7 @@ def upload_ged():
 
         connection = get_db()
         try:
-            insert_entries(connection, registro_id, valid_entries, tipodoc, numero, padrao_renomeio)
+            insert_entries(connection, registro_id, valid_entries, tipodoc, numero, padrao_renomeio, setor_value)
             connection.commit()
         except Exception:
             connection.rollback()
@@ -446,8 +467,9 @@ def upload_ged_direct():
             if registro_id <= 0:
                 registro_id = resolve_registro_id_by_numero(connection, numero, secretaria, setor, tipo)
 
-            validate_selected_registro(connection, registro_id, numero, secretaria, setor, tipo)
-            insert_entries(connection, registro_id, validated_entries, tipodoc, numero, padrao_renomeio)
+            registro = validate_selected_registro(connection, registro_id, numero, secretaria, setor, tipo)
+            setor_value = str(registro.get('field_434') or '').strip() or None
+            insert_entries(connection, registro_id, validated_entries, tipodoc, numero, padrao_renomeio, setor_value)
             connection.commit()
         except Exception:
             connection.rollback()
@@ -468,7 +490,7 @@ def upload_ged_direct():
         for entry in validated_entries:
             try:
                 storage.delete(entry['stored_name'])
-            except Exception:
-                pass
+            except Exception as cleanup_exc:
+                logger.warning('GED: falha ao remover objeto apos erro na finalizacao %s: %s', entry['stored_name'], cleanup_exc)
 
         return text_response('Erro ao carregar arquivos. Detalhes: ' + str(exc), 400)

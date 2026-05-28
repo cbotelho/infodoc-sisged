@@ -129,38 +129,52 @@ function get_registro_by_id($pdo, $registroId) {
 }
 
 function resolve_registro_id_by_numero($pdo, $numero, $secretaria = null, $setor = null, $tipo = null) {
-    $conditions = ['field_437 = ?'];
-    $params = [trim((string) $numero)];
+    $numero = trim((string) $numero);
+
+    if ($numero === '') {
+        throw new InvalidArgumentException('Informe o numero da Caixa/Pasta.');
+    }
+
+    $baseConditions = ['TRIM(field_437) = ?'];
+    $baseParams = [$numero];
 
     if ($secretaria !== null && $secretaria !== '') {
-        $conditions[] = 'field_433 = ?';
-        $params[] = $secretaria;
+        $baseConditions[] = 'field_433 = ?';
+        $baseParams[] = $secretaria;
     }
 
     if ($setor !== null && $setor !== '') {
-        $conditions[] = 'field_434 = ?';
-        $params[] = $setor;
+        $baseConditions[] = 'field_434 = ?';
+        $baseParams[] = $setor;
     }
 
-    if ($tipo !== null && $tipo !== '') {
-        $conditions[] = 'field_436 = ?';
-        $params[] = $tipo;
+    $fetchRegistro = function ($useTipoFilter) use ($pdo, $baseConditions, $baseParams, $tipo) {
+        $conditions = $baseConditions;
+        $params = $baseParams;
+
+        if ($useTipoFilter && $tipo !== null && $tipo !== '') {
+            $conditions[] = 'field_436 = ?';
+            $params[] = $tipo;
+        }
+
+        $sql = 'SELECT id FROM app_entity_41 WHERE ' . implode(' AND ', $conditions) . ' ORDER BY id DESC LIMIT 1';
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetch();
+    };
+
+    $registro = $fetchRegistro(true);
+
+    if (!$registro && $tipo !== null && $tipo !== '') {
+        $registro = $fetchRegistro(false);
     }
 
-    $sql = 'SELECT id FROM app_entity_41 WHERE ' . implode(' AND ', $conditions) . ' ORDER BY id DESC LIMIT 2';
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
-    $registros = $stmt->fetchAll();
-
-    if (count($registros) === 0) {
-        throw new InvalidArgumentException('Nenhum registro pai foi localizado para o numero informado com os filtros atuais.');
+    if (!$registro) {
+        throw new InvalidArgumentException('Nenhuma Caixa/Pasta foi encontrada na entidade 41 com os filtros informados.');
     }
 
-    if (count($registros) > 1) {
-        throw new InvalidArgumentException('Mais de um registro pai foi localizado para o numero informado. Selecione o item desejado no autocomplete.');
-    }
-
-    return (int) $registros[0]['id'];
+    return (int) $registro['id'];
 }
 
 function validate_selected_registro($pdo, $registroId, $numero, $secretaria = null, $setor = null, $tipo = null) {
@@ -180,10 +194,6 @@ function validate_selected_registro($pdo, $registroId, $numero, $secretaria = nu
 
     if ($setor !== null && $setor !== '' && (string) $registro['field_434'] !== (string) $setor) {
         throw new InvalidArgumentException('O setor informado nao corresponde ao registro selecionado.');
-    }
-
-    if ($tipo !== null && $tipo !== '' && (string) $registro['field_436'] !== (string) $tipo) {
-        throw new InvalidArgumentException('O tipo informado nao corresponde ao registro selecionado.');
     }
 
     return $registro;
@@ -248,7 +258,7 @@ function ged_inline_ocr_enabled() {
     return $enabled;
 }
 
-function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $numero, $padraoRenomeio) {
+function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $numero, $padraoRenomeio, $setorValue) {
     // Função para extrair metadados do arquivo
     function extract_metadata($file_path, $original_name) {
         return [
@@ -291,7 +301,7 @@ function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $numero, $padra
     }
 
     // Preparar a statement fora do loop para melhor performance
-    $stmt = $pdo->prepare("INSERT INTO app_entity_43 (parent_id, parent_item_id, linked_id, date_added, date_updated, created_by, sort_order, field_445, field_446, field_447, field_448, field_449, field_450, field_458, field_474, field_475, field_554) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO app_entity_43 (parent_id, parent_item_id, linked_id, date_added, date_updated, created_by, sort_order, field_445, field_446, field_447, field_448, field_449, field_450, field_458, field_474, field_475, field_554, field_565) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     
     foreach ($arquivos as $arquivo) {
         $originalFileName = $arquivo['nome'];
@@ -329,7 +339,8 @@ function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $numero, $padra
             $field458, // field_458
             json_encode($metadados, JSON_UNESCAPED_UNICODE), // field_474
             $ocr_text, // field_475
-            $totalPaginas // field_554
+            $totalPaginas, // field_554
+            $setorValue // field_565
         ]);
 
         try {
@@ -374,7 +385,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $registroId = resolve_registro_id_by_numero($pdo, $numero, $secretaria, $setor, $tipo);
         }
 
-        validate_selected_registro($pdo, $registroId, $numero, $secretaria, $setor, $tipo);
+        $registro = validate_selected_registro($pdo, $registroId, $numero, $secretaria, $setor, $tipo);
+        $setorValue = trim((string) ($registro['field_434'] ?? ''));
+        if ($setorValue === '') {
+            $setorValue = null;
+        }
 
         if (!isset($_FILES['files']['name']) || !is_array($_FILES['files']['name']) || count($_FILES['files']['name']) === 0) {
             throw new InvalidArgumentException('Nenhum arquivo foi recebido na requisicao.');
@@ -415,7 +430,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo "- " . $arquivoErro . "\n";
             }
         } else {
-            saveArquivo($pdo, $registroId, $arquivos, $tipodoc, $numero, $padraoRenomeio);
+            saveArquivo($pdo, $registroId, $arquivos, $tipodoc, $numero, $padraoRenomeio, $setorValue);
             $contadorArquivosImportados = count($arquivos);
             $pdo->commit();
             echo "Arquivos carregados com sucesso! Total de arquivos importados: " . $contadorArquivosImportados; 

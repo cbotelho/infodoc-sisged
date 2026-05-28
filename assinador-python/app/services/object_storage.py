@@ -20,6 +20,11 @@ class ObjectStorageError(RuntimeError):
 
 
 class ObjectStorage:
+    LEGACY_SIGNER_FOLDER = 'assinador-python/uploads'
+    GED_FOLDER = 'upload'
+    GED_SOURCE_PREFIXES = ('ged_', 'ged_fallback_', 'sefaz_rh_', 'generic_')
+    STANDALONE_SOURCE_PREFIXES = ('pdf_', 'assinado_', 'standalone_')
+
     def __init__(self, app_config):
         self.upload_dir = app_config.UPLOAD_DIR
         self.temp_dir = app_config.TEMP_DIR
@@ -60,9 +65,52 @@ class ObjectStorage:
 
         return self._client
 
-    def build_key(self, filename: str) -> str:
-        parts = [self.prefix, 'assinador-python', 'uploads', os.path.basename(filename)]
+    def _normalize_folder(self, folder: str) -> str:
+        return '/'.join([segment for segment in str(folder or '').strip('/').split('/') if segment])
+
+    def resolve_storage_folder(self, source: str | None = None, filename: str | None = None) -> str:
+        normalized_source = self.sanitize_filename(source).lower() if source else ''
+        safe_name = self.sanitize_filename(filename) if filename else ''
+
+        if normalized_source in {'ged', 'ged_fallback', 'sefaz_rh', 'generic', 'upload'}:
+            return self.GED_FOLDER
+
+        if normalized_source in {'standalone', 'signer'}:
+            return self.LEGACY_SIGNER_FOLDER
+
+        if safe_name.startswith(self.GED_SOURCE_PREFIXES):
+            return self.GED_FOLDER
+
+        if safe_name.startswith(self.STANDALONE_SOURCE_PREFIXES):
+            return self.LEGACY_SIGNER_FOLDER
+
+        return self.GED_FOLDER
+
+    def build_key(self, filename: str, folder: str | None = None) -> str:
+        resolved_folder = self._normalize_folder(folder or self.resolve_storage_folder(filename=filename))
+        parts = [self.prefix, resolved_folder, os.path.basename(filename)]
         return '/'.join([part for part in parts if part])
+
+    def build_candidate_keys(self, filename: str, source: str | None = None) -> list[str]:
+        safe_name = self.sanitize_filename(filename)
+        primary_folder = self.resolve_storage_folder(source=source, filename=safe_name)
+        folders = [
+            primary_folder,
+            self.GED_FOLDER,
+            self.LEGACY_SIGNER_FOLDER,
+        ]
+
+        keys = []
+        seen = set()
+
+        for folder in folders:
+            key = self.build_key(safe_name, folder)
+            if key in seen:
+                continue
+            seen.add(key)
+            keys.append(key)
+
+        return keys
 
     def sanitize_filename(self, filename: str) -> str:
         safe_name = os.path.basename(str(filename or '')).strip()
@@ -110,8 +158,8 @@ class ObjectStorage:
 
         raise last_exception
 
-    def save_upload(self, upload, filename: str, content_type: str = 'application/pdf') -> None:
-        safe_name = os.path.basename(filename)
+    def save_upload(self, upload, filename: str, content_type: str = 'application/pdf', source: str | None = None) -> None:
+        safe_name = self.sanitize_filename(filename)
 
         if not self.enabled:
             upload.save(os.path.join(self.upload_dir, safe_name))
@@ -120,11 +168,12 @@ class ObjectStorage:
         try:
             upload.stream.seek(0)
             extra_args = {'ContentType': content_type}
+            object_key = self.build_key(safe_name, self.resolve_storage_folder(source=source, filename=safe_name))
             self._run_with_retry(
                 lambda: self._get_client().upload_fileobj(
                     upload.stream,
                     self.bucket,
-                    self.build_key(safe_name),
+                    object_key,
                     ExtraArgs=extra_args,
                 ),
                 stream=upload.stream,
@@ -132,8 +181,8 @@ class ObjectStorage:
         except (OSError, BotoCoreError, ClientError) as exc:
             raise ObjectStorageError(f'Falha ao enviar arquivo para o R2: {exc}') from exc
 
-    def upload_local_file(self, local_path: str, filename: str, content_type: str = 'application/pdf') -> None:
-        safe_name = os.path.basename(filename)
+    def upload_local_file(self, local_path: str, filename: str, content_type: str = 'application/pdf', source: str | None = None) -> None:
+        safe_name = self.sanitize_filename(filename)
 
         if not self.enabled:
             destination = os.path.join(self.upload_dir, safe_name)
@@ -143,18 +192,19 @@ class ObjectStorage:
             return
 
         try:
+            object_key = self.build_key(safe_name, self.resolve_storage_folder(source=source, filename=safe_name))
             self._run_with_retry(
                 lambda: self._get_client().upload_file(
                     local_path,
                     self.bucket,
-                    self.build_key(safe_name),
+                    object_key,
                     ExtraArgs={'ContentType': content_type},
                 )
             )
         except (OSError, BotoCoreError, ClientError) as exc:
             raise ObjectStorageError(f'Falha ao enviar arquivo assinado para o R2: {exc}') from exc
 
-    def generate_presigned_upload(self, filename: str, content_type: str = 'application/octet-stream', expires_in: int | None = None) -> dict:
+    def generate_presigned_upload(self, filename: str, content_type: str = 'application/octet-stream', expires_in: int | None = None, source: str | None = None) -> dict:
         if not self.enabled:
             raise ObjectStorageError('Upload direto com URL assinada requer storage R2/S3 configurado.')
 
@@ -164,7 +214,7 @@ class ObjectStorage:
         if ttl <= 0:
             ttl = 900
 
-        object_key = self.build_key(safe_name)
+        object_key = self.build_key(safe_name, self.resolve_storage_folder(source=source, filename=safe_name))
 
         try:
             url = self._get_client().generate_presigned_url(
@@ -210,21 +260,30 @@ class ObjectStorage:
                 'storage_mode': 'local',
             }
 
-        try:
-            response = self._get_client().head_object(Bucket=self.bucket, Key=self.build_key(safe_name))
-        except ClientError as exc:
-            error_code = exc.response.get('Error', {}).get('Code', '')
-            if error_code in {'404', 'NoSuchKey', 'NotFound'}:
-                raise FileNotFoundError(safe_name) from exc
-            raise ObjectStorageError(f'Falha ao consultar objeto no R2: {exc}') from exc
-        except BotoCoreError as exc:
-            raise ObjectStorageError(f'Falha ao consultar objeto no R2: {exc}') from exc
+        response = None
+        object_key = None
+
+        for candidate_key in self.build_candidate_keys(safe_name):
+            try:
+                response = self._get_client().head_object(Bucket=self.bucket, Key=candidate_key)
+                object_key = candidate_key
+                break
+            except ClientError as exc:
+                error_code = exc.response.get('Error', {}).get('Code', '')
+                if error_code in {'404', 'NoSuchKey', 'NotFound'}:
+                    continue
+                raise ObjectStorageError(f'Falha ao consultar objeto no R2: {exc}') from exc
+            except BotoCoreError as exc:
+                raise ObjectStorageError(f'Falha ao consultar objeto no R2: {exc}') from exc
+
+        if response is None or object_key is None:
+            raise FileNotFoundError(safe_name)
 
         last_modified = response.get('LastModified')
 
         return {
             'filename': safe_name,
-            'object_key': self.build_key(safe_name),
+            'object_key': object_key,
             'content_length': int(response.get('ContentLength') or 0),
             'content_type': response.get('ContentType') or 'application/octet-stream',
             'etag': str(response.get('ETag') or '').strip('"') or None,
@@ -241,10 +300,21 @@ class ObjectStorage:
                 os.unlink(local_path)
             return
 
-        try:
-            self._get_client().delete_object(Bucket=self.bucket, Key=self.build_key(safe_name))
-        except (OSError, BotoCoreError, ClientError) as exc:
-            raise ObjectStorageError(f'Falha ao remover arquivo do R2: {exc}') from exc
+        last_exception = None
+
+        for candidate_key in self.build_candidate_keys(safe_name):
+            try:
+                self._get_client().delete_object(Bucket=self.bucket, Key=candidate_key)
+            except ClientError as exc:
+                error_code = exc.response.get('Error', {}).get('Code', '')
+                if error_code in {'404', 'NoSuchKey', 'NotFound'}:
+                    continue
+                last_exception = exc
+            except (OSError, BotoCoreError) as exc:
+                last_exception = exc
+
+        if last_exception is not None:
+            raise ObjectStorageError(f'Falha ao remover arquivo do R2: {last_exception}') from last_exception
 
     def exists(self, filename: str) -> bool:
         safe_name = os.path.basename(filename)
@@ -252,16 +322,19 @@ class ObjectStorage:
         if not self.enabled:
             return os.path.exists(os.path.join(self.upload_dir, safe_name))
 
-        try:
-            self._get_client().head_object(Bucket=self.bucket, Key=self.build_key(safe_name))
-            return True
-        except ClientError as exc:
-            error_code = exc.response.get('Error', {}).get('Code', '')
-            if error_code in {'404', 'NoSuchKey', 'NotFound'}:
-                return False
-            raise ObjectStorageError(f'Falha ao consultar arquivo no R2: {exc}') from exc
-        except BotoCoreError as exc:
-            raise ObjectStorageError(f'Falha ao consultar arquivo no R2: {exc}') from exc
+        for candidate_key in self.build_candidate_keys(safe_name):
+            try:
+                self._get_client().head_object(Bucket=self.bucket, Key=candidate_key)
+                return True
+            except ClientError as exc:
+                error_code = exc.response.get('Error', {}).get('Code', '')
+                if error_code in {'404', 'NoSuchKey', 'NotFound'}:
+                    continue
+                raise ObjectStorageError(f'Falha ao consultar arquivo no R2: {exc}') from exc
+            except BotoCoreError as exc:
+                raise ObjectStorageError(f'Falha ao consultar arquivo no R2: {exc}') from exc
+
+        return False
 
     def download_to_path(self, filename: str, destination_path: str) -> str:
         safe_name = os.path.basename(filename)
@@ -274,16 +347,19 @@ class ObjectStorage:
                 dst.write(src.read())
             return destination_path
 
-        try:
-            self._get_client().download_file(self.bucket, self.build_key(safe_name), destination_path)
-            return destination_path
-        except ClientError as exc:
-            error_code = exc.response.get('Error', {}).get('Code', '')
-            if error_code in {'404', 'NoSuchKey', 'NotFound'}:
-                raise FileNotFoundError(safe_name) from exc
-            raise ObjectStorageError(f'Falha ao baixar arquivo do R2: {exc}') from exc
-        except (OSError, BotoCoreError) as exc:
-            raise ObjectStorageError(f'Falha ao baixar arquivo do R2: {exc}') from exc
+        for candidate_key in self.build_candidate_keys(safe_name):
+            try:
+                self._get_client().download_file(self.bucket, candidate_key, destination_path)
+                return destination_path
+            except ClientError as exc:
+                error_code = exc.response.get('Error', {}).get('Code', '')
+                if error_code in {'404', 'NoSuchKey', 'NotFound'}:
+                    continue
+                raise ObjectStorageError(f'Falha ao baixar arquivo do R2: {exc}') from exc
+            except (OSError, BotoCoreError) as exc:
+                raise ObjectStorageError(f'Falha ao baixar arquivo do R2: {exc}') from exc
+
+        raise FileNotFoundError(safe_name)
 
     def read_bytes(self, filename: str) -> bytes:
         safe_name = os.path.basename(filename)
@@ -292,16 +368,19 @@ class ObjectStorage:
             with open(os.path.join(self.upload_dir, safe_name), 'rb') as file_handle:
                 return file_handle.read()
 
-        try:
-            response = self._get_client().get_object(Bucket=self.bucket, Key=self.build_key(safe_name))
-            return response['Body'].read()
-        except ClientError as exc:
-            error_code = exc.response.get('Error', {}).get('Code', '')
-            if error_code in {'404', 'NoSuchKey', 'NotFound'}:
-                raise FileNotFoundError(safe_name) from exc
-            raise ObjectStorageError(f'Falha ao ler arquivo do R2: {exc}') from exc
-        except BotoCoreError as exc:
-            raise ObjectStorageError(f'Falha ao ler arquivo do R2: {exc}') from exc
+        for candidate_key in self.build_candidate_keys(safe_name):
+            try:
+                response = self._get_client().get_object(Bucket=self.bucket, Key=candidate_key)
+                return response['Body'].read()
+            except ClientError as exc:
+                error_code = exc.response.get('Error', {}).get('Code', '')
+                if error_code in {'404', 'NoSuchKey', 'NotFound'}:
+                    continue
+                raise ObjectStorageError(f'Falha ao ler arquivo do R2: {exc}') from exc
+            except BotoCoreError as exc:
+                raise ObjectStorageError(f'Falha ao ler arquivo do R2: {exc}') from exc
+
+        raise FileNotFoundError(safe_name)
 
     def open_stream(self, filename: str) -> BinaryIO:
         return io.BytesIO(self.read_bytes(filename))

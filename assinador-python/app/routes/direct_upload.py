@@ -109,6 +109,7 @@ def presign_uploads():
                 stored_name,
                 file_info['content_type'],
                 expires_in,
+                source,
             )
 
             uploads.append({

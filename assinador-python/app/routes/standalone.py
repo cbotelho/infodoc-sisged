@@ -56,7 +56,7 @@ def upload_pdf():
 
     filename = f"pdf_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
     try:
-        storage.save_upload(upload, filename)
+        storage.save_upload(upload, filename, source='standalone')
     except ObjectStorageError as exc:
         return jsonify({'error': str(exc)}), 500
 
@@ -191,7 +191,7 @@ def sign_pdf():
             if not success:
                 return jsonify({'error': message}), 500
 
-            storage.upload_local_file(signed_path, signed_filename)
+            storage.upload_local_file(signed_path, signed_filename, source='standalone')
         except FileNotFoundError:
             return jsonify({'error': 'PDF não encontrado'}), 400
         except ObjectStorageError as exc:

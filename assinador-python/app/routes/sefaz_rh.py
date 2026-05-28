@@ -301,7 +301,7 @@ def upload_entries_to_storage(entries):
 
     try:
         for entry in entries:
-            storage.save_upload(entry['upload'], entry['stored_name'], entry['content_type'])
+            storage.save_upload(entry['upload'], entry['stored_name'], entry['content_type'], 'sefaz_rh')
             uploaded_names.append(entry['stored_name'])
     except Exception:
         for uploaded_name in uploaded_names:
