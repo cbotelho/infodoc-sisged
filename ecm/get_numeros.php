@@ -3,9 +3,9 @@ include '../includes/db.php';
 
 $format = $_GET['format'] ?? 'select';
 $term = isset($_GET['term']) ? trim((string) $_GET['term']) : '';
-$limit = 20;
+$limit = ($format === 'json' || $term !== '') ? 50 : null;
 
-function fetchNumeroRows(PDO $pdo, array $baseConditions, array $baseParams, string $term, int $limit, bool $useTipoFilter): array
+function fetchNumeroRows(PDO $pdo, array $baseConditions, array $baseParams, string $term, ?int $limit, bool $useTipoFilter): array
 {
     $conditions = $baseConditions;
     $params = $baseParams;
@@ -26,7 +26,11 @@ function fetchNumeroRows(PDO $pdo, array $baseConditions, array $baseParams, str
         $sql .= ' AND ' . implode(' AND ', $conditions);
     }
 
-    $sql .= ' GROUP BY field_437 ORDER BY field_437 LIMIT ' . $limit;
+    $sql .= ' GROUP BY field_437 ORDER BY field_437';
+
+    if ($limit !== null && $limit > 0) {
+        $sql .= ' LIMIT ' . $limit;
+    }
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);

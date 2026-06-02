@@ -140,7 +140,11 @@ function assinarComPython($token, $certificadoId, $senha, $posicao = []) {
     $ch = curl_init($pythonApiUrl);
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($dados));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    // Passa o tenant (banco de dados atual logado pelo PHP) e Content-Type
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'X-Tenant-DB: ' . (defined('DB_DATABASE') ? DB_DATABASE : '')
+    ]);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 60); // Timeout de 60 segundos
     
@@ -174,7 +178,10 @@ function validarComPython($pdfPath) {
     $ch = curl_init($pythonApiUrl);
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($dados));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'X-Tenant-DB: ' . (defined('DB_DATABASE') ? DB_DATABASE : '')
+    ]);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     
     $resposta = curl_exec($ch);

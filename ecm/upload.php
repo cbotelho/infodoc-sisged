@@ -425,6 +425,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!empty($arquivosComErro)) {
             $pdo->rollBack();
+            http_response_code(400);
             echo "Erro ao carregar arquivos. Os seguintes arquivos possuem formato inválido para o Padrao de Renomeio selecionado. Use nomes com partes separadas por # conforme o padrao informado:\n";
             foreach ($arquivosComErro as $arquivoErro) {
                 echo "- " . $arquivoErro . "\n";

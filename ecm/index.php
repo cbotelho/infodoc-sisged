@@ -7,9 +7,12 @@ error_reporting(E_ALL);
 
 $pythonServicePublicUrl = getenv('PYTHON_SERVICE_PUBLIC_URL');
 $gedUploadUrl = 'upload.php';
+$gedFallbackUploadUrl = 'upload.php';
 $presignUploadUrl = '';
 $completeUploadUrl = '';
 $gedDirectFinalizeUrl = '';
+$gedDirectUploadMaxFiles = (int) (getenv('GED_DIRECT_UPLOAD_MAX_FILES') ?: 100);
+$gedFallbackBatchSize = (int) (getenv('GED_FALLBACK_BATCH_SIZE') ?: 50);
 
 if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) !== '') {
     $pythonBaseUrl = rtrim((string) $pythonServicePublicUrl, '/');
@@ -57,7 +60,7 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
         <div class="row align-items-start">
             <div class="col-12">
                 <!-- Formulário de Upload -->
-                <form id="uploadForm" action="<?php echo htmlspecialchars($gedUploadUrl, ENT_QUOTES, 'UTF-8'); ?>" method="post" enctype="multipart/form-data">
+                <form id="uploadForm" action="<?php echo htmlspecialchars($gedFallbackUploadUrl, ENT_QUOTES, 'UTF-8'); ?>" method="post" enctype="multipart/form-data">
                     <input type="hidden" id="id_registro" name="id_registro">
                     <input type="hidden" id="numero_hidden" name="numero">
                     <div class="form-row">
@@ -134,6 +137,7 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                                 <input type="file" class="custom-file-input" id="files" name="files[]" multiple required>
                                 <label class="custom-file-label" for="files">* Escolha os arquivos...</label>
                             </div>
+                            <div id="arquivos_selecionados_info" style="color: red; font-weight: bold; display: none; margin-top: 5px;"></div>
                         </div>
                         <div class="form-group col-md-2">
                             <button type="submit" class="btn btn-primary mt-2">Enviar Arquivos</button>
@@ -191,9 +195,12 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
     <script>
     $(document).ready(function() {
         var gedUploadUrl = <?php echo json_encode($gedUploadUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+        var gedFallbackUploadUrl = <?php echo json_encode($gedFallbackUploadUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
         var presignUploadUrl = <?php echo json_encode($presignUploadUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
         var completeUploadUrl = <?php echo json_encode($completeUploadUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
         var gedDirectFinalizeUrl = <?php echo json_encode($gedDirectFinalizeUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+        var directUploadMaxFiles = <?php echo json_encode($gedDirectUploadMaxFiles); ?>;
+        var fallbackBatchSize = <?php echo json_encode($gedFallbackBatchSize); ?>;
         var directUploadEnabled = !!(presignUploadUrl && completeUploadUrl && gedDirectFinalizeUrl);
 
         // Carregar registros ao abrir a página
@@ -222,6 +229,7 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
             resetNumeroSelect();
 
             if (!secretariaId || !setorId || !tipoId) {
+                atualizarStatusArquivos();
                 return;
             }
 
@@ -236,8 +244,11 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                 }
             }).done(function(data) {
                 $('#numero_select').html(data);
+                syncNumeroSelection();
+                atualizarStatusArquivos();
             }).fail(function() {
                 resetNumeroSelect();
+                atualizarStatusArquivos();
             });
         }
 
@@ -265,6 +276,80 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                 tipodoc: $('#tipodoc').val(),
                 tratado_por: $('#tratado_por').val()
             };
+        }
+
+        function extractNameWithoutExtension(filename) {
+            var lastDot = filename.lastIndexOf('.');
+            return lastDot !== -1 ? filename.substring(0, lastDot) : filename;
+        }
+
+        function atualizarStatusArquivos() {
+            var files = getSelectedFiles();
+            var padrao = parseInt($('#padrao_renomeio').val(), 10);
+            var numero = $('#numero_hidden').val() || $('#numero_select').val();
+            var container = $('#arquivos_selecionados_info');
+
+            if (!files.length) {
+                container.hide().empty();
+                return;
+            }
+
+            container.show();
+
+            var html = '<div style="color: red; font-weight: bold; font-size: 16px;">Arquivos Selecionados: ' + files.length + '</div>';
+
+            if (!numero || isNaN(padrao)) {
+                html += '<div style="font-size: 13px; color: #dc3545; font-weight: normal; margin-top: 5px;">* Selecione o Padrão de Renomeio e o Nº da Caixa/Pasta para validar as regras.</div>';
+                container.html(html);
+                return;
+            }
+
+            var arquivosInvalidos = [];
+
+            files.forEach(function(file) {
+                var filename = file.name;
+                var nameWithoutExt = extractNameWithoutExtension(filename);
+                var partes = nameWithoutExt.split('#');
+                var partsCount = partes.length;
+
+                // 1. Validar quantidade de partes de acordo com o padrão
+                var validoPorPadrao = false;
+                if (partsCount > 0 && partsCount <= 4) {
+                    if (padrao === 1 && partsCount >= 1) validoPorPadrao = true;
+                    else if (padrao === 2 && partsCount >= 2) validoPorPadrao = true;
+                    else if (padrao === 3 && partsCount >= 3) validoPorPadrao = true;
+                    else if (padrao === 4 && partsCount >= 4) validoPorPadrao = true;
+                }
+
+                if (!validoPorPadrao) {
+                    var motivo = 'Formato inválido para o Padrão ' + padrao + ' (esperava pelo menos ' + padrao + ' partes separadas por #)';
+                    if (partsCount > 4) {
+                        motivo = 'Formato inválido (máximo de 4 partes separadas por #, encontrado ' + partsCount + ')';
+                    }
+                    arquivosInvalidos.push({
+                        nome: filename,
+                        razao: motivo
+                    });
+                }
+            });
+
+            if (arquivosInvalidos.length > 0) {
+                html += '<div style="margin-top: 10px; font-size: 13px; color: red;">' +
+                        '<b>Os seguintes arquivos possuem renomeio incompatível:</b>' +
+                        '<ul style="margin-top: 5px; margin-bottom: 0; padding-left: 15px; list-style-type: square;">';
+                arquivosInvalidos.forEach(function(arq) {
+                    html += '<li style="color: red; font-weight: bold; margin-bottom: 3px;">' + arq.nome + ' <span style="font-weight: normal; font-size: 12px; color: #555;">(' + arq.razao + ')</span></li>';
+                });
+                html += '</ul></div>';
+            } else {
+                html += '<div style="margin-top: 5px; font-size: 13px; color: #28a745;"><b>✓ Todos os arquivos possuem formato de nome de acordo com o padrão selecionado!</b></div>';
+            }
+
+            container.html(html);
+        }
+
+        function shouldUseDirectUpload(files) {
+            return directUploadEnabled && Array.isArray(files) && files.length > 0 && files.length <= directUploadMaxFiles;
         }
 
         function requestPresignedUploads(files) {
@@ -395,19 +480,19 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
 
             function updateOverallProgress(loadedBytes, bytesTotal) {
                 if (bytesTotal <= 0) {
-                    setProgressState('Enviando ao storage...', 10, true);
+                    setProgressState('Enviando arquivos...', 10, true);
                     return;
                 }
 
                 var percent = Math.round((loadedBytes / bytesTotal) * 85);
-                setProgressState(percent + '%', percent, false);
+                setProgressState('Enviando arquivos... ' + percent + '%', percent, false);
             }
 
-            setProgressState('Solicitando URLs assinadas...', 5, true);
+            setProgressState('Enviando arquivos...', 5, true);
             var presignResponse = await requestPresignedUploads(files);
 
             if (!presignResponse || !presignResponse.success || !Array.isArray(presignResponse.uploads)) {
-                throw new Error('Resposta invalida ao solicitar URLs assinadas.');
+                throw new Error('Resposta inválida ao solicitar URLs assinadas.');
             }
 
             if (presignResponse.uploads.length !== files.length) {
@@ -418,17 +503,17 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
             for (var index = 0; index < presignResponse.uploads.length; index += 1) {
                 var currentFile = files[index];
                 var currentUpload = presignResponse.uploads[index];
-                setProgressState('Enviando ' + (index + 1) + '/' + files.length + '...', Math.round((uploadedBytes / Math.max(totalBytes, 1)) * 85), true);
+                setProgressState('Enviando arquivos... (' + (index + 1) + '/' + files.length + ')', Math.round((uploadedBytes / Math.max(totalBytes, 1)) * 85), true);
                 var result = await uploadFileToStorage(currentUpload, currentFile, updateOverallProgress, uploadedBytes, Math.max(totalBytes, 1));
                 uploadedBytes += currentFile.size || 0;
                 uploadedFiles.push(result);
             }
 
-            setProgressState('Confirmando uploads no storage...', 90, true);
+            setProgressState('Confirmando arquivos...', 90, true);
             var completeResponse = await confirmDirectUploads(uploadedFiles);
 
             if (!completeResponse || !completeResponse.success || !Array.isArray(completeResponse.confirmed)) {
-                throw new Error((completeResponse && completeResponse.error) || 'Falha ao confirmar os uploads no storage.');
+                throw new Error((completeResponse && completeResponse.error) || 'Falha ao confirmar os uploads.');
             }
 
             payload.files = completeResponse.confirmed.map(function(item, fileIndex) {
@@ -441,15 +526,36 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                 };
             });
 
-            setProgressState('Finalizando registros no sistema...', 95, true);
-            return finalizeDirectUpload(payload);
+            setProgressState('Finalizando registros...', 95, true);
+            await finalizeDirectUpload(payload);
+            return files.length;
         }
 
-        function submitFallbackUpload() {
-            var formData = new FormData($('#uploadForm')[0]);
+        function createFallbackFormData(filesChunk) {
+            var formElement = $('#uploadForm')[0];
+            var formData = new FormData(formElement);
+            formData.delete('files[]');
+            formData.delete('files');
+            filesChunk.forEach(function(file) {
+                formData.append('files[]', file);
+            });
+            return formData;
+        }
+
+        function parseImportedCount(response) {
+            if (!response || typeof response !== 'string') return 0;
+            var match = response.match(/Total de arquivos importados:\s*(\d+)/i);
+            if (match && match[1]) {
+                return parseInt(match[1], 10);
+            }
+            return 0;
+        }
+
+        function submitFallbackUploadBatch(filesChunk) {
+            var formData = createFallbackFormData(filesChunk);
 
             return $.ajax({
-                url: gedUploadUrl,
+                url: gedFallbackUploadUrl,
                 type: 'POST',
                 data: formData,
                 async: true,
@@ -461,26 +567,73 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                     xhr.upload.addEventListener('progress', function(e) {
                         if (e.lengthComputable) {
                             var percent = Math.round((e.loaded / e.total) * 100);
-                            $('#progressBar').css('width', percent + '%').attr('aria-valuenow', percent).text(percent + '%');
+                            $('#progressBar').css('width', percent + '%').attr('aria-valuenow', percent).text('Enviando arquivos... ' + percent + '%');
                         }
                     });
                     return xhr;
                 },
                 beforeSend: function() {
-                    setProgressState('Enviando pelo assinador...', 0, true);
+                    setProgressState('Enviando arquivos...', 0, true);
                     $('.progress').show();
                 }
             });
         }
 
+        async function submitFallbackUpload(files) {
+            var selectedFiles = Array.isArray(files) ? files : getSelectedFiles();
+
+            if (!selectedFiles.length) {
+                throw new Error('Selecione ao menos um arquivo para upload.');
+            }
+
+            var batchSize = Math.max(1, parseInt(fallbackBatchSize, 10) || 50);
+            var batchCount = Math.ceil(selectedFiles.length / batchSize);
+            var importedTotal = 0;
+
+            for (var batchIndex = 0; batchIndex < batchCount; batchIndex += 1) {
+                var startIndex = batchIndex * batchSize;
+                var filesChunk = selectedFiles.slice(startIndex, startIndex + batchSize);
+                var progressPercent = Math.round((batchIndex / batchCount) * 100);
+
+                setProgressState('Enviando arquivos... Lote ' + (batchIndex + 1) + ' de ' + batchCount, progressPercent, true);
+
+                try {
+                    var response = await submitFallbackUploadBatch(filesChunk);
+                    importedTotal += parseImportedCount(response);
+                } catch (jqXHR) {
+                    var xhrMsg = jqXHR && jqXHR.responseText ? jqXHR.responseText : 'Falha na comunicação com o servidor VPS (Lote ' + (batchIndex + 1) + ').';
+                    throw new Error(xhrMsg);
+                }
+            }
+
+            return importedTotal;
+        }
+
         $('#numero_select').on('change', function() {
             syncNumeroSelection();
+            atualizarStatusArquivos();
+        });
+
+        $('#padrao_renomeio').on('change', function() {
+            atualizarStatusArquivos();
+        });
+
+        $('#files').on('change', function() {
+            var files = getSelectedFiles();
+            var label = $(this).next('.custom-file-label');
+            if (files.length > 0) {
+                label.text(files.length + ' arquivos selecionados');
+            } else {
+                label.text('Escolha os arquivos...');
+            }
+            atualizarStatusArquivos();
         });
 
         // Carregar opções de setor quando a secretaria é selecionada
         $('#secretaria').change(function() {
             var secretariaId = $(this).val();
             resetNumeroSelect();
+            atualizarStatusArquivos();
 
             if (secretariaId) {
                 $.ajax({
@@ -490,11 +643,13 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                     success: function(data) {
                         $('#setor').html(data);
                         resetNumeroSelect();
+                        atualizarStatusArquivos();
                     }
                 });
             } else {
                 $('#setor').html('<option value="">Selecione o Setor</option>');
                 resetNumeroSelect();
+                atualizarStatusArquivos();
             }
         });
 
@@ -505,13 +660,24 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
         // Atualizar a barra de progresso durante o upload
         $('#uploadForm').submit(function(event) {
             event.preventDefault();
+            var selectedFiles = getSelectedFiles();
 
             syncNumeroSelection();
+            atualizarStatusArquivos();
 
+            // Impedir envio se o número ou registro forem inválidos
             if (!$('#numero_hidden').val() || !$('#id_registro').val()) {
-                var invalidRegistroMessage = 'Erro ao carregar arquivos. Detalhes: selecione uma Caixa/Pasta valida da lista antes de enviar.';
+                var invalidRegistroMessage = '<span style="color: red; font-weight: bold;">Erro ao carregar arquivos. Detalhes: selecione uma Caixa/Pasta válida da lista antes de enviar.</span>';
                 $('#status').html(invalidRegistroMessage);
                 $('#statusInline').html(invalidRegistroMessage);
+                return;
+            }
+
+            // Impedir envio se houver erros de compatibilidade de nomes na listagem
+            if ($('#arquivos_selecionados_info .text-danger, #arquivos_selecionados_info li').length > 0 || $('#arquivos_selecionados_info').text().indexOf('incompatível') !== -1) {
+                var fixErrorsMessage = '<span style="color: red; font-weight: bold;">Erro: Existem nomes de arquivos que não estão de acordo com o padrão de renomeio selecionado. Corrija-os e tente novamente.</span>';
+                $('#status').html(fixErrorsMessage);
+                $('#statusInline').html(fixErrorsMessage);
                 return;
             }
 
@@ -520,38 +686,51 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
             setProgressState('Preparando...', 0, true);
             $('.progress').show();
 
-            if (directUploadEnabled) {
+            if (shouldUseDirectUpload(selectedFiles)) {
                 $('#uploadForm button[type="submit"]').prop('disabled', true);
 
-                handleDirectUpload().then(function(response) {
-                    var successMessage = response && response.message ? response.message : 'Arquivos carregados com sucesso!';
-                    $('#status').html(successMessage);
-                    $('#statusInline').html(successMessage);
+                handleDirectUpload().then(function(importedTotal) {
+                    var totalSelecionados = selectedFiles.length;
+                    var finalMessage = '';
+                    if (importedTotal === totalSelecionados) {
+                        finalMessage = '<span style="color: green; font-weight: bold;">Sucesso! ' + importedTotal + ' de ' + totalSelecionados + ' arquivos foram salvos com sucesso.</span>';
+                    } else {
+                        finalMessage = '<span style="color: red; font-weight: bold;">Erro: Apenas ' + importedTotal + ' de ' + totalSelecionados + ' arquivos foram salvos.</span>';
+                    }
+                    $('#status').html(finalMessage);
+                    $('#statusInline').html(finalMessage);
                     setProgressState('100%', 100, false);
                     setTimeout(function() {
                         $('.progress').hide();
                         $('#uploadForm')[0].reset();
                         resetNumeroSelect();
+                        $('#arquivos_selecionados_info').hide().empty();
                         loadRegistros(1);
-                    }, 1000);
+                    }, 1500);
                 }).catch(function(error) {
-                    var directErrorMessage = 'Falha no upload direto. Tentando envio pelo assinador...';
-                    $('#status').html(directErrorMessage);
-                    $('#statusInline').html(directErrorMessage);
-                    setProgressState('Alternando para o assinador...', 5, true);
+                    setProgressState('Enviando arquivos...', 5, true);
 
-                    submitFallbackUpload().done(function(response) {
-                        $('#status').html(response);
-                        $('#statusInline').html(response);
+                    submitFallbackUpload(selectedFiles).then(function(importedTotal) {
+                        var totalSelecionados = selectedFiles.length;
+                        var finalMessage = '';
+                        if (importedTotal === totalSelecionados) {
+                            finalMessage = '<span style="color: green; font-weight: bold;">Sucesso! ' + importedTotal + ' de ' + totalSelecionados + ' arquivos foram salvos com sucesso.</span>';
+                        } else {
+                            finalMessage = '<span style="color: red; font-weight: bold;">Erro: Apenas ' + importedTotal + ' de ' + totalSelecionados + ' arquivos foram salvos.</span>';
+                        }
+                        $('#status').html(finalMessage);
+                        $('#statusInline').html(finalMessage);
                         setProgressState('100%', 100, false);
                         setTimeout(function() {
                             $('.progress').hide();
                             $('#uploadForm')[0].reset();
                             resetNumeroSelect();
+                            $('#arquivos_selecionados_info').hide().empty();
                             loadRegistros(1);
-                        }, 1000);
-                    }).fail(function(xhr) {
-                        var fallbackErrorMessage = 'Erro ao carregar arquivos. Detalhes: ' + (error && error.message ? error.message : 'falha no fluxo de upload direto.') + ' Fallback no assinador: ' + xhr.status + ': ' + xhr.responseText;
+                        }, 1500);
+                    }).catch(function(err) {
+                        var msg = err && err.message ? err.message : 'Não foi possível concluir o envio dos arquivos. Tente novamente.';
+                        var fallbackErrorMessage = '<span style="color: red; font-weight: bold;">' + msg + '</span>';
                         $('#status').html(fallbackErrorMessage);
                         $('#statusInline').html(fallbackErrorMessage);
                     });
@@ -563,21 +742,30 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                 return;
             }
 
-            submitFallbackUpload().done(function(response) {
-                $('#status').html(response);
-                $('#statusInline').html(response);
+            submitFallbackUpload(selectedFiles).then(function(importedTotal) {
+                var totalSelecionados = selectedFiles.length;
+                var finalMessage = '';
+                if (importedTotal === totalSelecionados) {
+                    finalMessage = '<span style="color: green; font-weight: bold;">Sucesso! ' + importedTotal + ' de ' + totalSelecionados + ' arquivos foram salvos com sucesso.</span>';
+                } else {
+                    finalMessage = '<span style="color: red; font-weight: bold;">Erro: Apenas ' + importedTotal + ' de ' + totalSelecionados + ' arquivos foram salvos.</span>';
+                }
+                $('#status').html(finalMessage);
+                $('#statusInline').html(finalMessage);
                 setProgressState('100%', 100, false);
                 setTimeout(function() {
                     $('.progress').hide();
                     $('#uploadForm')[0].reset();
                     resetNumeroSelect();
+                    $('#arquivos_selecionados_info').hide().empty();
                     loadRegistros(1);
-                }, 1000);
-            }).fail(function(xhr) {
-                var errorMessage = 'Erro ao carregar arquivos. Detalhes: ' + xhr.status + ': ' + xhr.responseText;
+                }, 1500);
+            }).catch(function(err) {
+                var msg = err && err.message ? err.message : 'Não foi possível concluir o envio dos arquivos. Tente novamente.';
+                var errorMessage = '<span style="color: red; font-weight: bold;">' + msg + '</span>';
                 $('#status').html(errorMessage);
                 $('#statusInline').html(errorMessage);
-            }).always(function() {
+            }).finally(function() {
                 $('#files').val('');
             });
         });

@@ -30,7 +30,17 @@ class ObjectStorage:
         self.temp_dir = app_config.TEMP_DIR
         self.endpoint = app_config.FILE_STORAGE_R2_ENDPOINT
         self.region = app_config.FILE_STORAGE_R2_REGION
-        self.bucket = app_config.FILE_STORAGE_R2_BUCKET
+        
+        # Multi-Tenant Bucket Router
+        from flask import request, has_request_context
+        bucket = app_config.FILE_STORAGE_R2_BUCKET
+        if has_request_context():
+            host = request.headers.get('Host', '')
+            tenant = request.headers.get('X-Tenant-DB', '')
+            if 'cipemac' in host or 'cipemac' in tenant:
+                bucket = 'cipemac'
+                
+        self.bucket = bucket
         self.access_key_id = app_config.FILE_STORAGE_R2_ACCESS_KEY_ID
         self.secret_access_key = app_config.FILE_STORAGE_R2_SECRET_ACCESS_KEY
         self.prefix = (app_config.FILE_STORAGE_R2_OBJECT_PREFIX or '').strip('/')
