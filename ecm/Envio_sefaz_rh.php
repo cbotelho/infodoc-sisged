@@ -155,6 +155,7 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                                 <input type="file" class="custom-file-input" id="files" name="files[]" multiple required>
                                 <label class="custom-file-label" for="files">* Escolha os arquivos...</label>
                             </div>
+                            <div id="arquivos_selecionados_info" style="color: red; font-weight: bold; display: none; margin-top: 5px;"></div>
                         </div>
                         <div class="form-group col-md-2">
                             <button type="submit" class="btn btn-primary mt-2">Enviar Arquivos</button>
@@ -179,27 +180,12 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                 </form>
             </div>
         </div>
-        <div class="row mt-4">
+        <div class="row mt-4" id="upload_progress_container" style="display: none;">
             <div class="col-12">
-                <h5 class="mb-4">Registros Salvos</h5>
-                <div class="table-container">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Matricula</th>
-                                <th>Interessado</th>
-                                <th>CPF</th>
-                                <th>Tipo</th>
-                                <th>Páginas</th>
-                            </tr>
-                        </thead>
-                        <tbody id="registros"></tbody>
-                    </table>
+                <h5 class="mb-4">Arquivos Selecionados e Progresso de Envio</h5>
+                <div class="list-group" id="upload_progress_list">
+                    <!-- Barras de progresso individuais aparecerão aqui -->
                 </div>
-                <nav>
-                    <ul class="pagination" id="pagination"></ul>
-                </nav>
             </div>
         </div>
     </div>
@@ -214,10 +200,7 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
         var presignUploadUrl = <?php echo json_encode($presignUploadUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
         var completeUploadUrl = <?php echo json_encode($completeUploadUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
         var sefazRhDirectFinalizeUrl = <?php echo json_encode($sefazRhDirectFinalizeUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
-        var directUploadEnabled = !!(presignUploadUrl && completeUploadUrl && sefazRhDirectFinalizeUrl);
-
-        // Carregar registros ao abrir a página
-        loadRegistros(1);
+        var directUploadEnabled = false; // Isolando temporariamente no S3 pelo CORS da rede
 
         function resetNumeroSelect() {
             $('#numero_select').html('<option value="">Selecione o Nº da Caixa/Pasta</option>');
@@ -240,6 +223,7 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
             var tipoId = $('#tipo').val();
 
             resetNumeroSelect();
+            atualizarStatusArquivos();
 
             if (!secretariaId || !setorId || !tipoId) {
                 return;
@@ -256,9 +240,99 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                 }
             }).done(function(data) {
                 $('#numero_select').html(data);
+                syncNumeroSelection();
+                atualizarStatusArquivos();
             }).fail(function() {
                 resetNumeroSelect();
+                atualizarStatusArquivos();
             });
+        }
+
+        function extractNameWithoutExtension(filename) {
+            var lastDot = filename.lastIndexOf('.');
+            return lastDot !== -1 ? filename.substring(0, lastDot) : filename;
+        }
+
+        function atualizarStatusArquivos() {
+            var files = getSelectedFiles();
+            var padrao = parseInt($('#padrao_renomeio').val(), 10);
+            var numero = $('#numero_hidden').val() || $('#numero_select').val();
+            var container = $('#arquivos_selecionados_info');
+
+            if (!files.length) {
+                container.hide().empty();
+                return;
+            }
+
+            container.show();
+
+            var html = '<div style="color: red; font-weight: bold; font-size: 16px;">Arquivos Selecionados: ' + files.length + '</div>';
+
+            if (!numero || isNaN(padrao)) {
+                html += '<div style="font-size: 13px; color: #dc3545; font-weight: normal; margin-top: 5px;">* Selecione o Padrão de Renomeio e o Nº da Caixa/Pasta para validar as regras.</div>';
+                container.html(html);
+                return;
+            }
+
+            var arquivosInvalidos = [];
+
+            files.forEach(function(file) {
+                var filename = file.name;
+                var nameWithoutExt = extractNameWithoutExtension(filename);
+                var partes = nameWithoutExt.split('#');
+                var partsCount = partes.length;
+
+                // 1. Validar quantidade de partes de acordo com o padrão
+                var validoPorPadrao = false;
+                if (partsCount > 0 && partsCount <= 4) {
+                    if (padrao === 1 && partsCount >= 1) validoPorPadrao = true;
+                    else if (padrao === 2 && partsCount >= 2) validoPorPadrao = true;
+                    else if (padrao === 3 && partsCount >= 3) validoPorPadrao = true;
+                    else if (padrao === 4 && partsCount >= 4) validoPorPadrao = true;
+                }
+
+                if (!validoPorPadrao) {
+                    var motivo = 'Formato inválido para o Padrão ' + padrao + ' (esperava pelo menos ' + padrao + ' partes separadas por #)';
+                    if (partsCount > 4) {
+                        motivo = 'Formato inválido (máximo de 4 partes separadas por #, encontrado ' + partsCount + ')';
+                    }
+                    arquivosInvalidos.push({
+                        nome: filename,
+                        razao: motivo
+                    });
+                }
+            });
+
+            if (arquivosInvalidos.length > 0) {
+                html += '<div style="margin-top: 10px; font-size: 13px; color: red;">' +
+                        '<b>Os seguintes arquivos possuem renomeio incompatível:</b>' +
+                        '<ul style="margin-top: 5px; margin-bottom: 0; padding-left: 15px; list-style-type: square;">';
+                arquivosInvalidos.forEach(function(arq) {
+                    html += '<li style="color: red; font-weight: bold; margin-bottom: 3px;">' + arq.nome + ' <span style="font-weight: normal; font-size: 12px; color: #555;">(' + arq.razao + ')</span></li>';
+                });
+                html += '</ul></div>';
+                $('#upload_progress_container').hide();
+            } else {
+                html += '<div style="margin-top: 5px; font-size: 13px; color: #28a745;"><b>✓ Todos os arquivos possuem formato de nome de acordo com o padrão selecionado!</b></div>';
+                
+                // Exibir a listagem para cada arquivo com uma barra de progresso individual zerada
+                var listHtml = '';
+                files.forEach(function(file, idx) {
+                    listHtml += '<div class="list-group-item" id="file_item_' + idx + '">' +
+                                    '<div class="d-flex justify-content-between align-items-center mb-1">' +
+                                        '<span class="file-name" style="font-weight: 500;">' + file.name + '</span>' +
+                                        '<span class="file-status text-muted" style="font-size: 12px;">Aguardando envio...</span>' +
+                                    '</div>' +
+                                    '<div class="progress" style="height: 15px;">' +
+                                        '<div class="progress-bar progress-bar-striped" id="file_prog_' + idx + '" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>' +
+                                    '</div>' +
+                                '</div>';
+                });
+                $('#upload_progress_list').html(listHtml);
+                $('#upload_progress_container').show();
+            }
+
+            container.html(html);
         }
 
         function setProgressState(label, percent, animated) {
@@ -466,8 +540,19 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
             return finalizeDirectUpload(payload);
         }
 
-        function submitFallbackUpload() {
-            var formData = new FormData($('#uploadForm')[0]);
+        function createFallbackFormData(filesChunk) {
+            var formElement = $('#uploadForm')[0];
+            var formData = new FormData(formElement);
+            formData.delete('files[]');
+            formData.delete('files');
+            filesChunk.forEach(function(file) {
+                formData.append('files[]', file);
+            });
+            return formData;
+        }
+
+        function submitFallbackUploadFile(file, idx) {
+            var formData = createFallbackFormData([file]);
 
             return $.ajax({
                 url: sefazRhUploadUrl,
@@ -482,26 +567,85 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                     xhr.upload.addEventListener('progress', function(e) {
                         if (e.lengthComputable) {
                             var percent = Math.round((e.loaded / e.total) * 100);
-                            $('#progressBar').css('width', percent + '%').attr('aria-valuenow', percent).text(percent + '%');
+                            $('#file_prog_' + idx).css('width', percent + '%').attr('aria-valuenow', percent).text(percent + '%');
                         }
                     });
                     return xhr;
                 },
                 beforeSend: function() {
-                    setProgressState('Enviando pelo assinador...', 0, true);
-                    $('.progress').show();
+                    $('#file_prog_' + idx).css('width', '5%').text('Iniciando...');
+                    $('#file_item_' + idx + ' .file-status').text('Enviando pelo backend...');
+                    $('#file_item_' + idx).removeClass('list-group-item-danger list-group-item-success');
+                    $('#file_item_' + idx + ' .file-name').css('color', '');
                 }
             });
         }
 
+        async function submitFallbackUpload(files) {
+            var selectedFiles = Array.isArray(files) ? files : getSelectedFiles();
+
+            if (!selectedFiles.length) {
+                throw new Error('Selecione ao menos um arquivo para upload.');
+            }
+
+            var importedTotal = 0;
+            $('#uploadForm button[type="submit"]').prop('disabled', true);
+
+            for (var idx = 0; idx < selectedFiles.length; idx += 1) {
+                var file = selectedFiles[idx];
+                var overallPercent = Math.round((idx / selectedFiles.length) * 100);
+                setProgressState('Enviando arquivos: ' + (idx + 1) + '/' + selectedFiles.length, overallPercent, true);
+
+                try {
+                    var response = await submitFallbackUploadFile(file, idx);
+                    var importCount = parseImportedCount(response);
+                    
+                    if (importCount > 0) {
+                        importedTotal += importCount;
+                        $('#file_item_' + idx).addClass('list-group-item-success');
+                        $('#file_item_' + idx + ' .file-status').html('<b style="color: green;">Enviado Com Sucesso</b>');
+                        $('#file_prog_' + idx).css('width', '100%').text('100%').removeClass('progress-bar-striped progress-bar-animated');
+                    } else {
+                        throw new Error('Arquivo não aceito ou formato inválido pelo servidor.');
+                    }
+                } catch (jqXHR) {
+                    var xhrMsg = jqXHR && jqXHR.responseText ? jqXHR.responseText : (jqXHR && jqXHR.message ? jqXHR.message : 'Falha na comunicação com o servidor/assinador.');
+                    $('#file_item_' + idx).addClass('list-group-item-danger');
+                    $('#file_item_' + idx + ' .file-name').css('color', 'red');
+                    $('#file_item_' + idx + ' .file-status').html('<b style="color: red;">Não Foi possível enviar o arquivo</b> (' + xhrMsg + ')');
+                    $('#file_prog_' + idx).css('width', '100%').addClass('bg-danger').text('Erro');
+                }
+            }
+
+            setProgressState('Upload Concluído.', 100, false);
+            return importedTotal;
+        }
+
         $('#numero_select').on('change', function() {
             syncNumeroSelection();
+            atualizarStatusArquivos();
+        });
+
+        $('#padrao_renomeio').on('change', function() {
+            atualizarStatusArquivos();
+        });
+
+        $('#files').on('change', function() {
+            var files = getSelectedFiles();
+            var label = $(this).next('.custom-file-label');
+            if (files.length > 0) {
+                label.text(files.length + ' arquivos selecionados');
+            } else {
+                label.text('Escolha os arquivos...');
+            }
+            atualizarStatusArquivos();
         });
 
         // Carregar opções de setor quando a secretaria é selecionada
         $('#secretaria').change(function() {
             var secretariaId = $(this).val();
             resetNumeroSelect();
+            atualizarStatusArquivos();
 
             if (secretariaId) {
                 $.ajax({
@@ -511,11 +655,13 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                     success: function(data) {
                         $('#setor').html(data);
                         resetNumeroSelect();
+                        atualizarStatusArquivos();
                     }
                 });
             } else {
                 $('#setor').html('<option value="">Selecione o Setor</option>');
                 resetNumeroSelect();
+                atualizarStatusArquivos();
             }
         });
 
@@ -523,16 +669,38 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
             loadNumeroOptions();
         });
 
+        function parseImportedCount(response) {
+            if (!response) return 0;
+            if (typeof response === 'object' && response.total_importados !== undefined) {
+                return parseInt(response.total_importados, 10);
+            }
+            var text = typeof response === 'string' ? response : (response.message || JSON.stringify(response));
+            var match = text.match(/Total de arquivos importados:\s*(\d+)/i);
+            if (match && match[1]) {
+                return parseInt(match[1], 10);
+            }
+            return 0;
+        }
+
         // Atualizar a barra de progresso durante o upload
         $('#uploadForm').submit(function(event) {
             event.preventDefault();
 
             syncNumeroSelection();
+            atualizarStatusArquivos();
 
             if (!$('#numero_hidden').val() || !$('#id_registro').val()) {
-                var errorMessage = 'Erro ao carregar arquivos. Detalhes: selecione uma Caixa/Pasta valida da lista antes de enviar.';
+                var errorMessage = '<span style="color: red; font-weight: bold;">Erro ao carregar arquivos. Detalhes: selecione uma Caixa/Pasta válida da lista antes de enviar.</span>';
                 $('#status').html(errorMessage);
                 $('#statusInline').html(errorMessage);
+                return;
+            }
+
+            // Impedir envio se houver erros de compatibilidade de nomes na listagem
+            if ($('#arquivos_selecionados_info .text-danger, #arquivos_selecionados_info li').length > 0 || $('#arquivos_selecionados_info').text().indexOf('incompatível') !== -1) {
+                var fixErrorsMessage = '<span style="color: red; font-weight: bold;">Erro: Existem nomes de arquivos que não estão de acordo com o padrão de renomeio selecionado. Corrija-os e tente novamente.</span>';
+                $('#status').html(fixErrorsMessage);
+                $('#statusInline').html(fixErrorsMessage);
                 return;
             }
 
@@ -543,36 +711,56 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
 
             if (directUploadEnabled) {
                 $('#uploadForm button[type="submit"]').prop('disabled', true);
+                var selectedFiles = getSelectedFiles();
 
                 handleDirectUpload().then(function(response) {
-                    var successMessage = response && response.message ? response.message : 'Arquivos carregados com sucesso!';
-                    $('#status').html(successMessage);
-                    $('#statusInline').html(successMessage);
+                    var totalSelecionados = selectedFiles.length;
+                    var importedTotal = parseImportedCount(response) || totalSelecionados;
+                    var finalMessage = '';
+                    if (importedTotal === totalSelecionados) {
+                        finalMessage = '<span style="color: green; font-weight: bold;">Sucesso! ' + importedTotal + ' de ' + totalSelecionados + ' arquivos foram salvos com sucesso.</span>';
+                    } else {
+                        finalMessage = '<span style="color: red; font-weight: bold;">Erro: Apenas ' + importedTotal + ' de ' + totalSelecionados + ' arquivos foram salvos.</span>';
+                    }
+                    $('#status').html(finalMessage);
+                    $('#statusInline').html(finalMessage);
                     setProgressState('100%', 100, false);
                     setTimeout(function() {
                         $('.progress').hide();
                         $('#uploadForm')[0].reset();
                         resetNumeroSelect();
-                        loadRegistros(1);
-                    }, 1000);
+                        $('#arquivos_selecionados_info').hide().empty();
+                        
+                    }, 1500);
                 }).catch(function(error) {
                     var directErrorMessage = 'Falha no upload direto. Tentando envio pelo assinador...';
                     $('#status').html(directErrorMessage);
                     $('#statusInline').html(directErrorMessage);
                     setProgressState('Alternando para o assinador...', 5, true);
 
-                    submitFallbackUpload().done(function(response) {
-                        $('#status').html(response);
-                        $('#statusInline').html(response);
+                    submitFallbackUpload(selectedFiles).then(function(importedTotal) {
+                        var totalSelecionados = selectedFiles.length;
+                        var finalMessage = '';
+                        if (importedTotal === totalSelecionados) {
+                            finalMessage = '<span style="color: green; font-weight: bold;">Sucesso! Todos os ' + importedTotal + ' arquivos foram salvos com sucesso.</span>';
+                        } else {
+                            finalMessage = '<span style="color: red; font-weight: bold;">Concluído com falhas: Apenas ' + importedTotal + ' de ' + totalSelecionados + ' arquivos foram salvos. Feche esta janela, corrija os arquivos em vermelho e tente novamente.</span>';
+                        }
+                        $('#status').html(finalMessage);
+                        $('#statusInline').html(finalMessage);
                         setProgressState('100%', 100, false);
                         setTimeout(function() {
                             $('.progress').hide();
-                            $('#uploadForm')[0].reset();
-                            resetNumeroSelect();
-                            loadRegistros(1);
-                        }, 1000);
-                    }).fail(function(xhr) {
-                        var fallbackErrorMessage = 'Erro ao carregar arquivos. Detalhes: ' + (error && error.message ? error.message : 'falha no fluxo de upload direto.') + ' Fallback no assinador: ' + xhr.status + ': ' + xhr.responseText;
+                            if (importedTotal === totalSelecionados) {
+                                $('#uploadForm')[0].reset();
+                                resetNumeroSelect();
+                                $('#upload_progress_container').hide();
+                                $('#arquivos_selecionados_info').hide().empty();
+                            }
+                        }, 3000);
+                    }).catch(function(err) {
+                        var msg = err && err.message ? err.message : 'Falha crítica na alternância para o assinador.';
+                        var fallbackErrorMessage = '<span style="color: red; font-weight: bold;">' + msg + '</span>';
                         $('#status').html(fallbackErrorMessage);
                         $('#statusInline').html(fallbackErrorMessage);
                     });
@@ -584,44 +772,36 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                 return;
             }
 
-            submitFallbackUpload().done(function(response) {
-                $('#status').html(response);
-                $('#statusInline').html(response);
+            var selectedFiles = getSelectedFiles();
+            submitFallbackUpload(selectedFiles).then(function(importedTotal) {
+                var totalSelecionados = selectedFiles.length;
+                var finalMessage = '';
+                if (importedTotal === totalSelecionados) {
+                    finalMessage = '<span style="color: green; font-weight: bold;">Sucesso! Todos os ' + importedTotal + ' arquivos foram salvos com sucesso.</span>';
+                } else {
+                    finalMessage = '<span style="color: red; font-weight: bold;">Concluído com falhas: Apenas ' + importedTotal + ' de ' + totalSelecionados + ' arquivos foram salvos. Feche esta janela, corrija os arquivos em vermelho e tente novamente.</span>';
+                }
+                $('#status').html(finalMessage);
+                $('#statusInline').html(finalMessage);
                 setProgressState('100%', 100, false);
                 setTimeout(function() {
                     $('.progress').hide();
-                    $('#uploadForm')[0].reset();
-                    resetNumeroSelect();
-                    loadRegistros(1);
-                }, 1000);
-            }).fail(function(xhr) {
-                var errorMessage = 'Erro ao carregar arquivos. Detalhes: ' + xhr.status + ': ' + xhr.responseText;
+                    if (importedTotal === totalSelecionados) {
+                        $('#uploadForm')[0].reset();
+                        resetNumeroSelect();
+                        $('#upload_progress_container').hide();
+                        $('#arquivos_selecionados_info').hide().empty();
+                    }
+                }, 3000);
+            }).catch(function(err) {
+                var msg = err && err.message ? err.message : 'Falha crítica ao tentar enviar um ou mais arquivos.';
+                var errorMessage = '<span style="color: red; font-weight: bold;">' + msg + '</span>';
                 $('#status').html(errorMessage);
                 $('#statusInline').html(errorMessage);
-            }).always(function() {
+            }).finally(function() {
+                $('#uploadForm button[type="submit"]').prop('disabled', false);
                 $('#files').val('');
             });
-        });
-
-        // Carregar registros com paginação
-        function loadRegistros(page) {
-            $.ajax({
-                url: 'load_registros_sefaz_rh.php',
-                type: 'GET',
-                data: { page: page },
-                dataType: 'json',
-                success: function(data) {
-                    $('#registros').html(data.records);
-                    $('#pagination').html(data.pagination);
-                }
-            });
-        }
-
-        // Navegação na paginação
-        $(document).on('click', '.page-link', function(e) {
-            e.preventDefault();
-            var page = $(this).data('page');
-            loadRegistros(page);
         });
     });
     </script>

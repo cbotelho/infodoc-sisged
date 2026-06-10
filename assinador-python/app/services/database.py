@@ -13,10 +13,11 @@ def get_tenant_db_name():
     if has_request_context():
         tenant_header = request.headers.get('X-Tenant-DB')
         host = request.headers.get('Host', '')
+        forwarded_host = request.headers.get('X-Forwarded-Host', '')
         
         if tenant_header:
             db_name = tenant_header
-        elif 'cipemac' in host:
+        elif 'cipemac' in host or 'cipemac' in forwarded_host:
             db_name = 'sisged_cipemac'
     return db_name
 

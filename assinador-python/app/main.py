@@ -25,7 +25,7 @@ app = Flask(__name__,
             static_folder='static')
 
 app.config.from_object(Config)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 # Registrar blueprints
 app.register_blueprint(auth.bp)

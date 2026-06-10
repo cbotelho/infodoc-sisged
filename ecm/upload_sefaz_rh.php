@@ -10,15 +10,21 @@ error_reporting(E_ALL);
 
 require_once __DIR__ . '/object_storage_helper.php';
 
-// Definir conexão com o banco de dados
-define('DB_SERVER', '195.200.4.41');
-define('DB_SERVER_USERNAME', 'admin');
-define('DB_SERVER_PASSWORD', '8rekXBff');
-define('DB_SERVER_PORT', '');		
-define('DB_DATABASE', 'sisged_gea');
+// Definir conexão com o banco de dados dinamicamente usando as constantes
+if (!defined('DB_SERVER')) {
+    $configFile = __DIR__ . '/../config/database.php';
+    if (file_exists($configFile)) {
+        require_once $configFile;
+    }
+}
 
 function create_pdo_connection() {
-    $dsn = "mysql:host=" . DB_SERVER . ";dbname=" . DB_DATABASE . ";charset=utf8mb4";
+    $host = defined('DB_SERVER') ? DB_SERVER : '195.200.4.41';
+    $db   = defined('DB_DATABASE') ? DB_DATABASE : 'sisged_gea';
+    $user = defined('DB_SERVER_USERNAME') ? DB_SERVER_USERNAME : 'admin';
+    $pass = defined('DB_SERVER_PASSWORD') ? DB_SERVER_PASSWORD : '';
+
+    $dsn = "mysql:host=" . $host . ";dbname=" . $db . ";charset=utf8mb4";
 
     $options = [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
@@ -26,7 +32,7 @@ function create_pdo_connection() {
         PDO::ATTR_EMULATE_PREPARES   => false,
     ];
 
-    return new PDO($dsn, DB_SERVER_USERNAME, DB_SERVER_PASSWORD, $options);
+    return new PDO($dsn, $user, $pass, $options);
 }
 
 function parse_ini_size_to_bytes($value) {
@@ -238,9 +244,9 @@ function validate_selected_registro($pdo, $registroId, $numero, $secretaria = nu
         throw new InvalidArgumentException('O setor informado nao corresponde ao registro pai selecionado na entidade 48.');
     }
 
-    if ($tipo !== null && $tipo !== '' && trim((string) ($registro['field_526'] ?? '')) !== trim((string) $tipo)) {
-        throw new InvalidArgumentException('O tipo informado nao corresponde ao registro pai selecionado na entidade 48.');
-    }
+    // Nao valida tipo de forma estrita para manter compatibilidade com registros
+    // legados em que o numero pode existir sem vinculo consistente com field_526.
+    // O combo de numero ja aplica o melhor filtro possivel e fallback controlado.
 
     return $registro;
 }

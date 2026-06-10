@@ -36,8 +36,9 @@ class ObjectStorage:
         bucket = app_config.FILE_STORAGE_R2_BUCKET
         if has_request_context():
             host = request.headers.get('Host', '')
+            forwarded_host = request.headers.get('X-Forwarded-Host', '')
             tenant = request.headers.get('X-Tenant-DB', '')
-            if 'cipemac' in host or 'cipemac' in tenant:
+            if 'cipemac' in host or 'cipemac' in forwarded_host or 'cipemac' in tenant:
                 bucket = 'cipemac'
                 
         self.bucket = bucket

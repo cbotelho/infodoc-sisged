@@ -8,21 +8,30 @@
   $dbName = getenv('DB_DATABASE') ?: getenv('DB_NAME') ?: 'infodoc_sisged';
 
   // --- MULTI-TENANT ROUTER ---
-  // Identifica o tenant pelo domínio de acesso
-  $httpHost = $_SERVER['HTTP_HOST'] ?? '';
+  // Identifica o tenant pelo domínio de acesso (atrás de proxy ou direto)
+  $httpHost = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'] ?? '';
+
+  // Fallback caso o Forwarded Host venha como lista (ex: "cipemac.com, cipemac.com")
+  if (strpos($httpHost, ',') !== false) {
+      $hosts = explode(',', $httpHost);
+      $httpHost = trim($hosts[0]);
+  }
 
   if (strpos($httpHost, 'cipemac.infodocsisged.com.br') !== false) {
       $dbName = 'sisged_cipemac';
       // Força o bucket e variáveis para o ambiente CIPEMAC
       putenv('FILE_STORAGE_R2_BUCKET=cipemac');
       $_ENV['FILE_STORAGE_R2_BUCKET'] = 'cipemac';
+      $_SERVER['FILE_STORAGE_R2_BUCKET'] = 'cipemac';
       
       // Se precisar de url base diferente nas classes (ex emails)
       putenv('APP_BASE_URL=https://cipemac.infodocsisged.com.br');
       $_ENV['APP_BASE_URL'] = 'https://cipemac.infodocsisged.com.br';
-  } elseif (strpos($httpHost, 'gea') !== false || $httpHost === 'seu-dominio-gea.com.br') { // ajuste com o dominio real do GEA
-      // Pode omitir pois as envs do Docker default (GEA) cuidam disso
-      // ou explicitar: $dbName = 'infodoc_gea';
+  } else {
+      // Força o bucket e variáveis para o ambiente GEA quando o domínio NÃO for cipemac
+      putenv('FILE_STORAGE_R2_BUCKET=gea');
+      $_ENV['FILE_STORAGE_R2_BUCKET'] = 'gea';
+      $_SERVER['FILE_STORAGE_R2_BUCKET'] = 'gea';
   }
   // --- FIM DA ROTA ---
 

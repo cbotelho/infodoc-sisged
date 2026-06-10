@@ -15,6 +15,10 @@ backups
 cache
 log
 tmp
+temp
+signed
+supervisor
+Icp_Brasil
 admin_docs
 infodoc-assinador
 upload/*

@@ -195,6 +195,9 @@ def validate_selected_registro(connection, registro_id, numero, secretaria=None,
     if setor and str(registro.get('field_525') or '').strip() != str(setor).strip():
         raise ValueError('O setor informado nao corresponde ao registro pai selecionado na entidade 48.')
 
+    # Nao valida tipo de forma estrita para manter compatibilidade com registros
+    # legados em que o numero pode existir sem vinculo consistente com field_526.
+
     return registro
 
 

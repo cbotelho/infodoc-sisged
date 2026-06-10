@@ -12,6 +12,8 @@ echo "Versão PHP: " . phpversion() . "<br>";
 echo "Server API: " . php_sapi_name() . "<br>";
 echo "Document Root: " . $_SERVER['DOCUMENT_ROOT'] . "<br>";
 echo "Arquivo atual: " . __FILE__ . "<br>";
+echo "HTTP_HOST recebido: <b>" . htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'nulo/não definido') . "</b><br>";
+echo "HTTP_X_FORWARDED_HOST recebido: <b>" . htmlspecialchars($_SERVER['HTTP_X_FORWARDED_HOST'] ?? 'nulo/não definido') . "</b><br>";
 
 // Verificar arquivo db.php
 echo "<h3>Verificação do arquivo db.php:</h3>";
@@ -42,6 +44,7 @@ try {
         require_once $dbPath;
         if (isset($pdo) && $pdo instanceof PDO) {
             echo "✓ Conexão com banco de dados OK!<br>";
+            echo "Banco de dados resolvido e conectado: <b>" . (defined('DB_DATABASE') ? DB_DATABASE : $db) . "</b><br>";
             
             // Testar consulta
             $stmt = $pdo->query("SELECT COUNT(*) as total FROM app_entity_26");
