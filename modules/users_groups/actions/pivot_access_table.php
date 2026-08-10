@@ -7,6 +7,11 @@ if(!$users_groups_info = db_fetch_array($users_groups_info_query))
     redirect_to('users_groups/users_groups');
 }
 
+if(!users_groups_can_manage_access_matrix())
+{
+    redirect_to('dashboard/access_forbidden');
+}
+
 switch($app_module_action)
 {
     case 'set_access':

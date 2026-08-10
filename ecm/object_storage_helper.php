@@ -74,11 +74,36 @@ function ged_get_runtime_setting($key, $default = '') {
     return $default;
 }
 
+function ged_get_normalized_request_host() {
+    $host = (string) ($_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'] ?? '');
+
+    if (strpos($host, ',') !== false) {
+        $parts = explode(',', $host);
+        $host = trim($parts[0]);
+    }
+
+    $host = trim($host);
+
+    if (strpos($host, ':') !== false) {
+        $host = explode(':', $host, 2)[0];
+    }
+
+    return strtolower($host);
+}
+
+function ged_resolve_tenant_bucket($defaultBucket) {
+    // Regra unificada: todos os tenants usam o bucket padrao,
+    // assim CIPEMAC segue exatamente o mesmo fluxo do GED.
+    return $defaultBucket;
+}
+
 function ged_get_r2_config() {
+    $defaultBucket = ged_get_runtime_setting('FILE_STORAGE_R2_BUCKET', '');
+
     return [
         'endpoint' => ged_get_runtime_setting('FILE_STORAGE_R2_ENDPOINT', ''),
         'region' => ged_get_runtime_setting('FILE_STORAGE_R2_REGION', 'auto'),
-        'bucket' => ged_get_runtime_setting('FILE_STORAGE_R2_BUCKET', ''),
+        'bucket' => ged_resolve_tenant_bucket($defaultBucket),
         'access_key_id' => ged_get_runtime_setting('FILE_STORAGE_R2_ACCESS_KEY_ID', ''),
         'secret_access_key' => ged_get_runtime_setting('FILE_STORAGE_R2_SECRET_ACCESS_KEY', ''),
         'object_prefix' => trim(ged_get_runtime_setting('FILE_STORAGE_R2_OBJECT_PREFIX', 'ged'), '/'),
@@ -153,14 +178,28 @@ function ged_get_r2_client() {
 }
 
 function ged_build_object_key($fileName, $folder = 'upload') {
+    return ged_build_object_key_with_prefix($fileName, $folder, null);
+}
+
+function ged_build_object_key_with_prefix($fileName, $folder = 'upload', $prefixOverride = null) {
     $config = ged_get_r2_config();
     $parts = [];
 
-    if ($config['object_prefix'] !== '') {
-        $parts[] = $config['object_prefix'];
+    $prefix = $prefixOverride;
+    if ($prefix === null) {
+        $prefix = $config['object_prefix'];
     }
 
-    $parts[] = trim($folder, '/');
+    $prefix = trim((string) $prefix, '/');
+    if ($prefix !== '') {
+        $parts[] = $prefix;
+    }
+
+    $folder = trim((string) $folder, '/');
+    if ($folder !== '') {
+        $parts[] = $folder;
+    }
+
     $parts[] = basename($fileName);
 
     return implode('/', array_filter($parts, 'strlen'));
@@ -186,6 +225,47 @@ function ged_detect_content_type($localPath) {
     return $contentType ?: 'application/octet-stream';
 }
 
+function ged_should_retry_r2_upload(Throwable $exception) {
+    $message = strtolower((string) $exception->getMessage());
+
+    return strpos($message, 'multipart upload') !== false
+        || strpos($message, 'uploadpart') !== false
+        || strpos($message, 'connection reset') !== false
+        || strpos($message, 'net::err_failed') !== false
+        || strpos($message, 'timeout') !== false
+        || strpos($message, '503') !== false
+        || strpos($message, '500') !== false
+        || strpos($message, 'temporarily unavailable') !== false;
+}
+
+function ged_get_bucket_candidates() {
+    $config = ged_get_r2_config();
+    $primaryBucket = trim((string) ($config['bucket'] ?? ''));
+    $defaultBucket = trim((string) ged_get_runtime_setting('FILE_STORAGE_R2_BUCKET', ''));
+
+    $candidates = [];
+
+    foreach ([$primaryBucket, $defaultBucket] as $bucket) {
+        if ($bucket !== '' && !in_array($bucket, $candidates, true)) {
+            $candidates[] = $bucket;
+        }
+    }
+
+    return $candidates;
+}
+
+function ged_is_access_denied_error($exception) {
+    if (!$exception instanceof Throwable) {
+        return false;
+    }
+
+    $message = strtolower((string) $exception->getMessage());
+
+    return strpos($message, 'accessdenied') !== false
+        || strpos($message, '403') !== false
+        || strpos($message, 'forbidden') !== false;
+}
+
 function ged_upload_file($localPath, $fileName, $folder = 'upload') {
     if (!is_file($localPath)) {
         throw new RuntimeException('Arquivo temporario nao encontrado para envio.');
@@ -208,36 +288,71 @@ function ged_upload_file($localPath, $fileName, $folder = 'upload') {
     }
 
     $client = ged_get_r2_client();
-    $config = ged_get_r2_config();
     $objectKey = ged_build_object_key($safeName, $folder);
 
-    $stream = fopen($localPath, 'rb');
+    $bucketCandidates = ged_get_bucket_candidates();
+    $lastException = null;
 
-    if ($stream === false) {
-        throw new RuntimeException('Falha ao abrir o arquivo temporario para envio ao R2.');
+    foreach ($bucketCandidates as $bucket) {
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            $stream = fopen($localPath, 'rb');
+
+            if ($stream === false) {
+                throw new RuntimeException('Falha ao abrir o arquivo temporario para envio ao R2.');
+            }
+
+            try {
+                $client->upload(
+                    $bucket,
+                    $objectKey,
+                    $stream,
+                    'private',
+                    [
+                        'params' => [
+                            'ContentType' => ged_detect_content_type($localPath),
+                        ],
+                    ]
+                );
+
+                return [
+                    'mode' => 'r2',
+                    'path' => $objectKey,
+                ];
+            } catch (Throwable $e) {
+                $lastException = $e;
+
+                if (ged_is_access_denied_error($e)) {
+                    break;
+                }
+
+                if ($attempt < 3 && ged_should_retry_r2_upload($e)) {
+                    usleep(250000 * $attempt);
+                    continue;
+                }
+
+                throw new RuntimeException('Falha ao enviar arquivo para o R2: ' . $e->getMessage(), 0, $e);
+            } finally {
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
+            }
+        }
     }
 
-    try {
-        $client->upload(
-            $config['bucket'],
-            $objectKey,
-            $stream,
-            'private',
-            [
-                'params' => [
-                    'ContentType' => ged_detect_content_type($localPath),
-                ],
-            ]
-        );
-    } catch (Throwable $e) {
-        throw new RuntimeException('Falha ao enviar arquivo para o R2: ' . $e->getMessage(), 0, $e);
-    } finally {
-        fclose($stream);
+    $uploadDir = ged_ensure_local_upload_dir();
+    $destination = $uploadDir . DIRECTORY_SEPARATOR . $safeName;
+
+    if (realpath($localPath) !== realpath($destination) && !@copy($localPath, $destination)) {
+        $message = $lastException instanceof Throwable
+            ? $lastException->getMessage()
+            : 'Falha ao gravar o arquivo no armazenamento local de fallback.';
+
+        throw new RuntimeException('Falha ao enviar arquivo para o R2 e no fallback local: ' . $message, 0, $lastException instanceof Throwable ? $lastException : null);
     }
 
     return [
-        'mode' => 'r2',
-        'path' => $objectKey,
+        'mode' => 'local-buffer',
+        'path' => $destination,
     ];
 }
 
@@ -262,21 +377,101 @@ function ged_download_file_to_path($fileName, $destinationPath, $folder = 'uploa
     }
 
     $client = ged_get_r2_client();
-    $config = ged_get_r2_config();
     $objectKey = ged_build_object_key($safeName, $folder);
+    $lastException = null;
 
-    try {
-        $client->getObject([
-            'Bucket' => $config['bucket'],
-            'Key' => $objectKey,
-            'SaveAs' => $destinationPath,
-        ]);
-    } catch (Throwable $e) {
-        throw new RuntimeException('Falha ao baixar arquivo do R2: ' . $e->getMessage(), 0, $e);
+    foreach (ged_get_bucket_candidates() as $bucket) {
+        try {
+            $client->getObject([
+                'Bucket' => $bucket,
+                'Key' => $objectKey,
+                'SaveAs' => $destinationPath,
+            ]);
+
+            return [
+                'mode' => 'r2',
+                'path' => $destinationPath,
+            ];
+        } catch (Throwable $e) {
+            $lastException = $e;
+            if (ged_is_access_denied_error($e)) {
+                continue;
+            }
+
+            throw new RuntimeException('Falha ao baixar arquivo do R2: ' . $e->getMessage(), 0, $e);
+        }
     }
 
-    return [
-        'mode' => 'r2',
-        'path' => $destinationPath,
-    ];
+    throw new RuntimeException('Falha ao baixar arquivo do R2: ' . ($lastException instanceof Throwable ? $lastException->getMessage() : 'bucket nao acessivel.'));
+}
+
+function ged_download_file_to_path_by_object_key($objectKey, $destinationPath) {
+    $safeObjectKey = trim((string) $objectKey, '/');
+
+    if ($safeObjectKey === '') {
+        throw new RuntimeException('Chave do objeto R2 vazia para download.');
+    }
+
+    if (!ged_r2_is_enabled() || !ged_sync_r2_upload_enabled()) {
+        $safeName = basename($safeObjectKey);
+        $sourcePath = ged_get_local_upload_dir() . DIRECTORY_SEPARATOR . $safeName;
+
+        if (!is_file($sourcePath)) {
+            throw new RuntimeException('Arquivo nao encontrado no armazenamento local de fallback.');
+        }
+
+        if (!@copy($sourcePath, $destinationPath)) {
+            throw new RuntimeException('Falha ao copiar arquivo do armazenamento local.');
+        }
+
+        return [
+            'mode' => ged_r2_is_enabled() ? 'local-buffer' : 'local',
+            'path' => $destinationPath,
+        ];
+    }
+
+    $client = ged_get_r2_client();
+    $lastException = null;
+
+    foreach (ged_get_bucket_candidates() as $bucket) {
+        try {
+            $client->getObject([
+                'Bucket' => $bucket,
+                'Key' => $safeObjectKey,
+                'SaveAs' => $destinationPath,
+            ]);
+
+            return [
+                'mode' => 'r2',
+                'path' => $destinationPath,
+            ];
+        } catch (Throwable $e) {
+            $lastException = $e;
+            if (ged_is_access_denied_error($e)) {
+                continue;
+            }
+
+            throw new RuntimeException('Falha ao baixar arquivo do R2: ' . $e->getMessage(), 0, $e);
+        }
+    }
+
+    throw new RuntimeException('Falha ao baixar arquivo do R2: ' . ($lastException instanceof Throwable ? $lastException->getMessage() : 'bucket nao acessivel.'));
+}
+
+function ged_get_current_tenant_slug() {
+    $host = ged_get_normalized_request_host();
+
+    if ($host === '') {
+        return 'gea';
+    }
+
+    if (strpos($host, 'cipemac') !== false) {
+        return 'cipemac';
+    }
+
+    if (preg_match('/^([a-z0-9-]+)\.infodocsisged\.com\.br$/i', $host, $matches)) {
+        return strtolower($matches[1]);
+    }
+
+    return 'gea';
 }

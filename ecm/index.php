@@ -48,6 +48,12 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
         .container{
             max-width:100%;
         }
+        .upload-error-item,
+        .upload-error-item .file-name,
+        .upload-error-item .file-status,
+        .upload-error-item .file-status b {
+            color: #fff !important;
+        }
     </style>
 </head>
 <body width="100%">
@@ -549,6 +555,43 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
             return 0;
         }
 
+        function buildAjaxErrorMessage(jqXHR) {
+            var statusCode = jqXHR && typeof jqXHR.status === 'number' ? jqXHR.status : 0;
+            var statusText = jqXHR && jqXHR.statusText ? String(jqXHR.statusText) : '';
+            var responseText = jqXHR && jqXHR.responseText ? String(jqXHR.responseText) : '';
+            var headerError = jqXHR && typeof jqXHR.getResponseHeader === 'function'
+                ? String(jqXHR.getResponseHeader('X-GED-Error') || '')
+                : '';
+
+            if (headerError.trim() !== '') {
+                try {
+                    return decodeURIComponent(headerError);
+                } catch (decodeError) {
+                    return headerError;
+                }
+            }
+
+            if (responseText.trim() !== '') {
+                var plain = responseText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                if (plain.length > 350) {
+                    plain = plain.substring(0, 350) + '...';
+                }
+                if (plain !== '') {
+                    return plain;
+                }
+            }
+
+            if (statusCode === 413) {
+                return 'HTTP 413 - Upload excedeu o limite permitido (client_max_body_size/upload_max_filesize).';
+            }
+
+            if (statusCode > 0) {
+                return 'HTTP ' + statusCode + (statusText ? ' - ' + statusText : '');
+            }
+
+            return 'Sem resposta HTTP do servidor (status 0). Verifique rede, proxy/reverse proxy e disponibilidade do backend.';
+        }
+
         function submitFallbackUploadFile(file, idx) {
             var formData = createFallbackFormData([file]);
 
@@ -573,7 +616,7 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                 beforeSend: function() {
                     $('#file_prog_' + idx).css('width', '5%').text('Iniciando...');
                     $('#file_item_' + idx + ' .file-status').text('Enviando pelo backend...');
-                    $('#file_item_' + idx).removeClass('list-group-item-danger list-group-item-success');
+                    $('#file_item_' + idx).removeClass('list-group-item-danger list-group-item-success upload-error-item');
                     $('#file_item_' + idx + ' .file-name').css('color', '');
                 }
             });
@@ -607,10 +650,10 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                         throw new Error('Arquivo não aceito ou formato inválido pelo servidor.');
                     }
                 } catch (jqXHR) {
-                    var xhrMsg = jqXHR && jqXHR.responseText ? jqXHR.responseText : (jqXHR && jqXHR.message ? jqXHR.message : 'Falha na comunicação com o servidor VPS.');
-                    $('#file_item_' + idx).addClass('list-group-item-danger');
-                    $('#file_item_' + idx + ' .file-name').css('color', 'red');
-                    $('#file_item_' + idx + ' .file-status').html('<b style="color: red;">Não Foi possível enviar o arquivo</b> (' + xhrMsg + ')');
+                    var xhrMsg = buildAjaxErrorMessage(jqXHR);
+                    $('#file_item_' + idx).addClass('list-group-item-danger upload-error-item');
+                    $('#file_item_' + idx + ' .file-name').css('color', '#fff');
+                    $('#file_item_' + idx + ' .file-status').html('<b style="color: #fff;">Não Foi possível enviar o arquivo</b> (' + xhrMsg + ')');
                     $('#file_prog_' + idx).css('width', '100%').addClass('bg-danger').text('Erro');
                 }
             }

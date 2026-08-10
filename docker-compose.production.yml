@@ -1,7 +1,10 @@
+version: "3.8"
+
 services:
   web:
-    image: cbotelho80/infodoc-web:${WEB_IMAGE_TAG:-${IMAGE_TAG:-1.0.42}}
-    command: ["apache2-foreground"]
+    image: cbotelho80/infodoc-web:${WEB_IMAGE_TAG:-${IMAGE_TAG:-1.0.100}}
+    command:
+      - apache2-foreground
     container_name: infodoc-web
     restart: unless-stopped
     depends_on:
@@ -40,6 +43,9 @@ services:
       PHP_DATE_TIMEZONE: ${PHP_DATE_TIMEZONE:-America/Sao_Paulo}
       PHP_DISPLAY_ERRORS: ${PHP_DISPLAY_ERRORS:-Off}
       PHP_LOG_ERRORS: ${PHP_LOG_ERRORS:-On}
+      OCR_MAX_WORKERS: ${OCR_MAX_WORKERS:-4}
+      OCR_PDF_PARSER_MAX_PAGES: ${OCR_PDF_PARSER_MAX_PAGES:-200}
+      OCR_MAX_PDF_PAGES: ${OCR_MAX_PDF_PAGES:-0}
     ports:
       - "${APP_PORT:-18081}:80"
     volumes:
@@ -76,8 +82,10 @@ services:
       FILE_STORAGE_R2_SECRET_ACCESS_KEY: ${FILE_STORAGE_R2_SECRET_ACCESS_KEY}
       FILE_STORAGE_R2_OBJECT_PREFIX: ${FILE_STORAGE_R2_OBJECT_PREFIX}
       FILE_STORAGE_CRON_INTERVAL: ${FILE_STORAGE_CRON_INTERVAL:-60}
-    command: >-
-      sh -c "while true; do php /var/www/html/cron/file_storage.php; sleep \"$${FILE_STORAGE_CRON_INTERVAL}\"; done"
+    command:
+      - sh
+      - -c
+      - while true; do php /var/www/html/cron/file_storage.php; sleep "${FILE_STORAGE_CRON_INTERVAL}"; done
     volumes:
       - infodoc_backups:/var/www/html/backups
       - infodoc_uploads:/var/www/html/uploads
@@ -89,7 +97,7 @@ services:
       - proxy
 
   runtime-cleanup-worker:
-    image: cbotelho80/infodoc-web:${WEB_IMAGE_TAG:-${IMAGE_TAG:-1.0.41}}
+    image: cbotelho80/infodoc-web:${WEB_IMAGE_TAG:-${IMAGE_TAG:-1.0.100}}
     container_name: infodoc-runtime-cleanup-worker
     restart: unless-stopped
     depends_on:
@@ -101,8 +109,10 @@ services:
       RUNTIME_CLEANUP_TMP_RETENTION_DAYS: ${RUNTIME_CLEANUP_TMP_RETENTION_DAYS:-7}
       RUNTIME_CLEANUP_CACHE_RETENTION_DAYS: ${RUNTIME_CLEANUP_CACHE_RETENTION_DAYS:-7}
       RUNTIME_CLEANUP_DRY_RUN: ${RUNTIME_CLEANUP_DRY_RUN:-false}
-    command: >-
-      sh -c "while true; do php /var/www/html/cron/runtime_cleanup.php; sleep \"$${RUNTIME_CLEANUP_INTERVAL}\"; done"
+    command:
+      - sh
+      - -c
+      - while true; do php /var/www/html/cron/runtime_cleanup.php; sleep "${RUNTIME_CLEANUP_INTERVAL}"; done
     volumes:
       - infodoc_backups:/var/www/html/backups
       - infodoc_uploads:/var/www/html/uploads
@@ -114,7 +124,7 @@ services:
       - proxy
 
   assinador-python:
-    image: cbotelho80/infodoc-assinador-python:${SIGNER_IMAGE_TAG:-${IMAGE_TAG:-1.0.39}}
+    image: cbotelho80/infodoc-assinador-python:${SIGNER_IMAGE_TAG:-${IMAGE_TAG:-1.0.57}}
     container_name: infodoc-assinador
     restart: unless-stopped
     environment:
@@ -136,7 +146,7 @@ services:
       FILE_STORAGE_R2_OBJECT_PREFIX: ${FILE_STORAGE_R2_OBJECT_PREFIX}
       HOST: 0.0.0.0
       PORT: 5000
-      DEBUG: false
+      DEBUG: "false"
       PYTHON_SERVICE_INTERNAL_URL: http://assinador-python:5000
       PYTHON_SERVICE_PUBLIC_URL: ${PYTHON_SERVICE_PUBLIC_URL}
       APP_BASE_URL: ${APP_BASE_URL}
@@ -150,10 +160,67 @@ services:
       - default
       - proxy
 
-networks:
-  proxy:
-    external: true
-    name: ${PROXY_EXTERNAL_NETWORK:-proxy_net}
+  cron-gea:
+    image: cbotelho80/infodoc-web:${WEB_IMAGE_TAG:-${IMAGE_TAG:-1.0.100}}
+    container_name: infodoc-cron-gea
+    restart: unless-stopped
+    depends_on:
+      - web
+    environment:
+      DB_SERVER: ${DB_SERVER}
+      DB_SERVER_PORT: ${DB_SERVER_PORT}
+      DB_SERVER_USERNAME: ${DB_SERVER_USERNAME}
+      DB_SERVER_PASSWORD: ${DB_SERVER_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      FILE_STORAGE_R2_ENDPOINT: ${FILE_STORAGE_R2_ENDPOINT}
+      FILE_STORAGE_R2_REGION: ${FILE_STORAGE_R2_REGION}
+      FILE_STORAGE_R2_BUCKET: ${FILE_STORAGE_R2_BUCKET}
+      FILE_STORAGE_R2_ACCESS_KEY_ID: ${FILE_STORAGE_R2_ACCESS_KEY_ID}
+      FILE_STORAGE_R2_SECRET_ACCESS_KEY: ${FILE_STORAGE_R2_SECRET_ACCESS_KEY}
+      FILE_STORAGE_R2_OBJECT_PREFIX: ${FILE_STORAGE_R2_OBJECT_PREFIX}
+      APP_BASE_URL: ${APP_BASE_URL}
+    command:
+      - sh
+      - -c
+      - while true; do php /var/www/html/cron/process.php; sleep 60; done
+    networks:
+      - default
+
+  cron-cipemac:
+    image: cbotelho80/infodoc-web:${WEB_IMAGE_TAG:-${IMAGE_TAG:-1.0.100}}
+    container_name: infodoc-cron-cipemac
+    restart: unless-stopped
+    depends_on:
+      - web
+    environment:
+      DB_SERVER: ${DB_SERVER}
+      DB_SERVER_PORT: ${DB_SERVER_PORT}
+      DB_SERVER_USERNAME: ${DB_SERVER_USERNAME}
+      DB_SERVER_PASSWORD: ${DB_SERVER_PASSWORD}
+      DB_DATABASE: sisged_cipemac
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: sisged_cipemac
+      FILE_STORAGE_R2_ENDPOINT: ${FILE_STORAGE_R2_ENDPOINT}
+      FILE_STORAGE_R2_REGION: ${FILE_STORAGE_R2_REGION}
+      FILE_STORAGE_R2_BUCKET: cipemac
+      FILE_STORAGE_R2_ACCESS_KEY_ID: ${FILE_STORAGE_R2_ACCESS_KEY_ID}
+      FILE_STORAGE_R2_SECRET_ACCESS_KEY: ${FILE_STORAGE_R2_SECRET_ACCESS_KEY}
+      FILE_STORAGE_R2_OBJECT_PREFIX: ${FILE_STORAGE_R2_OBJECT_PREFIX}
+      APP_BASE_URL: https://cipemac.infodocsisged.com.br
+    command:
+      - sh
+      - -c
+      - while true; do php /var/www/html/cron/process.php; sleep 60; done
+    networks:
+      - default
 
 volumes:
   infodoc_backups:
@@ -164,3 +231,10 @@ volumes:
   signer_certs:
   signer_temp:
   signer_logs:
+
+networks:
+  proxy:
+    external: true
+    name: ${PROXY_EXTERNAL_NETWORK:-proxy_net}
+  default:
+    driver: bridge

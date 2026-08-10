@@ -72,8 +72,29 @@ function request_exceeds_post_limit() {
     return $contentLength > $postMaxSize;
 }
 
+function normalize_error_message($message) {
+    $message = (string) $message;
+    $message = preg_replace('/\s+/', ' ', $message);
+    return trim((string) $message);
+}
+
+function set_error_header($message) {
+    if (headers_sent()) {
+        return;
+    }
+
+    $normalized = normalize_error_message($message);
+    if ($normalized === '') {
+        return;
+    }
+
+    header('X-GED-Error: ' . rawurlencode(substr($normalized, 0, 1000)));
+}
+
 function fail_request($message, $statusCode = 400) {
     http_response_code($statusCode);
+    header('Content-Type: text/plain; charset=UTF-8');
+    set_error_header($message);
     echo $message;
     exit;
 }
@@ -100,31 +121,84 @@ function require_post_fields(array $fieldNames) {
     return $values;
 }
 
+register_shutdown_function(function() use ($debugMode) {
+    $error = error_get_last();
+
+    if (!$error || !is_array($error)) {
+        return;
+    }
+
+    $fatalTypes = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR];
+    if (!in_array((int) ($error['type'] ?? 0), $fatalTypes, true)) {
+        return;
+    }
+
+    $errorMessage = normalize_error_message((string) ($error['message'] ?? 'Falha fatal no processamento do upload.'));
+    $errorFile = (string) ($error['file'] ?? 'desconhecido');
+    $errorLine = (int) ($error['line'] ?? 0);
+
+    $detail = $debugMode
+        ? ($errorMessage . ' em ' . $errorFile . ':' . $errorLine)
+        : $errorMessage;
+
+    if (!headers_sent()) {
+        http_response_code(500);
+    }
+
+    set_error_header($detail);
+    echo 'Erro ao carregar arquivos. Detalhes: ' . $detail;
+});
+
 function count_pdf_pages($filePath) {
     if (!is_file($filePath)) {
         throw new RuntimeException('Arquivo PDF nao encontrado para contagem de paginas.');
     }
 
-    $autoload = __DIR__ . '/vendor/autoload.php';
-
-    if (!is_file($autoload)) {
-        throw new RuntimeException('Autoload do vendor nao encontrado para contar paginas do PDF.');
+    // Contagem leve em streaming para evitar estourar memoria com PDFs grandes.
+    $handle = @fopen($filePath, 'rb');
+    if ($handle === false) {
+        throw new RuntimeException('Nao foi possivel abrir o PDF para contagem de paginas.');
     }
 
-    require_once $autoload;
+    $count = 0;
+    $tail = '';
 
-    if (!class_exists('Smalot\\PdfParser\\Parser')) {
-        throw new RuntimeException('Biblioteca PdfParser nao encontrada para contar paginas do PDF.');
+    while (!feof($handle)) {
+        $chunk = fread($handle, 1024 * 1024);
+        if ($chunk === false) {
+            break;
+        }
+
+        $data = $tail . $chunk;
+        $count += preg_match_all('/\/Type\s*\/Page\b/', $data, $matches);
+        $tail = substr($data, -64);
     }
 
-    try {
-        $parser = new Smalot\PdfParser\Parser();
-        $document = $parser->parseFile($filePath);
+    fclose($handle);
 
-        return count($document->getPages());
-    } catch (Throwable $e) {
-        throw new RuntimeException('Falha ao contar paginas do PDF: ' . $e->getMessage(), 0, $e);
+    if ($count > 0) {
+        return (int) $count;
     }
+
+    // Fallback opcional para PDFs pequenos quando o padrao nao for encontrado.
+    $fileSize = @filesize($filePath);
+    if ($fileSize !== false && $fileSize <= (20 * 1024 * 1024)) {
+        $autoload = __DIR__ . '/vendor/autoload.php';
+        if (is_file($autoload)) {
+            require_once $autoload;
+            if (class_exists('Smalot\\PdfParser\\Parser')) {
+                try {
+                    $parser = new Smalot\PdfParser\Parser();
+                    $document = $parser->parseFile($filePath);
+                    return count($document->getPages());
+                } catch (Throwable $e) {
+                    // Nao bloquear upload por falha de metadado.
+                }
+            }
+        }
+    }
+
+    return 0;
 }
 
 function get_registro_by_id($pdo, $registroId) {
@@ -316,7 +390,12 @@ function saveArquivo($pdo, $parent_item_id, $arquivos, $tipodoc, $numero, $padra
         list($field446, $field447, $field448, $field458) = resolve_document_fields($arquivo, $padraoRenomeio);
 
         if (strtolower(pathinfo($originalFileName, PATHINFO_EXTENSION)) === 'pdf') {
-            $totalPaginas = count_pdf_pages($arquivo['tmp_name']);
+            try {
+                $totalPaginas = count_pdf_pages($arquivo['tmp_name']);
+            } catch (Throwable $e) {
+                // Nao interromper upload por falha de contagem de paginas.
+                $totalPaginas = 0;
+            }
         }
 
         // Extrair metadados e OCR
@@ -431,11 +510,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!empty($arquivosComErro)) {
             $pdo->rollBack();
-            http_response_code(400);
-            echo "Erro ao carregar arquivos. Os seguintes arquivos possuem formato inválido para o Padrao de Renomeio selecionado. Use nomes com partes separadas por # conforme o padrao informado:\n";
+            $errorMessage = "Erro ao carregar arquivos. Os seguintes arquivos possuem formato inválido para o Padrao de Renomeio selecionado. Use nomes com partes separadas por # conforme o padrao informado:\n";
             foreach ($arquivosComErro as $arquivoErro) {
-                echo "- " . $arquivoErro . "\n";
+                $errorMessage .= "- " . $arquivoErro . "\n";
             }
+
+            fail_request($errorMessage, 400);
         } else {
             saveArquivo($pdo, $registroId, $arquivos, $tipodoc, $numero, $padraoRenomeio, $setorValue);
             $contadorArquivosImportados = count($arquivos);
@@ -448,8 +528,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->rollBack();
         }
 
-        http_response_code(400);
-        echo 'Erro ao carregar arquivos. Detalhes: ' . $e->getMessage();
+        $statusCode = $e instanceof InvalidArgumentException ? 400 : 500;
+        fail_request('Erro ao carregar arquivos. Detalhes: ' . $e->getMessage(), $statusCode);
     }
 }
 ?>

@@ -13,7 +13,9 @@
 
         <ul class="nav nav-tabs">
             <li class="active"><a href="#general_info"  data-toggle="tab"><?php echo TEXT_GENERAL_INFO ?></a></li>
-            <li><a href="#ldap_tab"  data-toggle="tab"><?php echo TEXT_HEADING_LDAP ?></a></li>  
+            <?php if(users_groups_can_manage_access_matrix()): ?>
+            <li><a href="#ldap_tab"  data-toggle="tab"><?php echo TEXT_HEADING_LDAP ?></a></li>
+            <?php endif; ?>
         </ul>  
 
         <div class="tab-content">
@@ -26,12 +28,14 @@
                     </div>			
                 </div>  
 
+                <?php if(users_groups_can_manage_access_matrix()): ?>
                 <div class="form-group">
                     <label class="col-md-3 control-label" for="is_default"><?php echo TEXT_IS_DEFAULT ?></label>
                     <div class="col-md-9">	
                         <div class="checkbox-list"><label class="checkbox-inline"><?php echo input_checkbox_tag('is_default', '1', array('checked' => $obj['is_default'])) ?></label></div>
                     </div>			
-                </div> 
+                </div>
+                <?php endif; ?>
 
                 <div class="form-group">
                     <label class="col-md-3 control-label" for="sort_order"><?php echo TEXT_SORT_ORDER ?></label>
@@ -48,6 +52,7 @@
                 </div> 
 
             </div>
+            <?php if(users_groups_can_manage_access_matrix()): ?>
             <div class="tab-pane fade" id="ldap_tab">
 
                 <div class="form-group">
@@ -66,6 +71,7 @@
                 </div>
 
             </div>
+            <?php endif; ?>
         </div>
 
     </div>

@@ -4,6 +4,11 @@
 switch($app_module_action)
 {
     case 'sort':
+        if(!users_groups_can_manage_access_matrix())
+        {
+            redirect_to('dashboard/access_forbidden');
+        }
+
         if(isset($_POST['sort_items']))
         {
             $sort_order = 0;
@@ -25,6 +30,14 @@ switch($app_module_action)
             'ldap_filter' => $_POST['ldap_filter'],
             'notes' => $_POST['notes'],
         );
+
+        if(!users_groups_can_manage_access_matrix())
+        {
+            // Perfis sem ACL avançada nao podem alterar defaults globais/LDAP.
+            $sql_data['is_default'] = 0;
+            $sql_data['is_ldap_default'] = 0;
+            $sql_data['ldap_filter'] = '';
+        }
 
         if(isset($_POST['is_default']))
         {
@@ -48,6 +61,11 @@ switch($app_module_action)
         redirect_to('users_groups/users_groups');
         break;
     case 'delete':
+        if(!users_groups_can_manage_access_matrix())
+        {
+            redirect_to('dashboard/access_forbidden');
+        }
+
         if(isset($_GET['id']))
         {
             $msg = access_groups::check_before_delete($_GET['id']);

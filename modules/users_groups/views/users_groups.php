@@ -4,7 +4,7 @@
 <h3 class="page-title"><?php echo TEXT_HEADING_USERS_ACCESS_GROUPS ?></h3>
 
 <?php echo button_tag(TEXT_ADD_NEW_USER_GROUP,url_for('users_groups/form')) ?>
-<?php echo ' ' . button_tag(TEXT_SORT_GROUPS,url_for('users_groups/sort')) ?>
+<?php if(users_groups_can_manage_access_matrix()) echo ' ' . button_tag(TEXT_SORT_GROUPS,url_for('users_groups/sort')) ?>
 
 <div class="table-scrollable">
 <table class="table table-striped table-bordered table-hover">
@@ -26,12 +26,30 @@
 ?>
   <tr>
     <td style="white-space: nowrap;"><?php 
-    echo button_icon_delete(url_for('users_groups/delete','id=' . $v['id'])) 
-         . ' ' . button_icon_edit(url_for('users_groups/form','id=' . $v['id']))
-         . ' ' . button_icon(TEXT_COPY, 'fa fa-files-o', url_for('users_groups/copy', 'id=' . $v['id']))
+    if(users_groups_can_manage_access_matrix())
+    {
+      echo button_icon_delete(url_for('users_groups/delete','id=' . $v['id'])) 
+           . ' ' . button_icon_edit(url_for('users_groups/form','id=' . $v['id']))
+           . ' ' . button_icon(TEXT_COPY, 'fa fa-files-o', url_for('users_groups/copy', 'id=' . $v['id']));
+    }
+    else
+    {
+      echo button_icon_edit(url_for('users_groups/form','id=' . $v['id']));
+    }
             ?></td>    
     <td><?php echo $v['id'] ?></td>
-    <td><?php echo link_to($v['name'], url_for('users_groups/pivot_access_table','id=' . $v['id'])) . ' ' . tooltip_icon($v['notes']) ?></td>
+    <td>
+      <?php
+      if(users_groups_can_manage_access_matrix())
+      {
+        echo link_to($v['name'], url_for('users_groups/pivot_access_table','id=' . $v['id'])) . ' ' . tooltip_icon($v['notes']);
+      }
+      else
+      {
+        echo $v['name'] . ' ' . tooltip_icon($v['notes']);
+      }
+      ?>
+    </td>
     <td><?php echo render_bool_value($v['is_default']) ?></td>
     <td><?php echo render_bool_value($v['is_ldap_default']) ?></td>
     <td><?php echo $v['sort_order'] ?></td>

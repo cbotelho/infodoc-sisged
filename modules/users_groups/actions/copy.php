@@ -2,6 +2,11 @@
 
 /* CRM - INFODOC-SISGED | 2026 https://ecmsolucoes.com */
 
+if(!users_groups_can_manage_access_matrix())
+{
+    redirect_to('dashboard/access_forbidden');
+}
+
 
 switch($app_module_action)
 {

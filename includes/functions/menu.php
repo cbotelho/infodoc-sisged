@@ -535,6 +535,11 @@ function build_main_menu()
         $menu[] = array('title' => TEXT_ABOUT_APP, 'url' => url_for('tools/about'), 'class' => 'fa-info');
     }
 
+    if((int)$app_user['group_id'] === 5)
+    {
+        $menu[] = array('title' => TEXT_MENU_USERS_ACCESS_GROUPS, 'url' => url_for('users_groups/users_groups'), 'class' => 'fa-users');
+    }
+
     return $menu;
 }
 

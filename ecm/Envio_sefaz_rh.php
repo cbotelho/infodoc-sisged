@@ -7,13 +7,17 @@ error_reporting(E_ALL);
 
 $pythonServicePublicUrl = getenv('PYTHON_SERVICE_PUBLIC_URL');
 $sefazRhUploadUrl = 'upload_sefaz_rh.php';
+$sefazRhLocalUploadUrl = 'upload_sefaz_rh.php';
+$sefazRhRemoteUploadUrl = '';
 $presignUploadUrl = '';
 $completeUploadUrl = '';
 $sefazRhDirectFinalizeUrl = '';
 
 if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) !== '') {
     $pythonBaseUrl = rtrim((string) $pythonServicePublicUrl, '/');
-    $sefazRhUploadUrl = $pythonBaseUrl . '/api/sefaz-rh/upload';
+    // Fluxo padrao permanece local para evitar CORS no browser e manter compatibilidade
+    // com uploads grandes via backend PHP.
+    $sefazRhRemoteUploadUrl = $pythonBaseUrl . '/api/sefaz-rh/upload';
     $presignUploadUrl = $pythonBaseUrl . '/api/uploads/presign';
     $completeUploadUrl = $pythonBaseUrl . '/api/uploads/complete';
     $sefazRhDirectFinalizeUrl = $pythonBaseUrl . '/api/sefaz-rh/upload/direct';
@@ -102,10 +106,23 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                             <label for="doctipo">* Tipo de Documento</label>
                             <select class="form-control" id="doctipo" name="doctipo" required>
                                 <option value="">Selecione o Tipo de Documento</option>
+                                <option value="1">Contrato</option>
                                 <option value="2">Matrícula</option>
                                 <option value="3">Folha de Ponto</option>
                                 <option value="4">Pasta Funcional</option>
                                 <option value="5">Diário Oficial</option>
+                                <option value="6">Folha de Pagamento</option>
+                                <option value="7">Ficha Financeira</option>
+                                <option value="8">Contra Cheque</option>
+                                <option value="9">Férias</option>
+                                <option value="10">Escala de Férias</option>
+                                <option value="11">Requerimento de Licença</option>
+                                <option value="12">Portaria de Progressão</option>
+                                <option value="13">Portaria de Promoção</option>
+                                <option value="14">Portaria de Aposentadoria</option>
+                                <option value="15">Portaria de Exoneração</option>
+                                <option value="16">Portaria de Nomeação</option>
+                                <option value="17">Portaria de Designação</option>
                             </select>
                         </div>
                     </div>
@@ -197,6 +214,8 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
     <script>
     $(document).ready(function() {
         var sefazRhUploadUrl = <?php echo json_encode($sefazRhUploadUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+        var sefazRhLocalUploadUrl = <?php echo json_encode($sefazRhLocalUploadUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+        var sefazRhRemoteUploadUrl = <?php echo json_encode($sefazRhRemoteUploadUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
         var presignUploadUrl = <?php echo json_encode($presignUploadUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
         var completeUploadUrl = <?php echo json_encode($completeUploadUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
         var sefazRhDirectFinalizeUrl = <?php echo json_encode($sefazRhDirectFinalizeUrl, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
@@ -551,11 +570,12 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
             return formData;
         }
 
-        function submitFallbackUploadFile(file, idx) {
+        function submitFallbackUploadFile(file, idx, endpointUrl) {
             var formData = createFallbackFormData([file]);
+            var targetUrl = endpointUrl || sefazRhUploadUrl;
 
             return $.ajax({
-                url: sefazRhUploadUrl,
+                url: targetUrl,
                 type: 'POST',
                 data: formData,
                 async: true,
@@ -574,7 +594,11 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                 },
                 beforeSend: function() {
                     $('#file_prog_' + idx).css('width', '5%').text('Iniciando...');
-                    $('#file_item_' + idx + ' .file-status').text('Enviando pelo backend...');
+                    if (targetUrl === sefazRhLocalUploadUrl) {
+                        $('#file_item_' + idx + ' .file-status').text('Enviando pelo backend local...');
+                    } else {
+                        $('#file_item_' + idx + ' .file-status').text('Enviando pelo backend remoto...');
+                    }
                     $('#file_item_' + idx).removeClass('list-group-item-danger list-group-item-success');
                     $('#file_item_' + idx + ' .file-name').css('color', '');
                 }
@@ -597,7 +621,23 @@ if ($pythonServicePublicUrl !== false && trim((string) $pythonServicePublicUrl) 
                 setProgressState('Enviando arquivos: ' + (idx + 1) + '/' + selectedFiles.length, overallPercent, true);
 
                 try {
-                    var response = await submitFallbackUploadFile(file, idx);
+                    var response;
+
+                    try {
+                        response = await submitFallbackUploadFile(file, idx, sefazRhUploadUrl);
+                    } catch (remoteError) {
+                        // Se o endpoint local falhar, tenta endpoint remoto apenas como contingencia.
+                        if (sefazRhRemoteUploadUrl) {
+                            $('#file_item_' + idx + ' .file-status').html('<b style="color: #b35b00;">Falha no backend local. Tentando backend remoto...</b>');
+                            response = await submitFallbackUploadFile(file, idx, sefazRhRemoteUploadUrl);
+                        } else if (sefazRhUploadUrl !== sefazRhLocalUploadUrl) {
+                            $('#file_item_' + idx + ' .file-status').html('<b style="color: #b35b00;">Falha no backend remoto. Tentando backend local...</b>');
+                            response = await submitFallbackUploadFile(file, idx, sefazRhLocalUploadUrl);
+                        } else {
+                            throw remoteError;
+                        }
+                    }
+
                     var importCount = parseImportedCount(response);
                     
                     if (importCount > 0) {

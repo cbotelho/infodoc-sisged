@@ -8,16 +8,29 @@
   $dbName = getenv('DB_DATABASE') ?: getenv('DB_NAME') ?: 'infodoc_sisged';
 
   // --- MULTI-TENANT ROUTER ---
-  // Identifica o tenant pelo domínio de acesso (atrás de proxy ou direto)
-  $httpHost = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'] ?? '';
+  // Identifica o tenant pelo dominio de acesso (atras de proxy ou direto)
+  $httpHost = $_SERVER['HTTP_X_FORWARDED_HOST']
+      ?? $_SERVER['HTTP_X_ORIGINAL_HOST']
+      ?? $_SERVER['HTTP_HOST']
+      ?? '';
 
-  // Fallback caso o Forwarded Host venha como lista (ex: "cipemac.com, cipemac.com")
+  // Fallback caso o Forwarded Host venha como lista (ex: "cipemac.com, gea.com")
   if (strpos($httpHost, ',') !== false) {
       $hosts = explode(',', $httpHost);
       $httpHost = trim($hosts[0]);
   }
 
-  if (strpos($httpHost, 'cipemac.infodocsisged.com.br') !== false) {
+  $httpHost = strtolower(trim((string) $httpHost));
+
+  // Remove porta para evitar variacoes como "host:443".
+  if (strpos($httpHost, ':') !== false) {
+      $httpHost = explode(':', $httpHost, 2)[0];
+  }
+
+  $tenantHeader = strtolower(trim((string) ($_SERVER['HTTP_X_TENANT_DB'] ?? '')));
+  $isCipemac = $tenantHeader === 'cipemac' || strpos($httpHost, 'cipemac') !== false;
+
+  if ($isCipemac) {
       $dbName = 'sisged_cipemac';
       // Força o bucket e variáveis para o ambiente CIPEMAC
       putenv('FILE_STORAGE_R2_BUCKET=cipemac');
@@ -32,6 +45,9 @@
       putenv('FILE_STORAGE_R2_BUCKET=gea');
       $_ENV['FILE_STORAGE_R2_BUCKET'] = 'gea';
       $_SERVER['FILE_STORAGE_R2_BUCKET'] = 'gea';
+
+      putenv('APP_BASE_URL=https://gea.infodocsisged.com.br');
+      $_ENV['APP_BASE_URL'] = 'https://gea.infodocsisged.com.br';
   }
   // --- FIM DA ROTA ---
 

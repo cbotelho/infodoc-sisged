@@ -1,0 +1,70 @@
+services:
+  s3-r2-agent-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cbotelho80/infodoc-s3-r2-agent:${IMAGE_TAG:-1.0.0}
+    container_name: infodoc-s3-r2-agent-worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      AGENT_ROOT_PATH: ${AGENT_ROOT_PATH:-/data}
+      AGENT_POLL_INTERVAL_SECONDS: ${AGENT_POLL_INTERVAL_SECONDS:-30}
+      AGENT_TENANT_ALLOWLIST: ${AGENT_TENANT_ALLOWLIST:-}
+      AGENT_DRY_RUN: ${AGENT_DRY_RUN:-false}
+      AGENT_DB_PATH: ${AGENT_DB_PATH:-/data/.agent/queue.db}
+      AGENT_BATCH_SIZE: ${AGENT_BATCH_SIZE:-50}
+      AGENT_MAX_ATTEMPTS: ${AGENT_MAX_ATTEMPTS:-5}
+      AGENT_BACKOFF_BASE_SECONDS: ${AGENT_BACKOFF_BASE_SECONDS:-30}
+      AGENT_BACKOFF_MAX_SECONDS: ${AGENT_BACKOFF_MAX_SECONDS:-1800}
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      S3_REGION: ${S3_REGION:-auto}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+      S3_BUCKET_PREFIX: ${S3_BUCKET_PREFIX:-}
+    volumes:
+      - ${SERVER_FILES_ROOT:-/opt/infodoc-agent/data}:/data
+    command: ["python", "-m", "app.worker"]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"print('ok')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  s3-r2-agent-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cbotelho80/infodoc-s3-r2-agent:${IMAGE_TAG:-1.0.0}
+    container_name: infodoc-s3-r2-agent-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      AGENT_ROOT_PATH: ${AGENT_ROOT_PATH:-/data}
+      AGENT_POLL_INTERVAL_SECONDS: ${AGENT_POLL_INTERVAL_SECONDS:-30}
+      AGENT_TENANT_ALLOWLIST: ${AGENT_TENANT_ALLOWLIST:-}
+      AGENT_DRY_RUN: ${AGENT_DRY_RUN:-false}
+      AGENT_DB_PATH: ${AGENT_DB_PATH:-/data/.agent/queue.db}
+      AGENT_BATCH_SIZE: ${AGENT_BATCH_SIZE:-50}
+      AGENT_MAX_ATTEMPTS: ${AGENT_MAX_ATTEMPTS:-5}
+      AGENT_BACKOFF_BASE_SECONDS: ${AGENT_BACKOFF_BASE_SECONDS:-30}
+      AGENT_BACKOFF_MAX_SECONDS: ${AGENT_BACKOFF_MAX_SECONDS:-1800}
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      S3_REGION: ${S3_REGION:-auto}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+      S3_BUCKET_PREFIX: ${S3_BUCKET_PREFIX:-}
+    volumes:
+      - ${SERVER_FILES_ROOT:-/opt/infodoc-agent/data}:/data
+    ports:
+      - "${AGENT_API_PORT:-18090}:8090"
+    command: ["uvicorn", "app.api:app", "--host", "0.0.0.0", "--port", "8090"]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://127.0.0.1:8090/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s

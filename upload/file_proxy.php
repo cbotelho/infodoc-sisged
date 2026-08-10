@@ -88,28 +88,75 @@ function load_r2_sdk()
     $loaded = true;
 }
 
-function build_r2_client()
+function get_normalized_request_host()
 {
-    load_r2_sdk();
-
-    // --- MULTI-TENANT CONFIG ROUTER NO FILE PROXY ---
     $httpHost = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'] ?? '';
+
     if (strpos($httpHost, ',') !== false) {
         $hosts = explode(',', $httpHost);
         $httpHost = trim($hosts[0]);
     }
 
+    $httpHost = trim((string) $httpHost);
+
+    // Remove porta para evitar variações como "host:443".
+    if (strpos($httpHost, ':') !== false) {
+        $httpHost = explode(':', $httpHost, 2)[0];
+    }
+
+    return strtolower($httpHost);
+}
+
+function resolve_r2_bucket_name()
+{
+    $defaultBucket = trim((string) (getenv('FILE_STORAGE_R2_BUCKET') ?: ''));
+
+    // Regra unificada: mesmo bucket padrao para todos os tenants.
+    return $defaultBucket;
+}
+
+function resolve_r2_bucket_candidates()
+{
+    $primary = resolve_r2_bucket_name();
+    $defaultBucket = trim((string) (getenv('FILE_STORAGE_R2_BUCKET') ?: ''));
+    $candidates = [];
+
+    foreach ([$primary, $defaultBucket] as $bucket) {
+        if ($bucket !== '' && !in_array($bucket, $candidates, true)) {
+            $candidates[] = $bucket;
+        }
+    }
+
+    return $candidates;
+}
+
+function sanitize_storage_path($path)
+{
+    $path = trim(str_replace('\\', '/', (string) $path), '/');
+
+    if ($path === '') {
+        return '';
+    }
+
+    $segments = array_filter(explode('/', $path), 'strlen');
+    $safeSegments = [];
+
+    foreach ($segments as $segment) {
+        $safeSegments[] = sanitize_storage_filename($segment);
+    }
+
+    return implode('/', array_filter($safeSegments, 'strlen'));
+}
+
+function build_r2_client()
+{
+    load_r2_sdk();
+
     $endpoint = trim((string) (getenv('FILE_STORAGE_R2_ENDPOINT') ?: ''));
     $region = trim((string) (getenv('FILE_STORAGE_R2_REGION') ?: 'auto'));
     $accessKeyId = trim((string) (getenv('FILE_STORAGE_R2_ACCESS_KEY_ID') ?: ''));
     $secretAccessKey = trim((string) (getenv('FILE_STORAGE_R2_SECRET_ACCESS_KEY') ?: ''));
-    
-    // Determina o bucket dinamicamente baseado no domínio acessado
-    if (strpos($httpHost, 'cipemac.infodocsisged.com.br') !== false) {
-        $bucket = 'cipemac';
-    } else {
-        $bucket = trim((string) (getenv('FILE_STORAGE_R2_BUCKET') ?: ''));
-    }
+    $bucket = resolve_r2_bucket_name();
 
     if ($endpoint === '' || $accessKeyId === '' || $secretAccessKey === '' || $bucket === '') {
         fail_with_status(500, 'Configuracao R2 incompleta no ambiente.');
@@ -130,7 +177,8 @@ function build_r2_client()
 function build_r2_object_key($relativePath)
 {
     $prefix = trim((string) (getenv('FILE_STORAGE_R2_OBJECT_PREFIX') ?: 'ged'), '/');
-    $objectParts = array_filter([$prefix, 'upload', basename($relativePath)], 'strlen');
+    $normalizedRelative = trim(str_replace('\\', '/', (string) $relativePath), '/');
+    $objectParts = array_filter([$prefix, 'upload', $normalizedRelative], 'strlen');
 
     return implode('/', $objectParts);
 }
@@ -158,27 +206,58 @@ function sanitize_storage_filename($filename)
 function build_r2_candidate_keys($relativePath)
 {
     $prefix = trim((string) (getenv('FILE_STORAGE_R2_OBJECT_PREFIX') ?: 'ged'), '/');
-    $rawName = basename($relativePath);
-    $safeName = sanitize_storage_filename($rawName);
+    $rawRelative = trim(str_replace('\\', '/', (string) $relativePath), '/');
+
+    // Aceita variacoes comuns de encoding em path (espaco/+ e dupla codificacao).
+    $relativeVariants = array_values(array_unique(array_filter([
+        $rawRelative,
+        str_replace('_', '#', $rawRelative),
+        rawurldecode($rawRelative),
+        str_replace('_', '#', rawurldecode($rawRelative)),
+        rawurldecode(rawurldecode($rawRelative)),
+        str_replace('_', '#', rawurldecode(rawurldecode($rawRelative))),
+        str_replace('+', ' ', $rawRelative),
+        str_replace('+', ' ', rawurldecode($rawRelative)),
+        str_replace('+', ' ', rawurldecode(rawurldecode($rawRelative))),
+    ], 'strlen')));
+
     $folders = ['upload', 'assinador-python/uploads'];
 
     $keys = [];
     $seen = [];
 
-    foreach ($folders as $folder) {
-        foreach ([$rawName, $safeName] as $name) {
+    $addKey = static function ($key) use (&$seen, &$keys) {
+        if (!is_string($key) || $key === '' || isset($seen[$key])) {
+            return;
+        }
+
+        $seen[$key] = true;
+        $keys[] = $key;
+    };
+
+    foreach ($relativeVariants as $variant) {
+        $safeRelative = sanitize_storage_path($variant);
+        $rawName = basename($variant);
+        $safeName = sanitize_storage_filename($rawName);
+
+        foreach ($folders as $folder) {
+            foreach ([$variant, $safeRelative, $rawName, $safeName] as $name) {
+                if (!is_string($name) || $name === '') {
+                    continue;
+                }
+
+                $key = implode('/', array_filter([$prefix, $folder, $name], 'strlen'));
+                $addKey($key);
+            }
+        }
+
+        foreach ([$variant, $safeRelative, $rawName, $safeName] as $name) {
             if (!is_string($name) || $name === '') {
                 continue;
             }
 
-            $key = implode('/', array_filter([$prefix, $folder, $name], 'strlen'));
-
-            if (isset($seen[$key])) {
-                continue;
-            }
-
-            $seen[$key] = true;
-            $keys[] = $key;
+            $key = implode('/', array_filter([$prefix, $name], 'strlen'));
+            $addKey($key);
         }
     }
 
@@ -187,21 +266,9 @@ function build_r2_candidate_keys($relativePath)
 
 function stream_r2_object($relativePath)
 {
-    // --- MULTI-TENANT BUCKET ROUTER PARA STREAM ---
-    $httpHost = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'] ?? '';
-    if (strpos($httpHost, ',') !== false) {
-        $hosts = explode(',', $httpHost);
-        $httpHost = trim($hosts[0]);
-    }
-
-    if (strpos($httpHost, 'cipemac.infodocsisged.com.br') !== false) {
-        $bucket = 'cipemac';
-    } else {
-        $bucket = trim((string) (getenv('FILE_STORAGE_R2_BUCKET') ?: ''));
-    }
-
     $objectKey = build_r2_object_key($relativePath);
     $client = build_r2_client();
+    $bucketCandidates = resolve_r2_bucket_candidates();
 
     $candidateKeys = build_r2_candidate_keys($relativePath);
     if (!in_array($objectKey, $candidateKeys, true)) {
@@ -211,24 +278,32 @@ function stream_r2_object($relativePath)
     $result = null;
     $lastAwsException = null;
 
-    foreach ($candidateKeys as $candidateKey) {
-        try {
-            $result = $client->getObject([
-                'Bucket' => $bucket,
-                'Key' => $candidateKey,
-            ]);
-            $objectKey = $candidateKey;
-            break;
-        } catch (AwsException $exception) {
-            $statusCode = (int) ($exception->getStatusCode() ?: 0);
-            if ($statusCode === 404 || $exception->getAwsErrorCode() === 'NoSuchKey') {
-                $lastAwsException = $exception;
-                continue;
-            }
+    foreach ($bucketCandidates as $bucket) {
+        foreach ($candidateKeys as $candidateKey) {
+            try {
+                $result = $client->getObject([
+                    'Bucket' => $bucket,
+                    'Key' => $candidateKey,
+                ]);
+                $objectKey = $candidateKey;
+                break 2;
+            } catch (AwsException $exception) {
+                $statusCode = (int) ($exception->getStatusCode() ?: 0);
+                $awsCode = (string) ($exception->getAwsErrorCode() ?: '');
+                if ($statusCode === 404 || $awsCode === 'NoSuchKey') {
+                    $lastAwsException = $exception;
+                    continue;
+                }
 
-            fail_with_status(502, 'Falha ao recuperar arquivo no R2.');
-        } catch (Throwable $exception) {
-            fail_with_status(502, 'Falha ao recuperar arquivo no R2.');
+                if ($statusCode === 403 || $awsCode === 'AccessDenied') {
+                    $lastAwsException = $exception;
+                    break;
+                }
+
+                fail_with_status(502, 'Falha ao recuperar arquivo no R2.');
+            } catch (Throwable $exception) {
+                fail_with_status(502, 'Falha ao recuperar arquivo no R2.');
+            }
         }
     }
 
@@ -270,6 +345,14 @@ $localPath = __DIR__ . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATO
 
 if (is_file($localPath)) {
     stream_local_file($localPath, $relativePath);
+}
+
+$legacyRelativePath = str_replace('_', '#', $relativePath);
+if ($legacyRelativePath !== $relativePath) {
+    $legacyLocalPath = __DIR__ . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $legacyRelativePath);
+    if (is_file($legacyLocalPath)) {
+        stream_local_file($legacyLocalPath, $legacyRelativePath);
+    }
 }
 
 $safeLocalName = sanitize_storage_filename($relativePath);
